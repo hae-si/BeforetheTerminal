@@ -4,3 +4,8 @@ build/*
 run/*
 gradle/*
 libs/*
+
+# local-only reference clones / private design docs / map archive
+references/
+docs/
+The Harpy Express.zip
