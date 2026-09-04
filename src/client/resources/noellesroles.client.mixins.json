@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "InstinctMixin",
+    "btt.BttEndScreenMixin",
+    "btt.MoodHudGuardMixin",
     "bartender.BartenderShopMixin",
     "bartender.DefenseVialHandMixin",
     "chameleon.ChameleonCapeMixin",

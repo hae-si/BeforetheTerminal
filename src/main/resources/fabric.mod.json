@@ -39,7 +39,8 @@
       "noellesroles:recaller",
       "noellesroles:vulture",
       "noellesroles:chameleon",
-      "noellesroles:infected"
+      "noellesroles:infected",
+      "noellesroles:btt_game"
     ]
   },
   "mixins": [

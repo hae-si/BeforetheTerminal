@@ -1,68 +1,48 @@
 {
   "key.noellesroles.ability": "技能",
-  
   "announcement.goals.noellesroles.jester": "找到杀手并与其合作取得胜利。",
   "announcement.role.noellesroles.jester": "狂信者",
-
   "announcement.goals.noellesroles.morphling": "变成其他人的样子愚弄所有人。",
   "announcement.role.noellesroles.morphling": "变形怪",
-
   "announcement.goals.noellesroles.awesome_binglus": "你有超多便条，随便写吧！",
   "announcement.role.noellesroles.awesome_binglus": "记者",
-
   "announcement.goals.noellesroles.conductor": "你能打开列车上所有的门！",
   "announcement.role.noellesroles.conductor": "列车长",
-
   "announcement.goals.noellesroles.the_insane_damned_paranoid_killer": "我听得见死者的声音！",
   "announcement.role.noellesroles.the_insane_damned_paranoid_killer": "亡语杀手",
-
-
   "announcement.goals.noellesroles.bartender": "透过墙壁看见喝酒和中毒的玩家！",
   "announcement.role.noellesroles.bartender": "酒保",
-
   "announcement.goals.noellesroles.phantom": "可以隐形，但要小心你还有碰撞体积。",
   "announcement.role.noellesroles.phantom": "幻灵",
-
   "announcement.goals.noellesroles.noisemaker": "在死亡时向所有人高亮你的位置。",
   "announcement.role.noellesroles.noisemaker": "大嗓门",
-
   "announcement.goals.noellesroles.voodoo": "选择一名玩家，在你死时一起同归于尽。",
   "announcement.role.noellesroles.voodoo": "巫毒师",
   "hud.voodoo.player_deaths_only": "巫毒师的死亡必须由另一名玩家触发",
-
   "announcement.goals.noellesroles.swapper": "指定两名玩家交换位置。",
   "announcement.role.noellesroles.swapper": "交换者",
   "hud.swapper.first_player_selection": "选择第一个交换的玩家",
   "hud.swapper.second_player_selection": "选择第二个交换的玩家",
-
   "announcement.goals.noellesroles.coroner": "从尸体上获取信息。",
   "announcement.role.noellesroles.coroner": "验尸官",
   "hud.coroner.sanity_requirements": "验尸需保持一半的理智值",
   "hud.coroner.death_info": "死于 %s 秒前，死因是",
   "hud.coroner.role_info": "其身份为 ",
-
   "announcement.goals.noellesroles.executioner": "当你的目标死于非杀手之手后，你将随机获得其他杀手身份。",
   "announcement.role.noellesroles.executioner": "仇杀客",
   "hud.executioner.target": "仇杀目标: %s",
-
   "announcement.goals.noellesroles.trapper": "使用身份地雷获取其他乘客的身份。",
   "announcement.role.noellesroles.trapper": "陷阱师",
-
   "announcement.goals.noellesroles.recaller": "传送至你在列车上保存的位置！",
   "announcement.role.noellesroles.recaller": "回溯者",
-
   "announcement.goals.noellesroles.guesser": "猜中平民的身份以将其瞬间击杀。",
   "announcement.role.noellesroles.guesser": "猜测者",
-
   "announcement.goals.noellesroles.mimic": "杀手会误以为你是同伙，但你所属平民阵营。",
   "announcement.role.noellesroles.mimic": "模仿者",
-
   "announcement.goals.noellesroles.recon": "去发现玩家的身份！",
   "announcement.role.noellesroles.recon": "侦查员",
-
   "announcement.goals.noellesroles.infected": "感染整个列车。",
   "announcement.role.noellesroles.infected": "疫使",
-
   "announcement.modifier.noellesroles.tiny": "矮子",
   "announcement.modifier.noellesroles.chameleon": "变色龙",
   "announcement.modifier.noellesroles.guesser": "猜测者",
@@ -70,17 +50,12 @@
   "announcement.modifier.noellesroles.feather": "轻灵",
   "announcement.modifier.noellesroles.introvert": "内敛",
   "announcement.modifier.noellesroles.stealth": "鬼祟",
-
-
   "announcement.goals.noellesroles.better_vigilante": "呃——————",
   "announcement.role.noellesroles.better_vigilante": "更好的义警",
-
   "announcement.goals.noellesroles.vulture": "吃掉足够的尸体后变成杀手！",
   "announcement.role.noellesroles.vulture": "秃鹫",
   "hud.vulture.eat": "按下 %s 键来啃食尸体！",
   "hud.vulture.already_consumed": "这具尸体已经被啃食干净了。",
-
-
   "item.noellesroles.fake_revolver": "仿真左轮手枪",
   "item.noellesroles.master_key": "万能钥匙",
   "item.noellesroles.fake_knife": "仿真匕首",
@@ -91,7 +66,6 @@
   "item.noellesroles.delusion_vial.tooltip": "右键点击食物/饮品托盘以使用\n使误食的玩家获得假中毒\n误以为自己中毒，但不会造成任何实际后果。",
   "item.noellesroles.role_mine": "身份地雷",
   "item.noellesroles.role_mine.tooltip": "右键点击放置在地板或天花板上。\n对其他玩家不可见，无论是放置后的地雷还是手中持有地雷。",
-
   "death_reason.wathe.gun_shot": "被左轮射杀",
   "death_reason.noellesroles.infection": "病毒感染",
   "death_reason.wathe.knife_stab": "被匕首刺死",
@@ -102,23 +76,68 @@
   "death_reason.wathe.fell_out_of_train": "被列车碾死",
   "death_reason.noellesroles.voodoo": "巫毒魔法",
   "death_reason.noellesroles.modded_backfire": "因愧疚而自杀",
-
   "tip.phantom": "按下 %s 键来隐形",
   "tip.infected": "按下 %s 键感染一名玩家!",
   "tip.recaller.place": "按下 %s 键来保存你的位置",
   "tip.recaller.teleport": "按下 %s 键来传送至保存的位置",
   "tip.vulture": "已吃掉尸体 %s/%s",
-  "tip.recaller.not_enough_money": "需要 100\uE781 来进行传送",
+  "tip.recaller.not_enough_money": "需要 100 来进行传送",
   "tip.selected": "已选中",
   "tip.noellesroles.cooldown": "能力在 %s 秒后可用",
   "tip.master_key_invisible_count": "乘客人数少于 %s 人时，万能钥匙显示为撬锁器",
   "tip.master_key_invisible": "万能钥匙显示为撬锁器",
   "tip.trapper.caught": "你使用身份地雷捕获了 %s 名乘客的信息，他们的身份是:",
   "tip.trapper.caught_names": "你的陷阱捕捉了 %s 名玩家。他们的名字是:",
-
   "subtitles.noellesroles.role_mine_beep": "身份地雷发出了哔哔声",
-  "subtitles.noellesroles.cough": "咳嗽"
+  "subtitles.noellesroles.cough": "咳嗽",
+  "announcement.role.noellesroles.godfather": "教父！",
+  "announcement.title.noellesroles.godfather": "主犯凶手",
+  "announcement.goal.noellesroles.godfather": "在抵达终点站之前，杀死所有乘客。",
+  "announcement.goals.noellesroles.godfather": "在抵达终点站之前，杀死所有乘客。",
+  "announcement.win.noellesroles.godfather": "凶手胜利！",
+  "announcement.role.noellesroles.vigilante": "义警！",
+  "announcement.title.noellesroles.vigilante": "执法乘客",
+  "announcement.goal.noellesroles.vigilante": "用枪淘汰所有凶手，保护乘客。",
+  "announcement.goals.noellesroles.vigilante": "用枪淘汰所有凶手，保护乘客。",
+  "announcement.win.noellesroles.vigilante": "乘客胜利！",
+  "announcement.role.noellesroles.doctor": "医生！",
+  "announcement.title.noellesroles.doctor": "平民乘客",
+  "announcement.goal.noellesroles.doctor": "验尸查明真相，帮助乘客获胜。",
+  "announcement.goals.noellesroles.doctor": "验尸查明真相，帮助乘客获胜。",
+  "announcement.win.noellesroles.doctor": "乘客胜利！",
+  "announcement.role.noellesroles.virgin": "处子！",
+  "announcement.title.noellesroles.virgin": "平民乘客",
+  "announcement.goal.noellesroles.virgin": "努力活到终点站；你的死将被所有人看见。",
+  "announcement.goals.noellesroles.virgin": "努力活到终点站；你的死将被所有人看见。",
+  "announcement.win.noellesroles.virgin": "乘客胜利！",
+  "item.noellesroles.inspect": "查验镜",
+  "item.noellesroles.inspect.tooltip": "右键注视一名玩家或尸体，查验其具体身份。\n冷却 30 秒。",
+  "btt.faction.principal": "主犯凶手",
+  "btt.faction.passenger": "乘客",
+  "btt.faction.neutral": "中立",
+  "btt.faction.unknown": "？？？",
+  "btt.reveal.header": "—— 终点站抵达之前 ——",
+  "btt.reveal.identity": "你的身份：%s（%s）",
+  "btt.reveal.counts": "本局：凶手 %s 名 · 中立 %s 名 · 外人 %s 名",
+  "btt.start_error.exact_players": "《终点站抵达之前》Demo 固定 %s 人开局，当前人数不符。",
+  "btt.inspect.result.living": "【查验】该玩家身份：%s",
+  "btt.inspect.result.body": "【查验】该尸体生前身份：%s",
+  "btt.inspect.no_target": "【查验】视线内没有可查验的目标。",
+  "btt.inspect.no_identity": "【查验】无法确认身份。",
+  "btt.ending.trial_complete.title": "结局：审判完成",
+  "btt.ending.trial_complete.quote": "一切应行的审判都已完结，在终点站抵达之前。",
+  "btt.ending.trial_complete.result": "所有乘客胜利！",
+  "btt.ending.enforcement_end.title": "结局：执法落幕",
+  "btt.ending.enforcement_end.quote": "枪响过后，满载鲜血的列车重归寂静。",
+  "btt.ending.enforcement_end.result": "平民乘客胜利！执法乘客失败！",
+  "btt.ending.journey_end.title": "结局：旅途结束",
+  "btt.ending.journey_end.quote": "碾过哀嚎的亡魂与未了的恩怨，冰冷的车轮停止了转动。",
+  "btt.ending.journey_end.result": "平民乘客胜利！执法乘客失败！",
+  "btt.ending.blood_express.title": "结局：血染快车",
+  "btt.ending.blood_express.quote": "列车上的罪恶将被永远埋葬于暴风雪下。",
+  "btt.ending.blood_express.result": "凶手胜利！",
+  "btt.faction.enforcer": "执法乘客",
+  "btt.ending.personal.win": "你胜利了！",
+  "btt.ending.personal.lose": "你失败了……",
+  "btt.ending.personal.neutral": "中立方，置身胜负之外"
 }
-
-
-

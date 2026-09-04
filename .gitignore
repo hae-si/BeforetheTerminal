@@ -4,6 +4,7 @@ build/*
 run/*
 gradle/*
 libs/*
+release/*
 
 # local-only reference clones / private design docs / map archive
 references/

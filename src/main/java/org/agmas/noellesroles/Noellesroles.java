@@ -194,6 +194,8 @@ public class Noellesroles implements ModInitializer {
 
         registerPackets();
 
+        org.agmas.noellesroles.btt.BttGameModes.register();
+
         if (NoellesRolesConfig.HANDLER.instance().allowCivillianGuessers) {
             GUESSER.killerOnly = false;
         }
@@ -214,9 +216,12 @@ public class Noellesroles implements ModInitializer {
 
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(playerEntity.getWorld());
             if (gameWorldComponent.isRole(playerEntity,Noellesroles.JESTER)) {
-                PlayerPsychoComponent component =  PlayerPsychoComponent.KEY.get(playerEntity);
-                if (component.getPsychoTicks() > GameConstants.getInTicks(0,44)) {
-                    return false;
+                // BTT 局内 doc-小丑不走旧“疯魔期免疫”（护盾层数由 BttEvents 口径管理）
+                if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(playerEntity.getWorld())) {
+                    PlayerPsychoComponent component =  PlayerPsychoComponent.KEY.get(playerEntity);
+                    if (component.getPsychoTicks() > GameConstants.getInTicks(0,44)) {
+                        return false;
+                    }
                 }
             }
 
@@ -296,8 +301,11 @@ public class Noellesroles implements ModInitializer {
                 player.giveItemStack(ModItems.FAKE_KNIFE.getDefaultStack());
             }
             if (role.equals(JESTER)) {
-                player.giveItemStack(ModItems.FAKE_KNIFE.getDefaultStack());
-                player.giveItemStack(ModItems.FAKE_REVOLVER.getDefaultStack());
+                // BTT 局内 doc-小丑无假刀/假枪（渐进式替换：旧行为仅限 NR 谋杀局）
+                if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) {
+                    player.giveItemStack(ModItems.FAKE_KNIFE.getDefaultStack());
+                    player.giveItemStack(ModItems.FAKE_REVOLVER.getDefaultStack());
+                }
             }
             if (role.equals(RECON)) {
                 player.giveItemStack(ModItems.ROLE_MINE.getDefaultStack());

@@ -6,6 +6,9 @@
   "mixins": [
     "DoNotCollideWithFeatherMixin",
     "GiveCoinsOnMoodCompletionMixin",
+    "btt.BttKillHookMixin",
+    "btt.MoodServerTickGuardMixin",
+    "btt.ShopGateMixin",
     "bartender.BartenderPlayerShopComponentMixin",
     "bartender.BartenderReseterMixin",
     "bartender.CocktailItemMixin",

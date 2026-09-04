@@ -17,6 +17,8 @@ public abstract class JesterJestMixin {
 
     @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V", at = @At("HEAD"), cancellable = true)
     private static void jesterJest(PlayerEntity victim, boolean spawnBody, PlayerEntity killer, Identifier identifier, CallbackInfo ci) {
+        // BTT 局内 doc-小丑接管本键：疯魔由 BttEvents（2 分钟/2 层护盾/球棒）提供，旧 45s 逻辑跳过
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(victim.getWorld())) return;
         if (killer != null) {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
             if (gameWorldComponent.isRole(victim, Noellesroles.JESTER) && !gameWorldComponent.isRole(killer, Noellesroles.JESTER) && gameWorldComponent.isInnocent(killer)) {

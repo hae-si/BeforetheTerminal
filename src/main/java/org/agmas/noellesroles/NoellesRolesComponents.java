@@ -4,6 +4,7 @@ package org.agmas.noellesroles;
 import dev.doctor4t.wathe.entity.PlayerBodyEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
+import org.agmas.noellesroles.btt.BttGameWorldComponent;
 import org.agmas.noellesroles.chameleon.ChameleonPlayerComponent;
 import org.agmas.noellesroles.coroner.BodyDeathReasonComponent;
 import org.agmas.noellesroles.executioner.ExecutionerPlayerComponent;
@@ -39,5 +40,6 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
     @Override
     public void registerWorldComponentFactories(WorldComponentFactoryRegistry worldComponentFactoryRegistry) {
         worldComponentFactoryRegistry.register(ConfigWorldComponent.KEY, ConfigWorldComponent::new);
+        worldComponentFactoryRegistry.register(BttGameWorldComponent.KEY, BttGameWorldComponent::new);
     }
 }
