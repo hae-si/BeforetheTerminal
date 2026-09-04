@@ -5,14 +5,14 @@
 ## 1. 项目身份
 
 - 目标：在原版 `agmas/NoellesRoles` 基础上**替换式演进**为策划案《终点站抵达之前》(Before the Terminal, 代号 BTT)。
-- 基线：MC 1.21.1 / Fabric / Java 21 / 官方 `wathe-1.3.2-1.21.1.jar` / `harpymodloader-1.2.4-h1.3.jar` / 当前原版 NoellesRoles（`mod_version=1.7-h1.3`）。
+- 基线：MC 1.21.1 / Fabric / Java 21 / 官方 `wathe-1.3.2-1.21.1.jar` / `harpymodloader-1.2.4-h1.3.jar` / 当前原版 NoellesRoles 演进（mod_version 自 BTT alpha 起为 `0.1.0-alpha-h1.3`，§0a C-013）。
 - git：`origin https://github.com/hae-si/terminal`（用户仓库；演进自 `agmass/NoellesRoles`），`main` 分支。
 - 谱系考古见 `docs/ARCHAEOLOGY.md`；策划案见 `docs/终点站抵达之前.docx`。
 
 ## 2. 构建与运行
 
 ```powershell
-.\gradlew.bat build          # 编译+打 jar（产物 build/libs/noellesroles-1.7-h1.3.jar）
+.\gradlew.bat build          # 编译+打 jar（产物 build/libs/noellesroles-0.1.0-alpha-h1.3.jar）
 .\gradlew.bat runServer      # 起专用服（需 run/eula.txt=eula=true；loom 会建 run/）
 .\gradlew.bat runClient      # 起客户端
 .\gradlew.bat compileJava    # 仅编译 main，快速反馈
@@ -86,4 +86,5 @@
 - **仅剩 DEMO-011**：≥6 玩家多人完整一局实测（RM §5.3 DoD #13 + 全项回归）；代码侧 Phase 1 已就绪。
 - **联调进展（2026-09-04）**：用户假人实测“运行正常”；两个 wathe 基线坑已修并登记 §0a C-011（全新客户端配置 NPE 垫片）与 C-012（结局文本直接替换 wathe 结束覆盖层，聊天广播移除，`btt_game.lastEnding` 同步）。`release/` 为完整部署包（含依赖）。
 - 策划案已去除星号设定。下一步默认=多人实测收尾；除非被明确要求，不要自行开始 Phase 2。
-- 全部基线改动登记于 SYSTEM_SPEC §0a（C-001~C-012）。
+- 全部基线改动登记于 SYSTEM_SPEC §0a（C-001~C-013）。
+- **版本管理（2026-09-04）**：`971804a` = BTT Phase 1 提交；`mod_version` 切换为 `0.1.0-alpha-h1.3`（C-013）；tag `v0.1.0-alpha`（重指至版本切换提交）已连同 main 推送 origin。
