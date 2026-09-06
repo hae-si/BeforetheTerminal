@@ -66,7 +66,7 @@ public abstract class BttGodfatherHudMixin {
         // 角色名直译 announcement.role.<ns>.<path>（HML getRoleName 依赖服务端注册的 announcements，客户端为空）
         Text roleName = Text.translatable("announcement.role."
                 + role.identifier().getNamespace() + "." + role.identifier().getPath()).withColor(role.color());
-        Text identity = Text.translatable("btt.inspect.hud", roleName).formatted(Formatting.YELLOW);
+        Text identity = Text.translatable("noellesroles.inspect.hud", roleName).formatted(Formatting.YELLOW);
 
         context.getMatrices().push();
         context.getMatrices().translate(context.getScaledWindowWidth() / 2.0F, context.getScaledWindowHeight() / 2.0F + 6.0F, 0.0F);

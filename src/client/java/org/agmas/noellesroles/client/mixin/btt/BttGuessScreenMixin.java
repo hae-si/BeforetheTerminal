@@ -43,7 +43,7 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
 
     private static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.MAGICIAN || role == BttRoles.HUNTER
-                || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER || role == BttRoles.CANDY_SELLER;
+                || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST;
     }
 
     @Inject(method = "init", at = @At("HEAD"))

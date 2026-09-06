@@ -9,6 +9,9 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheItems;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ActionResult;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
@@ -35,7 +38,7 @@ public final class BttEvents {
     private BttEvents() {}
 
     /** 祭品得分队（深绿名+辉光轮廓） */
-    private static final String SACRIFICE_TEAM = "btt_sacrifice";
+    private static final String SACRIFICE_TEAM = "sacrifice";
     private static final Random RANDOM = new Random();
 
     public static void init() {
@@ -46,8 +49,62 @@ public final class BttEvents {
         registerCandySeller();
         BttGuessReceiver.register();
         BttShopGate.init();
-        BttForceRoleCommand.register();
+        registerMaidGive();
+        registerPsychopathShield();
         guardHmlPool();
+    }
+
+    // ===== 精神病人护盾（doc：拿出球棒获得护盾，直到杀死一个人——球棒冷却期间无盾） =====
+
+    private static void registerPsychopathShield() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
+            if (!gwc.isRunning()) return true;
+            if (!gwc.isRole(victim, BttRoles.PSYCHOPATH)) return true;
+            if (!victim.getMainHandStack().isOf(WatheItems.BAT)) return true;
+            if (victim.getItemCooldownManager().isCoolingDown(WatheItems.BAT)) return true;
+            return false; // 持棒（未冷却）→ 免死
+        });
+    }
+
+    // ===== 女仆赠予（doc：将拿取的食物/饮料赠予他人；手持食物右键玩家；仅当目标有对应需求） =====
+
+    private static void registerMaidGive() {
+        UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
+            if (world.isClient() || hand != Hand.MAIN_HAND) return ActionResult.PASS;
+            if (!(player instanceof ServerPlayerEntity user)) return ActionResult.PASS;
+            if (!BttIdentity.isBttMode(world)) return ActionResult.PASS;
+            GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
+            if (!gwc.isRunning()) return ActionResult.PASS;
+            if (!gwc.isRole(user, BttRoles.MAID)) return ActionResult.PASS;
+            if (entity == null || entity == user) return ActionResult.PASS;
+            ItemStack held = user.getMainHandStack();
+            if (held.isEmpty() || !isFoodOrDrink(held)) return ActionResult.PASS;
+            if (!(entity instanceof ServerPlayerEntity target)) return ActionResult.PASS;
+            // NRS 口径（用户指令）：仅当目标有对应需求（任务）时才能赠予
+            var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(target);
+            var need = isDrink(held)
+                    ? dev.doctor4t.wathe.cca.PlayerMoodComponent.Task.DRINK
+                    : dev.doctor4t.wathe.cca.PlayerMoodComponent.Task.EAT;
+            if (!mood.tasks.containsKey(need)) return ActionResult.PASS;
+            if (!target.getInventory().insertStack(held.copy())) return ActionResult.PASS;
+            user.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
+            user.sendMessage(net.minecraft.text.Text.literal("赠予 " + target.getName().getString()
+                    + " 一份食物。").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE), true);
+            return ActionResult.SUCCESS;
+        });
+    }
+
+    /** 女仆赠予范围：食物/饮料（1.21 数据组件 FOOD 或 wathe 鸡尾酒） */
+    private static boolean isFoodOrDrink(ItemStack stack) {
+        return isDrink(stack) || stack.contains(net.minecraft.component.DataComponentTypes.FOOD);
+    }
+
+    private static boolean isDrink(ItemStack stack) {
+        return stack.isOf(WatheItems.OLD_FASHIONED) || stack.isOf(WatheItems.MARTINI)
+                || stack.isOf(WatheItems.MOJITO) || stack.isOf(WatheItems.COSMOPOLITAN)
+                || stack.isOf(WatheItems.CHAMPAGNE);
     }
 
     // ===== kit 派发（身份初始物品/状态 → BttRoleDefs） =====
@@ -102,7 +159,7 @@ public final class BttEvents {
     private static void registerCandySeller() {
         CanSeePoison.EVENT.register(player -> {
             if (!BttIdentity.isBttMode(player.getWorld())) return false;
-            return GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.CANDY_SELLER);
+            return GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.PHARMACIST);
         });
     }
 
@@ -165,6 +222,11 @@ public final class BttEvents {
     private static void guardHmlPool() {
         org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.load();
         boolean changed = false;
+        // C-043：GUESSER Role 恢复（刺客接管）但禁入 HML murder 池（HML 走 modifier 版 guesser）
+        if (!org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.contains("noellesroles:guesser")) {
+            org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.add("noellesroles:guesser");
+            changed = true;
+        }
         for (Identifier id : BttRoles.newRoleIds()) {
             if (!org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.contains(id.toString())) {
                 org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.add(id.toString());

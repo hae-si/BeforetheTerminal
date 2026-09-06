@@ -14,6 +14,7 @@ public final class BttGameModes {
     public static void register() {
         BttRoles.register();
         BttRoleDefs.init();
+        BttRoleAnnouncements.init();
         WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.ID, BEFORE_THE_TERMINAL);
         BttEvents.init();
         BttEvents.registerTickHandlers();

@@ -90,8 +90,8 @@ public final class BttRoles {
 
     // ===== Demo 六身份（Phase 1 可席位，实现见各 DEMO 任务） =====
 
-    public static final Role GODFATHER = register("godfather", 0xB2182B, Faction.PRINCIPAL);
-    public static final Role VIGILANTE = register("vigilante", 0x1B8AE5, Faction.ENFORCER);
+    public static final Role GODFATHER = register("godfather", 0x8B008B, Faction.PRINCIPAL);
+    public static final Role VIGILANTE = register("vigilante", 0x0000FF, Faction.ENFORCER);
     /** 医生：接管 NR coroner 键（验尸 HUD 原生；显示名 lang→医生） */
     public static final Role DOCTOR = takeover(Noellesroles.CORONER, Faction.CIVILIAN);
     /** 处子：接管 NR noisemaker 键（死亡发光原生；显示名 lang→处子） */
@@ -108,109 +108,117 @@ public final class BttRoles {
 
     // ===== 执法乘客（槽位 = N//6） =====
 
-    public static final Role HUNTER = register("hunter", 0x2E86C1, Faction.ENFORCER);
-    public static final Role RAILWAYPOLICE = register("railwaypolice", 0x1F618D, Faction.ENFORCER,
+    public static final Role HUNTER = register("hunter", 0xCCCCFF, Faction.ENFORCER);
+    public static final Role RAILWAY_POLICE = register("railway_police", 0x0000FF, Faction.ENFORCER,
             true, false, Role.MoodType.REAL, -1, false);
-    public static final Role NIGHT_WATCHMAN = register("night_watchman", 0x5DADE2, Faction.ENFORCER);
-    public static final Role RANGER = register("ranger", 0x48C9B0, Faction.ENFORCER);
-    public static final Role GOLEM = register("golem", 0x85929E, Faction.ENFORCER);
+    public static final Role NIGHT_WATCHMAN = register("night_watchman", 0xCCCCFF, Faction.ENFORCER);
+    public static final Role RANGER = register("ranger", 0x8000FF, Faction.ENFORCER);
+    public static final Role GOLEM = register("golem", 0x8000FF, Faction.ENFORCER);
     /** 巫觋：接管 NR voodoo 键（死亡带走=doc 诅咒核心；显示名 lang→巫觋） */
     public static final Role WITCH = takeover(Noellesroles.VOODOO, Faction.ENFORCER);
-    public static final Role VETERAN = register("veteran", 0x34495E, Faction.ENFORCER);
+    public static final Role VETERAN = register("veteran", 0x800080, Faction.ENFORCER);
 
     // ===== 平民乘客·信息类 =====
 
-    public static final Role DETECTIVE = register("detective", 0xF7DC6F, Faction.CIVILIAN);
-    public static final Role PROPHET = register("prophet", 0xABEBC6, Faction.CIVILIAN);
-    public static final Role MORTICIAN = register("mortician", 0xD7BDE2, Faction.CIVILIAN);
+    public static final Role DETECTIVE = register("detective", 0xFFFF00, Faction.CIVILIAN);
+    public static final Role PROPHET = register("prophet", 0xFFFF00, Faction.CIVILIAN);
+    public static final Role MORTICIAN = register("mortician", 0xFF6600, Faction.CIVILIAN);
     public static final Role JOURNALIST = register("journalist", 0xF5B7B1, Faction.CIVILIAN);
-    public static final Role ENGINEER = register("engineer", 0xAED6F1, Faction.CIVILIAN);
-    public static final Role FOLKLORIST = register("folklorist", 0x76D7C4, Faction.CIVILIAN);
-    public static final Role MEYUUBYOU = register("meyuubyou", 0xBB8FCE, Faction.CIVILIAN);
+    public static final Role ENGINEER = register("engineer", 0xFFE5B4, Faction.CIVILIAN);
+    public static final Role FOLKLORIST = register("folklorist", 0xCD7F32, Faction.CIVILIAN);
+    public static final Role MEYUUBYOU = register("meyuubyou", 0xCD7F32, Faction.CIVILIAN);
 
     // ===== 平民乘客·生死类 =====
 
-    public static final Role PROFESSOR = register("professor", 0xF9E79F, Faction.CIVILIAN);
-    public static final Role CANDY_SELLER = register("candy_seller", 0xF1948A, Faction.CIVILIAN);
-    public static final Role STAR = register("star", 0xFAD7A0, Faction.CIVILIAN);
-    public static final Role SAILOR = register("sailor", 0x85C1E9, Faction.CIVILIAN);
+    public static final Role PROFESSOR = register("professor", 0xCCFF00, Faction.CIVILIAN);
+    public static final Role PHARMACIST = register("pharmacist", 0xCCFF00, Faction.CIVILIAN);
+    public static final Role STAR = register("star", 0xFFC0CB, Faction.CIVILIAN);
+        /** 吟游诗人（2026-09-06 替换水手——策划案修订；<歌唱>=群体醉酒 1min，依赖 BT-SYS-DRUNK） */
+    public static final Role MINSTREL = register("minstrel", 0xF400A1, Faction.CIVILIAN);
 
     // ===== 平民乘客·辅助类 =====
 
-    public static final Role ATTENDANT = register("attendant", 0xA3E4D7, Faction.CIVILIAN);
-    public static final Role ARCHITECT = register("architect", 0xD5DBDB, Faction.CIVILIAN);
-    public static final Role RIGGER = register("rigger", 0xF0B27A, Faction.CIVILIAN);
-    public static final Role SHOUJO = register("shoujo", 0xFADBD8, Faction.CIVILIAN);
-    public static final Role DRIVER = register("driver", 0xA9CCE3, Faction.CIVILIAN,
+    public static final Role ATTENDANT = register("attendant", 0x66FF00, Faction.CIVILIAN);
+    public static final Role ARCHITECT = register("architect", 0x50C878, Faction.CIVILIAN);
+    public static final Role RIGGER = register("rigger", 0x50C878, Faction.CIVILIAN);
+    public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN);
+    public static final Role DRIVER = register("driver", 0x00FF80, Faction.CIVILIAN,
             true, false, Role.MoodType.REAL, 200, true);
-    public static final Role MAID = register("maid", 0xE8DAEF, Faction.CIVILIAN);
-    public static final Role POSTMAN = register("postman", 0xFDEBD0, Faction.CIVILIAN);
-    public static final Role CANNIBAL = register("cannibal", 0xCD6155, Faction.CIVILIAN);
-    public static final Role PHILOSOPHER = register("philosopher", 0xD0ECE7, Faction.CIVILIAN);
+    public static final Role MAID = register("maid", 0x9ACD32, Faction.CIVILIAN);
+    public static final Role POSTMAN = register("postman", 0x9ACD32, Faction.CIVILIAN);
+    public static final Role CANNIBAL = register("cannibal", 0x6B8E23, Faction.CIVILIAN);
+    public static final Role PHILOSOPHER = register("philosopher", 0x6B8E23, Faction.CIVILIAN);
     /** 卧底：接管 NR mimic 键（KillerSidedTextsMixin 原生=凶手视角显示凶手阵营；显示名 lang→卧底） */
     public static final Role UNDERCOVER = takeover(Noellesroles.MIMIC, Faction.CIVILIAN);
-    public static final Role EX_UNDERCOVER = register("ex_undercover", 0xAAB7B8, Faction.CIVILIAN);
+    public static final Role EX_UNDERCOVER = register("ex_undercover", 0x40E0D0, Faction.CIVILIAN);
 
     // ===== 主犯凶手（全局 1 席） =====
 
-    public static final Role ASSASSIN = register("assassin", 0xC0392B, Faction.PRINCIPAL);
-    public static final Role IMPOSTOR = register("impostor", 0x922B21, Faction.PRINCIPAL);
+    /** 刺客：接管 guesser（NR 识破 UI/packet 原生；assassin 键删，GUESSER Role 由 C-043 恢复） */
+    public static final Role ASSASSIN = takeover(Noellesroles.GUESSER_ROLE, Faction.PRINCIPAL);
+    public static final Role IMPOSTOR = register("impostor", 0x800000, Faction.PRINCIPAL);
     /** 演员：接管 NR morphling 键（MorphlingRendererMixin 易容原生；显示名 lang→演员） */
     public static final Role ACTOR = takeover(Noellesroles.MORPHLING, Faction.PRINCIPAL);
     /** 偷渡客：接管 NR phantom 键（隐身能力原生=NR 幽灵 G 键；stowaway 键删除——用户指令 2026-09-05；假人/指纹延后） */
     public static final Role STOWAWAY = takeover(Noellesroles.PHANTOM, Faction.PRINCIPAL);
-    public static final Role MAGICIAN = register("magician", 0xD35400, Faction.PRINCIPAL);
-    public static final Role SMUGGLER = register("smuggler", 0xA93226, Faction.PRINCIPAL);
-    public static final Role DRUG_MAKER = register("drug_maker", 0x7B241C, Faction.PRINCIPAL);
+    /** 魔术师：接管 NR swapper（换位 UI/能力原生；2026-09-06 用户指令，magician 键删） */
+    public static final Role MAGICIAN = takeover(Noellesroles.SWAPPER, Faction.PRINCIPAL);
+    public static final Role SMUGGLER = register("smuggler", 0x556B2F, Faction.PRINCIPAL);
+    public static final Role DRUG_MAKER = register("drug_maker", 0x556B2F, Faction.PRINCIPAL);
 
     // ===== 从犯凶手（槽位 = N//6 − 1） =====
 
-    public static final Role KILLER = register("killer", 0xCA6F1E, Faction.ACCOMPLICE);
-    public static final Role PSYCHOPATH = register("psychopath", 0xBA4A00, Faction.ACCOMPLICE);
-    public static final Role ALCHEMIST = register("alchemist", 0xD68910, Faction.ACCOMPLICE);
-    public static final Role TERRORIST = register("terrorist", 0xE67E22, Faction.ACCOMPLICE);
-    public static final Role CLEANER = register("cleaner", 0xB9770E, Faction.ACCOMPLICE);
-    public static final Role BANDIT = register("bandit", 0xAF601C, Faction.ACCOMPLICE);
-    public static final Role ABUSER = register("abuser", 0x9C640C, Faction.ACCOMPLICE);
-    public static final Role PARTYHOST = register("partyhost", 0xD4AC0D, Faction.ACCOMPLICE);
-    public static final Role DEMON = register("demon", 0x873600, Faction.ACCOMPLICE);
-    public static final Role SERIALKILLER = register("serialkiller", 0x6E2C00, Faction.ACCOMPLICE);
-    public static final Role TRAITOR = register("traitor", 0x935116, Faction.ACCOMPLICE);
-    public static final Role EX_TRAITOR = register("ex_traitor", 0x8E7060, Faction.ACCOMPLICE);
+    public static final Role KILLER = register("killer", 0xC41E3A, Faction.ACCOMPLICE);
+    public static final Role PSYCHOPATH = register("psychopath", 0xC41E3A, Faction.ACCOMPLICE);
+    public static final Role ALCHEMIST = register("alchemist", 0x8B008B, Faction.ACCOMPLICE);
+    public static final Role TERRORIST = register("terrorist", 0x8B008B, Faction.ACCOMPLICE);
+    public static final Role CLEANER = register("cleaner", 0x8B4513, Faction.ACCOMPLICE);
+    public static final Role BANDIT = register("bandit", 0x8B4513, Faction.ACCOMPLICE);
+    public static final Role ABUSER = register("abuser", 0xE34234, Faction.ACCOMPLICE);
+    public static final Role PARTYHOST = register("partyhost", 0xE34234, Faction.ACCOMPLICE);
+    public static final Role DEMON = register("demon", 0xC08081, Faction.ACCOMPLICE);
+    public static final Role SERIAL_KILLER = register("serial_killer", 0xC08081, Faction.ACCOMPLICE);
+    public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.ACCOMPLICE);
+    public static final Role EX_TRAITOR = register("ex_traitor", 0x2F4F4F, Faction.ACCOMPLICE);
 
     // ===== 中立（槽位 = 1 + N//12） =====
 
-    public static final Role NOVELIST = register("novelist", 0x7D3C98, Faction.NEUTRAL);
-    public static final Role THIEF = register("thief", 0x884EA0, Faction.NEUTRAL);
-    public static final Role PYROMANIAC = register("pyromaniac", 0xA569BD, Faction.NEUTRAL);
-    public static final Role AMNESIAC = register("amnesiac", 0xD2B4DE, Faction.NEUTRAL);
-    public static final Role GOON = register("goon", 0x5B2C6F, Faction.NEUTRAL);
-    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x6C3483, Faction.NEUTRAL);
-    public static final Role CULT_LEADER = register("cult_leader", 0x4A235A, Faction.NEUTRAL);
+    public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.NEUTRAL);
+    /** 窃贼：接管 NR vulture（透视尸体/G 键吃尸原生；胜利=吃尸体过半而非变杀手，C-039） */
+    public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.NEUTRAL);
+    /** 纵火犯：接管 NR infected（感染链基建原生；pyromaniac 键删） */
+    public static final Role PYROMANIAC = takeover(Noellesroles.INFECTED, Faction.NEUTRAL);
+    public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.NEUTRAL);
+    public static final Role GOON = register("goon", 0xADD8E6, Faction.NEUTRAL);
+    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.NEUTRAL);
+    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.NEUTRAL);
     /** 酒鬼：占据中立坑位的**乘客**（doc 原文）——旗标按乘客（innocent），分类归中立 */
-    public static final Role DRUNK = register("drunk", 0xBFC9CA, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
+    public static final Role DRUNK = register("drunk", 0xDB7093, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
     /** 疯子：占据中立坑位的**乘客**（doc 原文）——同上 */
-    public static final Role LUNATIC = register("lunatic", 0x99A3A4, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
+    public static final Role LUNATIC = register("lunatic", 0xDB7093, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
 
     // ===== 外人（槽位 = N//12；全员有尾声） =====
 
-    public static final Role MAJO = register("majo", 0x1C2833, Faction.OUTSIDER);
-    public static final Role MESSIAH = register("messiah", 0x212F3D, Faction.OUTSIDER);
-    public static final Role KIDNAPPER = register("kidnapper", 0x2E4053, Faction.OUTSIDER);
-    public static final Role GARDENER = register("gardener", 0x283747, Faction.OUTSIDER);
-    public static final Role BLACKDEATH = register("blackdeath", 0x17202A, Faction.OUTSIDER);
+    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER);
+    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER);
+    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER);
+    public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER);
+    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.OUTSIDER);
     /** 异端分子：doc“属于乘客阵营”——旗标按乘客；胜负对调为实现期逻辑（分类仍归外人） */
-    public static final Role HERETIC = register("heretic", 0x2F4F4F, Faction.OUTSIDER, true, false, Role.MoodType.REAL, 200, false);
+    public static final Role HERETIC = register("heretic", 0x800000, Faction.OUTSIDER, true, false, Role.MoodType.REAL, 200, false);
 
     // ===== 查询 =====
 
     /** 已实装身份（有真实行为；席位抽取优先层）。注意：须置于全部角色声明之后（静态初始化顺序）。 */
     private static final java.util.Set<Role> IMPLEMENTED = java.util.Set.of(
             GODFATHER, VIGILANTE, DOCTOR, VIRGIN, JESTER, CONDUCTOR,
-            ACTOR, UNDERCOVER, WITCH, RAILWAYPOLICE, VETERAN, HUNTER,
+            ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
-            CANDY_SELLER, RIGGER, DEMON, SERIALKILLER, AMNESIAC, THIEF, NIGHT_WATCHMAN, STOWAWAY,
+            PHARMACIST, RIGGER, DEMON, SERIAL_KILLER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, KILLER, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER);
+    /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
+    public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, PYROMANIAC);
+
     /** BTT 席位池排除表（BARTENDER 搁置：NR 原生行为会泄漏进 BTT 局，用户裁定 2026-09-05） */
     private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER);
 

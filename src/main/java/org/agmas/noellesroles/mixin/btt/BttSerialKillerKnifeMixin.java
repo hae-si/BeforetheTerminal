@@ -31,7 +31,7 @@ public abstract class BttSerialKillerKnifeMixin {
                                   KnifeStabPayload payload, ServerPlayNetworking.Context context) {
         ServerPlayerEntity player = context.player();
         if (BttIdentity.isBttMode(player.getWorld())
-                && GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.SERIALKILLER)) {
+                && GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.SERIAL_KILLER)) {
             if (BttState.lastKillWasSacrifice) {
                 BttState.lastKillWasSacrifice = false; // 本刀不进 CD
                 return;

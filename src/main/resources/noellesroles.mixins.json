@@ -39,7 +39,12 @@
     "voodoo.VoodooVooMixin",
     "btt.BttRoundEndDataGuardMixin",
     "btt.BttAutoStartMixin",
-    "btt.BttShopRejectMixin"
+    "btt.BttShopRejectMixin",
+    "btt.BttCleanerSilentKnifeMixin",
+    "btt.BttSerialKillerKnifeMixin",
+    "btt.BttMaidPlatterMixin",
+    "btt.BttWatheVultureThiefMixin",
+    "btt.BttHmlForceRoleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

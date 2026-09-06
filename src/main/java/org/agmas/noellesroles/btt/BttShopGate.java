@@ -26,7 +26,7 @@ public final class BttShopGate {
             for (int i = 0; i < entries.size(); i++) {
                 var stack = (net.minecraft.item.ItemStack) entries.get(i).getClass().getMethod("stack").invoke(entries.get(i));
                 var item = stack.getItem();
-                if (item == WatheItems.KNIFE || item == WatheItems.REVOLVER || item == WatheItems.NOTE) {
+                if (item == WatheItems.KNIFE || item == WatheItems.REVOLVER || item == WatheItems.NOTE || item == WatheItems.FIRECRACKER) {
                     HIDE_INDEXES.add(i);
                 }
             }

@@ -48,7 +48,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 席位解锁（2026-09-05）：6–18 人按 doc 公式分配；越界拒绝
         if (players.size() < BttIdentity.MIN_PLAYERS || players.size() > BttIdentity.MAX_PLAYERS) {
             for (ServerPlayerEntity player : players) {
-                player.sendMessage(Text.translatable("btt.start_error.player_range",
+                player.sendMessage(Text.translatable("noellesroles.start_error.player_range",
                         BttIdentity.MIN_PLAYERS, BttIdentity.MAX_PLAYERS, players.size()).formatted(Formatting.RED), true);
             }
             LOGGER.warn("[BTT] start refused: {} ready players, requires {}-{}.", players.size(), BttIdentity.MIN_PLAYERS, BttIdentity.MAX_PLAYERS);
@@ -57,6 +57,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
 
         gameWorld.clearRoleMap();
+        // 防御：开局强制清空背包（发 kit 前；修复"偶尔残留上一局物品"）
+        for (ServerPlayerEntity p : players) {
+            p.getInventory().clear();
+        }
         Map<UUID, Role> seats = BttIdentity.assignSeats(players.stream().map(ServerPlayerEntity::getUuid).toList());
         if (seats == null) {
             GameFunctions.stopGame(world);
@@ -74,7 +78,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.active = true;
         btt.lastEnding = "NONE"; // 跨局残留清理（参照 SRE finalizeGame“回合状态全清”原则）
         btt.winners = "";
-        btt.endRoles = "";
         btt.sync();
         LOGGER.info("[BTT] round initialized: {} players seated.", players.size());
 
@@ -91,6 +94,20 @@ public class BeforeTheTerminalGameMode extends GameMode {
             int index = announcementIndex(role);
             ServerPlayNetworking.send(player, new AnnounceWelcomePayload(index, killers, passengers));
         }
+    }
+
+    private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
+        return p -> {
+            Role r = gwc.getRole(p);
+            return r != null && r.canUseKiller();
+        };
+    }
+
+    private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByInnocent(GameWorldComponent gwc) {
+        return p -> {
+            Role r = gwc.getRole(p);
+            return r != null && r.isInnocent();
+        };
     }
 
     private static int announcementIndex(Role role) {
@@ -114,51 +131,51 @@ public class BeforeTheTerminalGameMode extends GameMode {
             return;
         }
 
-        int aliveMurderers = 0;
+        int alivePrincipals = 0;
+        int aliveAccomplices = 0;
         int alivePassengers = 0;
-        int aliveOutsiders = 0; // 中立+外人（无人生还口径=乘客与外人全灭）
+        int aliveOutsiderNeutrals = 0; // 仅外人中立（魔女/救世主/饕餮/花匠）——结局阻塞项
         boolean anySeats = false;
         for (ServerPlayerEntity player : players) {
             Role role = gameWorld.getRole(player);
             if (role == null) continue;
             anySeats = true;
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
+                var faction = org.agmas.noellesroles.btt.BttRoles.factionOf(role);
                 if (role.isInnocent()) alivePassengers++;
-                else if (role.canUseKiller()) aliveMurderers++;
-                else aliveOutsiders++;
+                else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
+                else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
+                else if (faction == BttRoles.Faction.OUTSIDER) aliveOutsiderNeutrals++;
+                // 独行/狂人中立：不阻塞任何结局
             }
         }
         if (!anySeats) return; // 防御：尚无座位（不应发生）
 
         boolean stationReached = !GameTimeComponent.KEY.get(world).hasTime();
 
-        // 独胜判定（优先于常规）：窃贼搜刮 ≥ 一半人数；小说家猜对 ≥ 一半人数
+        // 独胜判定（优先于常规）：小说家猜对 ≥ 一半人数
+        // 窃贼独胜已由 BttWatheVultureThiefMixin 直接 stopGame（不走 tick 判定）
         BttEndings.Ending ending = null;
-        int looted = BttState.getGlobal("thiefLooted");
-        if (looted > 0 && looted * 2 >= players.size()) {
-            ending = BttEndings.Ending.THIEF_WIN;
-        } else {
-            for (ServerPlayerEntity p : players) {
-                if (gameWorld.getRole(p) == null || !gameWorld.getRole(p).equals(BttRoles.NOVELIST)) continue;
-                if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-                int hits = BttState.getInt(p.getUuid(), "novelistHits");
-                if (hits > 0 && hits * 2 >= players.size()) {
-                    ending = BttEndings.Ending.NOVELIST_WIN;
-                    break;
-                }
+        for (ServerPlayerEntity p : players) {
+            if (gameWorld.getRole(p) == null || !gameWorld.getRole(p).equals(BttRoles.NOVELIST)) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+            int hits = BttState.getInt(p.getUuid(), "novelistHits");
+            if (hits > 0 && hits * 2 >= players.size()) {
+                ending = BttEndings.Ending.NOVELIST_WIN;
+                break;
             }
         }
         if (ending == null) {
-            ending = BttEndings.decide(aliveMurderers, alivePassengers, aliveOutsiders, stationReached);
+            ending = BttEndings.decide(alivePrincipals, aliveAccomplices, alivePassengers, aliveOutsiderNeutrals, stationReached);
         }
 
-        // fork 口径：isWinner 服务端算好写入 btt_game.winners（覆盖全部结局；客户端只分组不再判阵营）
+        // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
             case TRIAL_COMPLETE, JOURNEY_END -> p -> {
                 Role r = gameWorld.getRole(p);
                 return r != null && r.isInnocent();
             };
-            case BLOOD_EXPRESS, NO_SURVIVORS -> p -> {
+            case BLOOD_EXPRESS, NAKU_KORO -> p -> {
                 Role r = gameWorld.getRole(p);
                 return r != null && r.canUseKiller();
             };
@@ -169,20 +186,31 @@ public class BeforeTheTerminalGameMode extends GameMode {
         };
         String winners = players.stream().filter(isWinner)
                 .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
-        String endRoles = players.stream()
-                .filter(p -> gameWorld.getRole(p) != null)
-                .map(p -> p.getUuid() + ":" + gameWorld.getRole(p).identifier())
-                .collect(java.util.stream.Collectors.joining(","));
+
+        // 异端分子：对调乘客与凶手的胜负结果（即使已死亡；GAME_DESIGN 未决点#5 字面口径，
+        // 异端本人按乘客阵营=翻转到乘客侧胜时获胜——REVIEW 待作者确认）
+        GameFunctions.WinStatus ws = BttEndings.winStatusOf(ending);
+        boolean heretic = players.stream()
+                .anyMatch(p -> gameWorld.getRole(p) == BttRoles.HERETIC);
+        if (heretic && ws != GameFunctions.WinStatus.NONE) {
+            ws = BttEndings.flip(ws);
+        }
+        java.util.function.Predicate<ServerPlayerEntity> flipWinner = ws == GameFunctions.WinStatus.KILLERS
+                ? (java.util.function.Predicate<ServerPlayerEntity>) isWinnerByKiller(gameWorld)
+                : isWinnerByInnocent(gameWorld);
+        String finalWinners = ws == GameFunctions.WinStatus.NONE
+                ? winners
+                : players.stream().filter(flipWinner)
+                        .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
 if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
-            LOGGER.info("[BTT] ending decided: {} (aliveM={} aliveP={} station={})",
-                    ending, aliveMurderers, alivePassengers, stationReached);
+            LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",
+                    ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals, stationReached);
             // doc 结局写入同步组件：客户端 BttEndTextMixin 直接改写 wathe 结束覆盖层文本（不在聊天框输出）
             BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
             btt.lastEnding = ending.name();
-            btt.winners = winners;
-            btt.endRoles = endRoles;
+            btt.winners = finalWinners;
             btt.sync();
-            GameRoundEndComponent.KEY.get(world).setRoundEndData(new ArrayList<>(players), BttEndings.winStatusOf(ending));
+            GameRoundEndComponent.KEY.get(world).setRoundEndData(new ArrayList<>(players), ws);
             GameFunctions.stopGame(world);
         }
     }
@@ -192,8 +220,7 @@ if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldCo
         // wathe GameFunctions.finalizeGame 已完成：清角色/重置玩家/清尸体/INACTIVE。
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
         btt.active = false;
-        // 注意：不清 endRoles/winners——结局覆盖层(finalize 后仍显示 200t)需持续读取；
-        // 下一局 initializeGame 会整体覆盖。清除曾导致结局后期回退 wathe 分阵营默认。
+        // winners 保留：结局覆盖层(finalize 后仍显示 200t)需持续读取；下一局 initializeGame 覆盖。
         btt.sync();
 
         // BTT 回合状态清理：祭品辉光/队伍 + 回合级状态表
@@ -201,7 +228,7 @@ if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldCo
             p.setGlowing(false);
         }
         var scoreboard = world.getScoreboard();
-        var team = scoreboard.getTeam("btt_sacrifice");
+        var team = scoreboard.getTeam("sacrifice");
         if (team != null) {
             for (String name : List.copyOf(team.getPlayerList())) {
                 scoreboard.removeScoreHolderFromTeam(name, team);

@@ -3,6 +3,7 @@ package org.agmas.noellesroles.client.mixin.btt;
 import dev.doctor4t.wathe.cca.GameRoundEndComponent;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
+import dev.doctor4t.wathe.client.gui.RoleAnnouncementTexts;
 import dev.doctor4t.wathe.client.gui.RoundTextRenderer;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -37,7 +38,7 @@ import java.util.UUID;
  *   <li>布局参数：cardWidth 36 / cardHeight 28 / 每行 ≥6 / 最多 4 行 / 行内居中。</li>
  * </ul>
  * isWinner 判定：常规三结局按阵营（客户端 gwc 同步 roles 即可算，同 fork 服务端 Role.getFaction）；
- * 独胜结局读 {@code btt_game.winners}（服务端下发 uuid 列表，fork 无此需求因 RoundEndData 内嵌 isWinner）。
+ * 独胜结局读 {@code game_state.winners}（服务端下发 uuid 列表，fork 无此需求因 RoundEndData 内嵌 isWinner）。
  * 注入点 = renderHud HEAD cancellable 全自绘（原 winStatus==NONE early-return 会拦住独胜）；
  * 原 BttEndTextMixin（标题/引语改写）并入本类后删除。
  */
@@ -67,15 +68,10 @@ public abstract class BttEndColumnsMixin {
         List<GameRoundEndComponent.RoundEndData> winners = new ArrayList<>();
         List<GameRoundEndComponent.RoundEndData> losers = new ArrayList<>();
 
-        // fork 口径：isWinner 服务端算好下发（btt_game.winners csv，覆盖全部结局）——客户端不再自行判阵营
+        // fork 口径：isWinner 服务端算好下发（game_state.winners csv，覆盖全部结局）——客户端不再自行判阵营
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(player.getWorld());
         List<String> winnerIds = Arrays.stream(btt.winners.split(","))
                 .filter(s -> !s.isEmpty()).toList();
-        java.util.Map<UUID, String> roleIds = new java.util.HashMap<>();
-        for (String pair : btt.endRoles.split(",")) {
-            int sep = pair.indexOf(':');
-            if (sep > 0) roleIds.put(UUID.fromString(pair.substring(0, sep)), pair.substring(sep + 1));
-        }
         for (GameRoundEndComponent.RoundEndData entry : entries) {
             (winnerIds.contains(entry.player().getId().toString()) ? winners : losers).add(entry);
         }
@@ -83,7 +79,7 @@ public abstract class BttEndColumnsMixin {
         context.getMatrices().push();
         context.getMatrices().translate(context.getScaledWindowWidth() / 2f, context.getScaledWindowHeight() / 2f - 40, 0);
 
-        // ===== 标题 + 引语（原 BttEndTextMixin 逻辑并入） =====
+        // ===== 标题（结局名） =====
         String key = endingKey(lastEnding);
         if (key != null) {
             int color = switch (key) {
@@ -92,17 +88,28 @@ public abstract class BttEndColumnsMixin {
                 case "blood" -> 0xFFFF5555;
                 case "thief" -> 0xFFAA00AA;
                 case "novelist" -> 0xFFAF7ADB;
-                case "no_survivors" -> 0xFF8B0000;
+                case "naku" -> 0xFF8B0000;
                 default -> 0xFFFFFFFF;
             };
-            Text endText = Text.translatable("btt.ending." + key).withColor(color);
+            Text endText = Text.translatable("noellesroles.ending." + key).withColor(color);
             context.getMatrices().push();
             context.getMatrices().scale(2.6f, 2.6f, 1f);
             context.drawTextWithShadow(renderer, endText, -renderer.getWidth(endText) / 2, -12, 0xFFFFFF);
             context.getMatrices().pop();
+        }
+
+        // ===== 引语（wathe 口径：胜者看己方胜利宣言，败者看胜方宣言）=====
+        GameRoundEndComponent.RoundEndData own = entries.stream()
+                .filter(e -> e.player().getId().equals(player.getUuid())).findFirst().orElse(null);
+        if (own != null) {
+            boolean ownWon = winnerIds.contains(player.getUuid().toString());
+            Text winMessage = ownWon
+                    ? own.role().winText
+                    : (status == GameFunctions.WinStatus.KILLERS
+                        ? RoleAnnouncementTexts.CIVILIAN.winText
+                        : RoleAnnouncementTexts.KILLER.winText);
             context.getMatrices().push();
             context.getMatrices().scale(1.2f, 1.2f, 1f);
-            MutableText winMessage = Text.translatable("btt.ending.quote." + key);
             context.drawTextWithShadow(renderer, winMessage, -renderer.getWidth(winMessage) / 2, -4, 0xFFFFFF);
             context.getMatrices().pop();
         }
@@ -116,13 +123,13 @@ public abstract class BttEndColumnsMixin {
                     ? (winners.size() - 1) % winnerPerRow + 1 : winnerPerRow;
             int x = -(itemsInRow * CARD_WIDTH) / 2 + col * CARD_WIDTH + CARD_WIDTH / 2 - 8;
             int y = 16 + row * CARD_HEIGHT;
-            renderCard(context, renderer, winners.get(i), x, y, roleIds.get(winners.get(i).player().getId()));
+            renderCard(context, renderer, winners.get(i), x, y);
         }
 
         // ===== 败者组（标题 + 网格） =====
         int losersStartY = 16 + Math.max(1, rowsFor(winners.size(), winnerPerRow)) * CARD_HEIGHT + 8;
         if (!losers.isEmpty()) {
-            Text losersTitle = Text.translatable("btt.ending.result.losers");
+            Text losersTitle = Text.translatable("noellesroles.ending.result.losers");
             context.drawTextWithShadow(renderer, losersTitle, -renderer.getWidth(losersTitle) / 2, losersStartY, 0xFF5555);
             int loserPerRow = perRow(losers.size());
             int gap = 14;
@@ -133,7 +140,7 @@ public abstract class BttEndColumnsMixin {
                         ? (losers.size() - 1) % loserPerRow + 1 : loserPerRow;
                 int x = -(itemsInRow * CARD_WIDTH) / 2 + col * CARD_WIDTH + CARD_WIDTH / 2 - 8;
                 int y = losersStartY + gap + row * CARD_HEIGHT;
-                renderCard(context, renderer, losers.get(i), x, y, roleIds.get(losers.get(i).player().getId()));
+                renderCard(context, renderer, losers.get(i), x, y);
             }
         }
 
@@ -149,8 +156,8 @@ public abstract class BttEndColumnsMixin {
         return size == 0 ? 0 : Math.min(MAX_ROWS, (size + perRow - 1) / perRow);
     }
 
-    /** fork renderPlayerCard 同构：头像（脸+帽）+ 死亡 X + 角色名 y+18 原尺寸带角色色（职业=服务端 endRoles） */
-    private static void renderCard(DrawContext context, TextRenderer renderer, GameRoundEndComponent.RoundEndData entry, int x, int y, String roleId) {
+    /** fork renderPlayerCard 同构：头像（脸+帽）+ 死亡 X + 角色名 y+18 原尺寸带角色色（NRS：role=per-role 条目） */
+    private static void renderCard(DrawContext context, TextRenderer renderer, GameRoundEndComponent.RoundEndData entry, int x, int y) {
         PlayerListEntry ple = WatheClient.PLAYER_ENTRIES_CACHE.get(entry.player().getId());
         Identifier texture = ple == null ? null : ple.getSkinTextures().texture();
         boolean dead = entry.wasDead();
@@ -170,25 +177,14 @@ public abstract class BttEndColumnsMixin {
         if (dead) {
             context.getMatrices().push();
             context.getMatrices().scale(2f, 1f, 1f);
-            context.getMatrices().translate(x / 2f + 5, y / 2f, 0);
+            context.getMatrices().translate(x / 2f + 5, y + 8f, 0);   // 修正：y 不再除以 2
             context.drawText(renderer, "x", -renderer.getWidth("x") / 2, 0, 0xE10000, false);
             context.drawText(renderer, "x", -renderer.getWidth("x") / 2, 1, 0x550000, false);
             context.getMatrices().pop();
         }
-        // 职业名/色：BTT 从服务端 endRoles 解析（wathe RoundEndData.role 已回归三分组，index 恒 0-4 读档安全）
-        Text roleName;
-        int roleColour = 0xFFFFFF;
-        if (roleId != null && roleId.contains(":")) {
-            String ns = roleId.substring(0, roleId.indexOf(':'));
-            String path = roleId.substring(roleId.indexOf(':') + 1);
-            roleName = Text.translatable("announcement.role." + ns + "." + path);
-            dev.doctor4t.wathe.api.Role roleObj = org.agmas.noellesroles.btt.BttRoles.byPath(path);
-            if (roleObj != null) roleColour = roleObj.color();
-        } else {
-            roleName = entry.role().roleText;
-            roleColour = entry.role().colour;
-        }
-        context.drawTextWithShadow(renderer, roleName, x + 8 - renderer.getWidth(roleName) / 2, y + 18, roleColour);
+        // NRS：roleText 自带角色色（per-role 条目由 BttRoleAnnouncements 注册、BttRoundEndRoleMixin 写入）
+        Text roleName = entry.role().roleText;
+        context.drawTextWithShadow(renderer, roleName, x + 8 - renderer.getWidth(roleName) / 2, y + 18, entry.role().colour);
     }
 
     private static String endingKey(String last) {
@@ -198,7 +194,7 @@ public abstract class BttEndColumnsMixin {
             case "BLOOD_EXPRESS" -> "blood";
             case "THIEF_WIN" -> "thief";
             case "NOVELIST_WIN" -> "novelist";
-            case "NO_SURVIVORS" -> "no_survivors";
+            case "NAKU_KORO" -> "naku";
             default -> null;
         };
     }

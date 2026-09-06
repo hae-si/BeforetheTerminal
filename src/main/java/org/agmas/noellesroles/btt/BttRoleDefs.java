@@ -48,14 +48,15 @@ public final class BttRoleDefs {
             BttState.setInt(p.getUuid(), "witchUses", 1); // 刀限一次
         });
         def(BttRoles.DEMON).kit(knife());
-        def(BttRoles.SERIALKILLER).kit(knife());
+        def(BttRoles.SERIAL_KILLER).kit(knife());
         def(BttRoles.CLEANER).kit(knife());
+        def(BttRoles.KILLER).kit(knife()); // 从犯：初始[刀]
         def(BttRoles.VETERAN).kit(p -> {
             knife().give(p);
             BttState.setInt(p.getUuid(), "veteranUses", VETERAN_KNIFE_USES);
         });
         revolverKit(BttRoles.VIGILANTE);
-        revolverKit(BttRoles.RAILWAYPOLICE);
+        revolverKit(BttRoles.RAILWAY_POLICE);
         revolverKit(BttRoles.HUNTER);
         // 猎人 UI 初始 CD=0（覆盖 NR generalCooldownTicks，否则开局选人件被灰）
         BttRoleDef hunter = def(BttRoles.HUNTER);
@@ -68,7 +69,7 @@ public final class BttRoleDefs {
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
-        def(BttRoles.CANDY_SELLER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
+        def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
         def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
 
         // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====
@@ -116,17 +117,14 @@ public final class BttRoleDefs {
             shooter.getItemCooldownManager().set(WatheItems.REVOLVER, cd);
         });
 
-        // 精神病人：击杀后剥盾 + 球棒 60s CD（doc：杀死一个人后进入冷却）
+        // 精神病人：击杀后球棒 60s CD（doc：杀死一个人后进入冷却；护盾=AllowPlayerDeath 否决，C-039）
         def(BttRoles.PSYCHOPATH).onKill((shooter, victim, reason, gwc) -> {
             if (reason != GameConstants.DeathReasons.BAT) return;
-            PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(shooter);
-            psycho.setPsychoTicks(0);
-            psycho.setArmour(0);
             shooter.getItemCooldownManager().set(WatheItems.BAT, GameConstants.getInTicks(1, 0));
         });
 
         // 连环杀手：祭品协议（BttSerialKillerKnifeMixin 消费瞬态标记）+ CD 永减 −10s
-        def(BttRoles.SERIALKILLER).onKill((shooter, victim, reason, gwc) -> {
+        def(BttRoles.SERIAL_KILLER).onKill((shooter, victim, reason, gwc) -> {
             if (BttState.getInt(victim.getUuid(), "sacrifice") == 1) {
                 BttState.lastKillWasSacrifice = true;
                 BttState.setInt(shooter.getUuid(), "serialCdDelta",
@@ -137,7 +135,7 @@ public final class BttRoleDefs {
         // ===== tick 钩子 =====
 
         // 乘警：理智锁满（doc：无理智限制）
-        def(BttRoles.RAILWAYPOLICE).onTick((player, world, gwc) ->
+        def(BttRoles.RAILWAY_POLICE).onTick((player, world, gwc) ->
                 PlayerMoodComponent.KEY.get(player).setMood(1.0f));
 
         // 司机：存活 → 倒计时额外 -1 tick/tick（×2 速率；审计修复后挂 DRIVER）
@@ -161,18 +159,6 @@ public final class BttRoleDefs {
                 }
             } else if (hasItem(player, WatheItems.BAT)) {
                 removeOne(player, WatheItems.BAT);
-            }
-        });
-
-        // 精神病人：拿出球棒→获得一层护盾（长计时，持续到击杀；DC-06）
-        def(BttRoles.PSYCHOPATH).onTick((player, world, gwc) -> {
-            PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(player);
-            boolean holdingBat = player.getMainHandStack().isOf(WatheItems.BAT);
-            boolean onCD = player.getItemCooldownManager().isCoolingDown(WatheItems.BAT);
-            if (holdingBat && psycho.getPsychoTicks() <= 0 && !onCD) {
-                psycho.startPsycho();
-                psycho.setArmour(1);
-                psycho.setPsychoTicks(72000); // 长计时：盾持续到击杀而非超时
             }
         });
 

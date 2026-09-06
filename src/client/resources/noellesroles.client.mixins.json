@@ -38,7 +38,8 @@
     "voodoo.VoodoScreenMixin",
     "vulture.VultureEatenBodyMixin",
     "vulture.VultureHudMixin",
-    "btt.BttShopFilterMixin"
+    "btt.BttShopFilterMixin",
+    "btt.BttInstinctColorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

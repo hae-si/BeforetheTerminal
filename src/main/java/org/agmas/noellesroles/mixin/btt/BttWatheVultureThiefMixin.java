@@ -1,0 +1,71 @@
+package org.agmas.noellesroles.mixin.btt;
+
+import org.agmas.noellesroles.AbilityPlayerComponent;
+import org.agmas.noellesroles.coroner.BodyDeathReasonComponent;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
+import org.agmas.noellesroles.vulture.VulturePlayerComponent;
+import dev.doctor4t.wathe.entity.PlayerBodyEntity;
+import dev.doctor4t.wathe.game.GameConstants;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.btt.BttGameWorldComponent;
+import org.agmas.noellesroles.btt.BttIdentity;
+import org.agmas.noellesroles.btt.BttState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.List;
+
+/**
+ * 窃贼胜利（C-039，用户指令"复用秃鹫但吃尸体=胜利"）：窃贼=接管 NR VULTURE，
+ * G 键吃尸走 NR 原生 packet（lambda$registerPackets$12）；BTT 局内拦 HEAD cancellable——
+ * 复刻吃尸效果（计数/burp/缓慢/vultured）但不转杀手；计数过半 → THIEF_WIN 结局。
+ */
+@Mixin(Noellesroles.class)
+public abstract class BttWatheVultureThiefMixin {
+
+    @Inject(method = "lambda$registerPackets$12", at = @At("HEAD"), cancellable = true)
+    private static void bttThiefEat(org.agmas.noellesroles.packet.VultureEatC2SPacket payload, net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context context, CallbackInfo ci) {
+        var eat = payload; var ctx = context;
+        ServerPlayerEntity user = ctx.player();
+        if (!BttIdentity.isBttMode(user.getWorld())) return;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
+        if (!gwc.isRunning()) return;
+        if (!gwc.isRole(user, org.agmas.noellesroles.btt.BttRoles.THIEF)) return; // 非窃贼（真秃鹫）走原逻辑
+        if (!(user.getServerWorld().getEntity(eat.playerBody()) instanceof PlayerBodyEntity body)) return;
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) { ci.cancel(); return; }
+        BodyDeathReasonComponent death = BodyDeathReasonComponent.KEY.get(body);
+        if (death.vultured) { ci.cancel(); return; }
+
+        // 复刻 NR 吃尸效果
+        ability.cooldown = GameConstants.getInTicks(0, 20);
+        ability.sync();
+        VulturePlayerComponent vulture = VulturePlayerComponent.KEY.get(user);
+        vulture.bodiesEaten++;
+        vulture.sync();
+        user.getWorld().playSound(null, user.getBlockPos(), SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.MASTER, 1.0F, 0.5F);
+        user.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 40, 2));
+        death.vultured = true;
+
+        // 过半 → 窃贼独胜
+        long players = user.getWorld().getPlayers().size();
+        if (vulture.bodiesEaten * 2 >= players) {
+            BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(user.getWorld());
+            btt.lastEnding = "THIEF_WIN";
+            btt.winners = user.getUuid().toString();
+            btt.sync();
+            dev.doctor4t.wathe.game.GameFunctions.stopGame((net.minecraft.server.world.ServerWorld) user.getWorld());
+        } else {
+            user.sendMessage(net.minecraft.text.Text.literal("已搜刮 " + vulture.bodiesEaten + " / " + vulture.bodiesRequired + " 具。")
+                    .formatted(net.minecraft.util.Formatting.AQUA), true);
+        }
+        ci.cancel();
+    }
+}

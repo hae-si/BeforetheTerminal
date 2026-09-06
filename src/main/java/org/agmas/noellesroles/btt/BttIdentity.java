@@ -31,7 +31,7 @@ public final class BttIdentity {
     public static final int MIN_PLAYERS = 6;
     public static final int MAX_PLAYERS = 18;
 
-    /** 下一局强制身份（/btt:forceRole 写入；assignSeats 优先消费并清空——测试用，wathe forceRole 只服务原版记分板选人） */
+    /** 下一局强制身份（/forceRole 写入；assignSeats 优先消费并清空——测试用，wathe forceRole 只服务原版记分板选人） */
     private static final Map<UUID, Role> FORCED = new HashMap<>();
 
     public static void force(UUID uuid, Role role) {

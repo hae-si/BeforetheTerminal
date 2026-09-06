@@ -18,7 +18,7 @@ import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
  */
 public class BttGameWorldComponent implements AutoSyncedComponent {
     public static final ComponentKey<BttGameWorldComponent> KEY =
-            ComponentRegistry.getOrCreate(Identifier.of(Noellesroles.MOD_ID, "btt_game"), BttGameWorldComponent.class);
+            ComponentRegistry.getOrCreate(Identifier.of(Noellesroles.MOD_ID, "game_state"), BttGameWorldComponent.class);
 
     private final World world;
     /** 当前是否处于 BTT 回合（STARTING/ACTIVE/STOPPING 视为回合内） */
@@ -30,8 +30,7 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
      * fork（TrainMurderMystery）把 isWinner 在服务端算好下发，wathe 的 RoundEndData 无此槽位 → 用本字段承载。
      */
     public String winners = "";
-    /** 结局职业表（"uuid:全id,..."；客户端渲染卡片职业名/色用——替代写入 wathe RoundEndData 的 per-role index） */
-    public String endRoles = "";
+
 
     public BttGameWorldComponent(World world) {
         this.world = world;
@@ -51,7 +50,7 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         tag.putBoolean("active", this.active);
         tag.putString("lastEnding", this.lastEnding);
         tag.putString("winners", this.winners);
-        tag.putString("endRoles", this.endRoles);
+
     }
 
     @Override
@@ -59,6 +58,6 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         if (tag.contains("active")) this.active = tag.getBoolean("active");
         if (tag.contains("lastEnding")) this.lastEnding = tag.getString("lastEnding");
         if (tag.contains("winners")) this.winners = tag.getString("winners");
-        if (tag.contains("endRoles")) this.endRoles = tag.getString("endRoles");
+
     }
 }

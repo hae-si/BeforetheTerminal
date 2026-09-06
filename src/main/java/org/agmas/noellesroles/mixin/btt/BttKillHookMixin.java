@@ -37,6 +37,12 @@ public abstract class BttKillHookMixin {
         // === ① 全局：杀人历史（任何击杀均记录） ===
         BttState.setInt(shooter.getUuid(), "hasKilled", 1);
 
+        // === ① 全局：独行中立被杀加钱（2026-09-06 策划修订：+100 狂气，同乘客口径） ===
+        if (gwc.getRole(victim) != null
+                && org.agmas.noellesroles.btt.BttRoles.LONE_NEUTRALS.contains(gwc.getRole(victim))) {
+            dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(shooter).addToBalance(100);
+        }
+
         // === ① 全局：祭品协议复位（连环杀手 def 内按需置位） ===
         BttState.lastKillWasSacrifice = false;
 
@@ -44,8 +50,7 @@ public abstract class BttKillHookMixin {
         if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.STAR)) {
             for (ServerPlayerEntity p : world.getPlayers()) {
                 if (gwc.isInnocent(p)) {
-                    p.sendMessage(net.minecraft.text.Text.literal("明星 " + victim.getName().getString()
-                            + " 死亡了。").formatted(net.minecraft.util.Formatting.GOLD), true);
+                    p.sendMessage(net.minecraft.text.Text.literal("明星死亡了！").formatted(net.minecraft.util.Formatting.GOLD), true);
                 }
             }
         }

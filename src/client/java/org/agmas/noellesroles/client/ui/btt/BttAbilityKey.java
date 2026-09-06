@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttRoles;
@@ -26,7 +25,7 @@ public final class BttAbilityKey {
 
     public static void register() {
         abilityKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.btt.ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.btt.keybinds"));
+                "key.noellesroles.select", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.noellesroles"));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (abilityKey.wasPressed()) {
                 openSelection(client);
@@ -41,13 +40,14 @@ public final class BttAbilityKey {
         if (!gwc.isRunning()) return;
         BttRoleDef def = BttRoleDefs.get(gwc.getRole(client.player));
         if (def == null) return;
-        // 尸体交互类（复用 NR 秃鹫模式：G 键 + 注视尸体 targetBody）
-        if (def.role == BttRoles.THIEF || def.role == BttRoles.AMNESIAC) {
-            var body = NoellesrolesClient.targetBody;
-            if (body == null) return;
-            int action = def.role == BttRoles.THIEF ? 0 : 1;
+        // 失忆患者：G 键 + 注视尸体（自带射线 4 格——NR targetBody 在暗处/2 格距离下不可用）
+        if (def.role == BttRoles.AMNESIAC) {
+            var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(client.player,
+                    e -> e instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity, 4.0);
+            if (!(hit instanceof net.minecraft.util.hit.EntityHitResult ehr)) return;
+            var body = (dev.doctor4t.wathe.entity.PlayerBodyEntity) ehr.getEntity();
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                    new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), action));
+                    new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
         if (!isUiRole(def.role)) return;
@@ -67,14 +67,14 @@ public final class BttAbilityKey {
     }
 
     public static boolean isUiRole(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.PROPHET || role == BttRoles.ASSASSIN || role == BttRoles.NOVELIST
-                || role == BttRoles.MAGICIAN || role == BttRoles.SNAKE_CHARMER
+        // 刺客=NR Guesser 原生 UI（Modifier 门控），不进本列表
+        return role == BttRoles.PROPHET || role == BttRoles.NOVELIST
                 || role == BttRoles.HUNTER || role == BttRoles.DETECTIVE
-                || role == BttRoles.RIGGER || role == BttRoles.CANDY_SELLER;
+                || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST;
     }
 
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.MAGICIAN || role == BttRoles.HUNTER
-                || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER || role == BttRoles.CANDY_SELLER;
+        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER
+                || role == BttRoles.PHARMACIST || role == BttRoles.SNAKE_CHARMER;
     }
 }

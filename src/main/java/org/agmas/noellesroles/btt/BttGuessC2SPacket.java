@@ -13,7 +13,7 @@ import java.util.UUID;
  * 语义按发起者身份在 {@link BttGuessReceiver} 分派。
  */
 public record BttGuessC2SPacket(UUID target, String guess) implements CustomPayload {
-    public static final Identifier ID_RAW = Identifier.of(BttGameModes.BEFORE_THE_TERMINAL.ID.getNamespace(), "btt_guess");
+    public static final Identifier ID_RAW = Identifier.of(BttGameModes.BEFORE_THE_TERMINAL.ID.getNamespace(), "select");
     public static final Id<BttGuessC2SPacket> ID = new Id<>(ID_RAW);
     public static final PacketCodec<RegistryByteBuf, BttGuessC2SPacket> CODEC = PacketCodec.of(
             BttGuessC2SPacket::write, BttGuessC2SPacket::read);

@@ -3,7 +3,6 @@ package org.agmas.noellesroles.btt;
 import dev.doctor4t.wathe.api.Role;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
-import dev.doctor4t.wathe.cca.PlayerShopComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
@@ -33,25 +32,17 @@ public final class BttGuessReceiver {
             if (!BttIdentity.isBttMode(user.getWorld())) return;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
+            if (!gwc.isRole(user, BttRoles.AMNESIAC)) return;
             if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
             if (BttState.getInt(body.getUuid(), "corpseUsed") == 1) return;
-
-            if (payload.action() == 0 && gwc.isRole(user, BttRoles.THIEF)) {
-                // 窃贼<搜刮>（复用秃鹫交互；独胜判定不变）
-                body.discard();
-                BttState.setInt(body.getUuid(), "corpseUsed", 1);
-                int looted = BttState.getGlobal("thiefLooted") + 1;
-                BttState.setGlobal("thiefLooted", looted);
-                user.sendMessage(Text.literal("已搜刮 " + looted + " 具尸体。").formatted(Formatting.AQUA), true);
-            } else if (payload.action() == 1 && gwc.isRole(user, BttRoles.AMNESIAC)) {
-                // 失忆患者<取遗物>（死者初始物品，每具一次）
-                Role dead = gwc.getRole(body.getPlayerUuid());
-                if (dead == null) return;
-                BttState.setInt(body.getUuid(), "corpseUsed", 1);
-                BttRoleDef d = BttRoleDefs.get(dead);
-                if (d != null) d.dispatchKit(user);
-                user.sendMessage(Text.literal("你从尸体上取回了遗物。").formatted(Formatting.LIGHT_PURPLE), true);
-            }
+            Role dead = gwc.getRole(body.getPlayerUuid());
+            if (dead == null) return;
+            BttState.setInt(body.getUuid(), "corpseUsed", 1);
+            BttRoleDef d = BttRoleDefs.get(dead);
+            if (d != null) d.dispatchKit(user);
+            user.sendMessage(Text.literal("你取回了 "
+                    + BttIdentity.displayName(dead).getString() + " 的遗物。")
+                    .formatted(Formatting.LIGHT_PURPLE), true);
         });
         ServerPlayNetworking.registerGlobalReceiver(BttGuessC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity user = context.player();
@@ -64,18 +55,8 @@ public final class BttGuessReceiver {
 
             if (gwc.isRole(user, BttRoles.PROPHET)) {
                 prophet(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.ASSASSIN)) {
-                assassin(user, target, gwc, payload, guessed);
             } else if (gwc.isRole(user, BttRoles.NOVELIST)) {
                 novelist(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.MAGICIAN)) {
-                magician(user, target);
-            } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
-                detective(user, target, gwc);
-            } else if (gwc.isRole(user, BttRoles.RIGGER)) {
-                rigger(user, target);
-            } else if (gwc.isRole(user, BttRoles.CANDY_SELLER)) {
-                candy(user, target);
             } else if (gwc.isRole(user, BttRoles.HUNTER)) {
                 hunter(user, target, gwc);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
@@ -100,23 +81,6 @@ public final class BttGuessReceiver {
         }
     }
 
-    // ===== 刺客：识破→对则杀/错则暴露；CD 60s；初始[刀] =====
-
-    private static void assassin(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
-                                 BttGuessC2SPacket payload, Role guessed) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(1, 0));
-        if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            user.sendMessage(Text.literal("识破成功。").formatted(Formatting.DARK_RED), true);
-            GameFunctions.killPlayer(target, true, user, GameConstants.DeathReasons.KNIFE);
-        } else {
-            // doc"自身身份被察觉"=只告知被猜的人
-            target.sendMessage(Text.literal("你察觉到了！"
-                    + user.getName().getString() + " 就是刺客！").formatted(Formatting.DARK_RED), true);
-        }
-    }
-
     // ===== 小说家：<猜测> 任何人身份；对→广播可继续，错→CD 30s；猜对过半→独胜 =====
 
     private static void novelist(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
@@ -131,21 +95,6 @@ public final class BttGuessReceiver {
         } else {
             setCd(ability, GameConstants.getInTicks(0, 30));
         }
-    }
-
-    // ===== 魔术师：换位（自我↔目标），消耗 100 狂气（doc 魔术箱）；道具化=BT-ITEM-SET TODO =====
-
-    private static void magician(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(2, 0)); // 用户裁定：不扣狂气，冷却 2 分钟
-        var world = user.getServerWorld();
-        if (!world.isSpaceEmpty(target) || !world.isSpaceEmpty(user)) return;
-        Vec3d a = user.getPos();
-        Vec3d b = target.getPos();
-        user.refreshPositionAfterTeleport(b.x, b.y, b.z);
-        target.refreshPositionAfterTeleport(a.x, a.y, a.z);
-        user.sendMessage(Text.literal("魔术箱启动。").formatted(Formatting.AQUA), true);
     }
 
     // ===== 侦探：<调查> 身边者（选人），CD 60s =====

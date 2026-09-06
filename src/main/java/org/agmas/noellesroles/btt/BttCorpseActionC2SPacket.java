@@ -9,11 +9,11 @@ import net.minecraft.util.Identifier;
 import java.util.UUID;
 
 /**
- * 尸体交互上行（复用 NR 秃鹫交互基建：G 键 + 注视尸体 targetBody）：
- * action 0=窃贼<搜刮>、1=失忆患者<取遗物>。
+ * 失忆患者尸体交互上行（G 键 + 自带尸体射线，2026-09-06：不再依赖 NR targetBody——
+ * CoronerHud 射线在暗处被 wathe renderHud 早退跳过且活人距离仅 2 格）。
  */
 public record BttCorpseActionC2SPacket(UUID body, int action) implements CustomPayload {
-    public static final Identifier ID_RAW = Identifier.of(BttGameModes.BEFORE_THE_TERMINAL.ID.getNamespace(), "btt_corpse_action");
+    public static final Identifier ID_RAW = Identifier.of(BttGameModes.BEFORE_THE_TERMINAL.ID.getNamespace(), "corpse_action");
     public static final Id<BttCorpseActionC2SPacket> ID = new Id<>(ID_RAW);
     public static final PacketCodec<RegistryByteBuf, BttCorpseActionC2SPacket> CODEC = PacketCodec.of(
             BttCorpseActionC2SPacket::write, BttCorpseActionC2SPacket::read);
