@@ -24,6 +24,8 @@ public abstract class GiveCoinsOnMoodCompletionMixin {
 
     @Inject(method = "setMood", at = @At("HEAD"))
     void giveCoinsForMood(float mood, CallbackInfo ci) {
+        // BTT（C-021）：doc 乘客无狂气/无被动收入——任务产币仅在 NR/HML 谋杀局生效
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) return;
         GameWorldComponent gameWorldComponent = (GameWorldComponent)GameWorldComponent.KEY.get(player.getWorld());
         if (mood > getMood()) {
             if (gameWorldComponent.getRole(player) != null) {

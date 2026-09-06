@@ -30,6 +30,7 @@ public abstract class TrapperPlayerShopComponentMixin {
 
     @Inject(method = "tryBuy", at = @At("HEAD"), cancellable = true)
     void bartenderBuy(int index, CallbackInfo ci) {
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) { ci.cancel(); return; } // C-028
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.TRAPPER)) {
             if (index == 0) {

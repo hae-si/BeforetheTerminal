@@ -1,0 +1,282 @@
+package org.agmas.noellesroles.btt;
+
+import dev.doctor4t.wathe.cca.GameWorldComponent;
+import org.agmas.noellesroles.AbilityPlayerComponent;
+import dev.doctor4t.wathe.cca.PlayerMoodComponent;
+import dev.doctor4t.wathe.cca.PlayerPsychoComponent;
+import dev.doctor4t.wathe.entity.PlayerBodyEntity;
+import dev.doctor4t.wathe.game.GameConstants;
+import dev.doctor4t.wathe.game.GameFunctions;
+import dev.doctor4t.wathe.index.WatheItems;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.ItemCooldownManager;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * BT-ARCH-001：BTT 身份声明式定义表（唯一事实源）。
+ * 新增身份 = 在此追加一个 {@code def(...)} 条目；禁止回到 if-chain（CLEAN-005）。
+ * 冷却载体约定（CLEAN-004）：优先 {@link ItemCooldownManager}（UI 可见），回合级计数走 {@link BttState}。
+ */
+public final class BttRoleDefs {
+    private BttRoleDefs() {}
+
+    /** 老兵刀使用次数上限（doc：只能使用三次） */
+    static final int VETERAN_KNIFE_USES = 3;
+    private static final Map<dev.doctor4t.wathe.api.Role, BttRoleDef> DEFS = new HashMap<>();
+
+    public static void init() {
+        // ===== 初始物品 =====
+        def(BttRoles.GODFATHER).kit(knife());
+        def(BttRoles.ACTOR).kit(knife());
+        def(BttRoles.WITCH).kit(p -> {
+            knife().give(p);
+            BttState.setInt(p.getUuid(), "witchUses", 1); // 刀限一次
+        });
+        def(BttRoles.DEMON).kit(knife());
+        def(BttRoles.SERIALKILLER).kit(knife());
+        def(BttRoles.CLEANER).kit(knife());
+        def(BttRoles.VETERAN).kit(p -> {
+            knife().give(p);
+            BttState.setInt(p.getUuid(), "veteranUses", VETERAN_KNIFE_USES);
+        });
+        revolverKit(BttRoles.VIGILANTE);
+        revolverKit(BttRoles.RAILWAYPOLICE);
+        revolverKit(BttRoles.HUNTER);
+        // 猎人 UI 初始 CD=0（覆盖 NR generalCooldownTicks，否则开局选人件被灰）
+        BttRoleDef hunter = def(BttRoles.HUNTER);
+        hunter.kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
+            initialAbilityCd(p, 0);
+        });
+        revolverKit(BttRoles.BANDIT);
+        revolverKit(BttRoles.NIGHT_WATCHMAN);
+        def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
+        def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
+        def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
+        def(BttRoles.CANDY_SELLER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
+        def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
+
+        // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====
+        // 预言家：无道具；初始 CD 60s
+        def(BttRoles.PROPHET).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0)));
+        // 刺客：初始[刀]；初始 CD 60s
+        def(BttRoles.ASSASSIN).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, GameConstants.getInTicks(1, 0));
+        });
+        // 魔术师：初始[刀]；无 CD（每次换位耗 100 狂气）
+        def(BttRoles.MAGICIAN).kit(knife());
+        // 小说家：无道具无初始 CD（猜错才 30s）
+        def(BttRoles.NOVELIST).kit(p -> {});
+        // 舞蛇人：无道具；初始 CD 60s
+        def(BttRoles.SNAKE_CHARMER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0)));
+
+        // ===== P2A-002 补全 =====
+        // 女仆：赠予手持的食物/饮料（双倍取餐在 BttMaidPlatterMixin）
+                // 邮差：搁置四星（用户裁定 2026-09-05——手持物右键消费整次交互，破坏枪/刀对玩家使用）
+
+        // ===== 击杀钩子（BttKillHookMixin 派发；全局杀人历史/祭品协议在 mixin 内先行） =====
+
+        // 老兵：刀 3 次（递减+移除）
+        def(BttRoles.VETERAN).onKill((shooter, victim, reason, gwc) -> {
+            if (reason != GameConstants.DeathReasons.KNIFE) return;
+            int uses = BttState.getInt(shooter.getUuid(), "veteranUses") - 1;
+            BttState.setInt(shooter.getUuid(), "veteranUses", uses);
+            if (uses <= 0) removeOne(shooter, WatheItems.KNIFE);
+        });
+
+        // 巫觋：刀限一次（击杀后移除）
+        def(BttRoles.WITCH).onKill((shooter, victim, reason, gwc) -> {
+            if (reason != GameConstants.DeathReasons.KNIFE) return;
+            BttState.setInt(shooter.getUuid(), "witchUses", 0);
+            removeOne(shooter, WatheItems.KNIFE);
+        });
+
+        // 强盗：条件 CD——受害者=乘客→60s，否则→wathe 原生
+        def(BttRoles.BANDIT).onKill((shooter, victim, reason, gwc) -> {
+            if (reason != GameConstants.DeathReasons.GUN) return;
+            int cd = gwc.isInnocent(victim)
+                    ? GameConstants.getInTicks(1, 0)
+                    : GameConstants.ITEM_COOLDOWNS.getOrDefault(WatheItems.REVOLVER, 200);
+            shooter.getItemCooldownManager().set(WatheItems.REVOLVER, cd);
+        });
+
+        // 精神病人：击杀后剥盾 + 球棒 60s CD（doc：杀死一个人后进入冷却）
+        def(BttRoles.PSYCHOPATH).onKill((shooter, victim, reason, gwc) -> {
+            if (reason != GameConstants.DeathReasons.BAT) return;
+            PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(shooter);
+            psycho.setPsychoTicks(0);
+            psycho.setArmour(0);
+            shooter.getItemCooldownManager().set(WatheItems.BAT, GameConstants.getInTicks(1, 0));
+        });
+
+        // 连环杀手：祭品协议（BttSerialKillerKnifeMixin 消费瞬态标记）+ CD 永减 −10s
+        def(BttRoles.SERIALKILLER).onKill((shooter, victim, reason, gwc) -> {
+            if (BttState.getInt(victim.getUuid(), "sacrifice") == 1) {
+                BttState.lastKillWasSacrifice = true;
+                BttState.setInt(shooter.getUuid(), "serialCdDelta",
+                        BttState.getInt(shooter.getUuid(), "serialCdDelta") - 200);
+            }
+        });
+
+        // ===== tick 钩子 =====
+
+        // 乘警：理智锁满（doc：无理智限制）
+        def(BttRoles.RAILWAYPOLICE).onTick((player, world, gwc) ->
+                PlayerMoodComponent.KEY.get(player).setMood(1.0f));
+
+        // 司机：存活 → 倒计时额外 -1 tick/tick（×2 速率；审计修复后挂 DRIVER）
+        def(BttRoles.DRIVER).onTick((player, world, gwc) -> {
+            if (GameFunctions.isPlayerAliveAndSurvival(player)) {
+                dev.doctor4t.wathe.cca.GameTimeComponent.KEY.get(world).addTime(-1);
+            }
+        });
+
+        // 小丑：疯魔中锁手持球棒；疯魔结束回收球棒（doc 疯魔模式限定）
+        def(BttRoles.JESTER).onTick((player, world, gwc) -> {
+            PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(player);
+            if (psycho.getPsychoTicks() > 0) {
+                for (int i = 0; i < player.getInventory().size(); i++) {
+                    if (player.getInventory().getStack(i).isOf(WatheItems.BAT)) {
+                        if (player.getInventory().selectedSlot != i) {
+                            player.getInventory().selectedSlot = i;
+                        }
+                        break;
+                    }
+                }
+            } else if (hasItem(player, WatheItems.BAT)) {
+                removeOne(player, WatheItems.BAT);
+            }
+        });
+
+        // 精神病人：拿出球棒→获得一层护盾（长计时，持续到击杀；DC-06）
+        def(BttRoles.PSYCHOPATH).onTick((player, world, gwc) -> {
+            PlayerPsychoComponent psycho = PlayerPsychoComponent.KEY.get(player);
+            boolean holdingBat = player.getMainHandStack().isOf(WatheItems.BAT);
+            boolean onCD = player.getItemCooldownManager().isCoolingDown(WatheItems.BAT);
+            if (holdingBat && psycho.getPsychoTicks() <= 0 && !onCD) {
+                psycho.startPsycho();
+                psycho.setArmour(1);
+                psycho.setPsychoTicks(72000); // 长计时：盾持续到击杀而非超时
+            }
+        });
+
+        // 恶魔：<凝视> 祭品保持视野每 4s 计 1s，累计 30 凝视秒 → 死亡（视线中断归零）
+        def(BttRoles.DEMON).onTick((player, world, gwc) -> demonGaze(world, gwc));
+
+        // ===== 实体交互钩子（UseEntityCallback 派发） =====
+
+        // 卖糖人<给糖>：解毒（醒酒依赖 BT-SYS-DRUNK，TODO），CD 60s
+        
+        // 绳艺师<拘束>：Slowness 255 · 15s，CD 60s
+        
+        // 侦探<调查>：望远镜点击→有没有杀过人，CD 60s（身边者口径以点击近似，已登记）
+        
+        // 失忆患者：尸体→死者身份→获对应初始物品（每具一次）
+        
+        // 窃贼<搜刮>：尸体消失+计数（过半独胜判定在 GameMode tick；透视 10s TODO=BT-THIEF-ESP）
+            }
+
+    // ===== 查询/派发 =====
+
+    public static BttRoleDef get(dev.doctor4t.wathe.api.Role role) {
+        return role == null ? null : DEFS.get(role);
+    }
+
+    public static int defCount() {
+        return DEFS.size();
+    }
+
+    private static BttRoleDef def(dev.doctor4t.wathe.api.Role role) {
+        return DEFS.computeIfAbsent(role, BttRoleDef::of);
+    }
+
+    private static BttRoleDef.Kit knife() {
+        return p -> p.giveItemStack(new ItemStack(WatheItems.KNIFE));
+    }
+
+    /** UI 身份初始冷却（AbilityPlayerComponent 自动同步；BttPlayerWidget 显示倒计时） */
+    private static void initialAbilityCd(ServerPlayerEntity p, int ticks) {
+        AbilityPlayerComponent a = AbilityPlayerComponent.KEY.get(p);
+        a.setCooldown(ticks);
+        a.sync();
+    }
+
+    private static void revolverKit(dev.doctor4t.wathe.api.Role role) {
+        def(role).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
+    }
+
+    // ===== 恶魔凝视（推迟测试：机制保留，2026-09-05 用户裁定往后推） =====
+
+    static final int DEMON_GAZE_QUARTERS = 2400;
+
+    private static void demonGaze(ServerWorld world, GameWorldComponent gwc) {
+        for (ServerPlayerEntity demon : world.getPlayers()) {
+            if (!gwc.isRole(demon, BttRoles.DEMON)) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(demon)) continue;
+            for (ServerPlayerEntity target : world.getPlayers()) {
+                if (BttState.getInt(target.getUuid(), "sacrifice") != 1) continue;
+                if (!GameFunctions.isPlayerAliveAndSurvival(target)) continue;
+                if (inView(world, demon, target)) {
+                    int q = BttState.getInt(target.getUuid(), "demonGazeQ") + 1;
+                    if (q >= DEMON_GAZE_QUARTERS) {
+                        BttState.setInt(target.getUuid(), "demonGazeQ", 0);
+                        GameFunctions.killPlayer(target, true, demon, GameConstants.DeathReasons.KNIFE);
+                    } else {
+                        BttState.setInt(target.getUuid(), "demonGazeQ", q);
+                    }
+                } else {
+                    BttState.setInt(target.getUuid(), "demonGazeQ", 0);
+                }
+            }
+        }
+    }
+
+    /** 视野（约 ±60° 锥角）+ 视线（方块遮挡检测） */
+    private static boolean inView(ServerWorld world, LivingEntity viewer, LivingEntity target) {
+        Vec3d eyes = viewer.getEyePos();
+        Vec3d targetEyes = target.getEyePos();
+        Vec3d dir = targetEyes.subtract(eyes);
+        if (dir.lengthSquared() < 1.0E-4) return true;
+        double dot = viewer.getRotationVec(1.0f).normalize().dotProduct(dir.normalize());
+        if (dot < 0.5) return false;
+        BlockHitResult hit = world.raycast(new RaycastContext(eyes, targetEyes,
+                RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, viewer));
+        return hit.getType() == HitResult.Type.MISS;
+    }
+
+    // ===== 通用 =====
+
+    static boolean hasItem(ServerPlayerEntity player, Item item) {
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            if (player.getInventory().getStack(i).isOf(item)) return true;
+        }
+        return false;
+    }
+
+    static void removeOne(ServerPlayerEntity player, Item item) {
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.isOf(item)) {
+                stack.setCount(0);
+                player.getInventory().markDirty();
+                return;
+            }
+        }
+    }
+}

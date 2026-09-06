@@ -7,8 +7,9 @@
     "DoNotCollideWithFeatherMixin",
     "GiveCoinsOnMoodCompletionMixin",
     "btt.BttKillHookMixin",
-    "btt.MoodServerTickGuardMixin",
-    "btt.ShopGateMixin",
+    "btt.BttGunDropMixin",
+    "btt.BttRoundEndRoleMixin",
+    "btt.BttHornStartMixin",
     "bartender.BartenderPlayerShopComponentMixin",
     "bartender.BartenderReseterMixin",
     "bartender.CocktailItemMixin",
@@ -35,7 +36,10 @@
     "noisemaker.NoisemakerKillMixin",
     "noisemaker.NoisemakerPlayerShopComponentMixin",
     "trapper.TrapperPlayerShopComponentMixin",
-    "voodoo.VoodooVooMixin"
+    "voodoo.VoodooVooMixin",
+    "btt.BttRoundEndDataGuardMixin",
+    "btt.BttAutoStartMixin",
+    "btt.BttShopRejectMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -5,8 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "InstinctMixin",
-    "btt.BttEndScreenMixin",
-    "btt.MoodHudGuardMixin",
+    "btt.BttEndColumnsMixin",
+    "btt.BttGuessScreenMixin",
+    "btt.BttScreenDoNotClose",
+    "btt.BttGodfatherHudMixin",
+    "btt.BttMoodGateMixin",
     "bartender.BartenderShopMixin",
     "bartender.DefenseVialHandMixin",
     "chameleon.ChameleonCapeMixin",
@@ -34,7 +37,8 @@
     "trapper.TrapperShopMixin",
     "voodoo.VoodoScreenMixin",
     "vulture.VultureEatenBodyMixin",
-    "vulture.VultureHudMixin"
+    "vulture.VultureHudMixin",
+    "btt.BttShopFilterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

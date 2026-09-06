@@ -13,9 +13,11 @@ public final class BttGameModes {
     /** BTT 统一启动入口（Noellesroles.onInitialize 调用；早于 HML SERVER_STARTED refreshRoles） */
     public static void register() {
         BttRoles.register();
+        BttRoleDefs.init();
         WatheGameModes.registerGameMode(BeforeTheTerminalGameMode.ID, BEFORE_THE_TERMINAL);
-        BttItems.bootstrap();
         BttEvents.init();
-        BeforeTheTerminalGameMode.LOGGER.info("[BTT] game mode registered: {} (roles/items/events ready)", BeforeTheTerminalGameMode.ID);
+        BttEvents.registerTickHandlers();
+        BeforeTheTerminalGameMode.LOGGER.info("[BTT] game mode registered: {} ({} identities, {} defs)",
+                BeforeTheTerminalGameMode.ID, BttRoles.newRoleIds().size(), org.agmas.noellesroles.btt.BttRoleDefs.defCount());
     }
 }

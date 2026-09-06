@@ -38,14 +38,18 @@ public class JesterMoodRenderer {
     @Shadow public static float moodAlpha;
     @Shadow public static Random random;
     @Unique private static final Identifier JESTER_MOOD = Identifier.of(Noellesroles.MOD_ID, "hud/mood_jester");
+    @Unique private static final Identifier BTT_NEUTRAL_MOOD = Identifier.of(Noellesroles.MOD_ID, "hud/mood_ghost");
 
     @Inject(method = "renderKiller", at = @At("HEAD"), cancellable = true)
     private static void jesterMood(TextRenderer textRenderer, DrawContext context, CallbackInfo ci) {
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
         if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.JESTER)) {
+        // BTT 层内中立（小丑）旗帜用 mood_ghost（策划 2026-09-04）；NR 谋杀局仍用 mood_jester
+        Identifier mood = org.agmas.noellesroles.btt.BttIdentity.isBttMode(MinecraftClient.getInstance().player.getWorld())
+                ? BTT_NEUTRAL_MOOD : JESTER_MOOD;
         context.getMatrices().push();
         context.getMatrices().translate(0.0F, 3.0F * moodOffset, 0.0F);
-        context.drawGuiTexture(JESTER_MOOD, 5, 6, 14, 17);
+        context.drawGuiTexture(mood, 5, 6, 14, 17);
         context.getMatrices().pop();
         context.getMatrices().push();
         context.getMatrices().translate(0.0F, 10.0F * moodOffset, 0.0F);

@@ -30,6 +30,7 @@ public abstract class NoisemakerPlayerShopComponentMixin {
 
     @Inject(method = "tryBuy", at = @At("HEAD"), cancellable = true)
     void noisemakerTryBuy(int index, CallbackInfo ci) {
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) { ci.cancel(); return; } // C-028
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.NOISEMAKER)) {
             if (index == 0) {

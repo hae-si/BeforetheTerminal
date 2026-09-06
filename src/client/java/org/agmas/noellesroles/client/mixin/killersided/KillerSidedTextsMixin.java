@@ -14,8 +14,9 @@ public class KillerSidedTextsMixin {
 
     @WrapOperation(method = "renderHud", at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/cca/GameWorldComponent;canUseKillerFeatures(Lnet/minecraft/entity/player/PlayerEntity;)Z", ordinal = 0))
     private static boolean renderCustomCohorts(GameWorldComponent instance, PlayerEntity player, Operation<Boolean> original) {
-        // BTT 局内 doc-小丑为中立，不显示杀手侧 HUD
+        // BTT 局内：doc-卧底(mimic)仍显示为凶手阵营（doc口径）；doc-小丑(jester)不显示
         if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) {
+            if (instance.isRole(player, Noellesroles.MIMIC)) return true;
             return original.call(instance, player);
         }
         if (instance.isRole(player, Noellesroles.MIMIC)) return true;

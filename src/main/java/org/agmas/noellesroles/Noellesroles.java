@@ -298,7 +298,10 @@ public class Noellesroles implements ModInitializer {
                 player.giveItemStack(WatheItems.GRENADE.getDefaultStack());
             }
             if (role.equals(MIMIC)) {
-                player.giveItemStack(ModItems.FAKE_KNIFE.getDefaultStack());
+                // BTT 局内 doc-卧底不发假刀（C-028，同小丑模式）
+                if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) {
+                    player.giveItemStack(ModItems.FAKE_KNIFE.getDefaultStack());
+                }
             }
             if (role.equals(JESTER)) {
                 // BTT 局内 doc-小丑无假刀/假枪（渐进式替换：旧行为仅限 NR 谋杀局）

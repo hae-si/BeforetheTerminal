@@ -42,14 +42,14 @@
 | `ROLE_DESIGN.md` | 身份正式规格 |
 | `ROLE_INTERACTIONS.md` | 身份/系统交互矩阵 |
 | `SYSTEM_SPEC.md` | 技术实现规范 + §21 API 最终结论 + §22 借鉴合并结论 + §0a 改动登记 |
-| `SPEC_TRACEABILITY.md` | 策划案→规范→任务→代码→验证 痕迹链 |
+
 
 **计划与进度**
 
 | 文件 | 职责 |
 |---|---|
 | `ROADMAP.md` | 阶段、优先级、延期事项（TODO 主清单） |
-| `IMPLEMENTATION_PLAN.md` | 具体施工任务（含状态与验证记录） |
+
 
 **其他**
 
@@ -57,6 +57,7 @@
 |---|---|
 | `终点站抵达之前.docx` | 策划案原件（不改） |
 
+> SPEC_TRACEABILITY（并入 IMPLEMENTATION_STATUS §五）与 IMPLEMENTATION_PLAN（并入 ROADMAP §6.1）已于 2026-09-05 删除。
 > 历史研究记录 `api_notes.md`（WATHE-API-001 证据）与 `OPTIMIZATION_REVIEW.md`（对照评审）已于 2026-09-04 删除，结论分别并入 SYSTEM_SPEC §21/§22 与 ROADMAP/IMPLEMENTATION_PLAN。
 
 ## 5. 核心铁律
@@ -75,6 +76,7 @@
 - 身份分配后派发 `ModdedRoleAssigned.EVENT` 以复用 NR“发初始道具”链路；清理挂 `ResetPlayerEvent.EVENT` 与 `GameFunctions.resetPlayer` TAIL。
 - 击杀一律走 `GameFunctions.killPlayer(victim,spawnBody,killer,deathReason)`；可被 `AllowPlayerDeath.EVENT` 否决。
 - mixin 配置：`src/main/resources/noellesroles.mixins.json`（公共）、`src/client/resources/noellesroles.client.mixins.json`（客户端）；新增 mixin 须加入对应 json 的列表。
+- client-only mixin（RoundTextRenderer/MoodRenderer 等客户端类）在专用服冒烟中永不加载，apply 错误只能由客户端启动暴露——新 client mixin 必须 static/实例与目标匹配并建议 runClient 自检。
 - CCA 组件注册于 `NoellesRolesComponents`（`EntityComponentInitializer`/`WorldComponentInitializer`）+ `fabric.mod.json` 的 `custom.cardinal-components`。
 - 网络：C2S payload 注册 `PayloadTypeRegistry.playC2S()` + `ServerPlayNetworking.registerGlobalReceiver`；S2C 用 `ServerPlayNetworking.send` 或 CCA `AutoSyncedComponent`。
 
@@ -86,5 +88,30 @@
 - **仅剩 DEMO-011**：≥6 玩家多人完整一局实测（RM §5.3 DoD #13 + 全项回归）；代码侧 Phase 1 已就绪。
 - **联调进展（2026-09-04）**：用户假人实测“运行正常”；两个 wathe 基线坑已修并登记 §0a C-011（全新客户端配置 NPE 垫片）与 C-012（结局文本直接替换 wathe 结束覆盖层，聊天广播移除，`btt_game.lastEnding` 同步）。`release/` 为完整部署包（含依赖）。
 - 策划案已去除星号设定。下一步默认=多人实测收尾；除非被明确要求，不要自行开始 Phase 2。
-- 全部基线改动登记于 SYSTEM_SPEC §0a（C-001~C-013）。
+- 全部基线改动登记于 SYSTEM_SPEC §0a（C-001~C-016）。
+- **身份目录轮（2026-09-04，用户指令）**：70 身份全量注册（**62 新键 + 8 接管**——morphling=演员/mimic=卧底 后加入接管【审计校正 DC-05】），仅元数据零能力；HML disabled 隔离；登记 §0a C-018、RM D11。
+- **处决/数值对齐（2026-09-04，策划修订）**：处决规则实装（C-017：理智−40/掉枪/误杀全员+100）；+1min 触发改“乘客死亡”（wathe 原生）；倒计时初始 8 分钟；狂气删队友+25；体力=原版直接用。**【2026-09-05 审计+用户裁定，DC-01 关闭】**"枪/弓冷却 30s"未实装且被裁定**推翻**——维持 wathe 原生 10s；义警击杀后 60s=处决特例（BttGunDropMixin）。
+- **理智/需求/旗帜（2026-09-04，用户指令）**：mood 隔离回退（C-016）——理智/需求/体力回归 wathe 原生（数值不改）；mood HUD 旗帜映射：乘客/凶手=原版旗、中立=mood_ghost、外人=mood_jester（暂定）；“任务”二段式与 doc 阈值仍 TODO（BT-ECO-SAN）。
+- **结局/键名二轮修订（2026-09-04，用户指令）**：结局文本改为 `BttEndTextMixin` 直接改写 wathe `getEndText`（SRE 式改内容不重画；自绘覆盖层 C-012 回退）；策划修订乘客胜利=两结局（执法落幕删除）；开局宣告=wathe 原版迎新屏（聊天行删除，中立/外人不展示）；键名接管第二轮：医生=coroner、处子=noisemaker（显示名 lang 更新）。登记 §0a C-014/C-015。
 - **版本管理（2026-09-04）**：`971804a` = BTT Phase 1 提交；`mod_version` 切换为 `0.1.0-alpha-h1.3`（C-013）；tag `v0.1.0-alpha`（重指至版本切换提交）已连同 main 推送 origin。
+- **P2G-001（2026-09-05，用户指令"做三星及以下"）**：19 身份有真实行为（P2-α 6 完整+4 部分；P2-β 演员/卧底/巫觋，酒保搁置——NR bartender 与 doc 灌酒不可复用；P2-γ 连环杀手/恶魔/侦探/卖糖人/绳艺师/失忆患者/窃贼+守夜人枪）；新通用机制=祭品池（scoreboard 深绿+辉光）/杀人历史/THIEF_WIN 独胜结局；新 mixin `BttSerialKillerKnifeMixin`（§0a C-019）；顺带修 NR 基线 `psychosis_items.json` JSON 损坏（§0a C-020）。
+- **全面重审（2026-09-05，用户指令）**：代码为事实源对齐全套文档；修复司机×2 误挂 CONDUCTOR→DRIVER（DC-07，Phase 1 测试期列车长在场倒计时双倍速）；决策日志 RM §0.3（DC-01~07）；轮子清理清单 RM §8.7/IP CLEANUP 章；事实源层级 RM §0.0（代码>设计>规范>架构>路线>计划；NRS=REFERENCE ONLY）。- **BT-ARCH-001 已落地（2026-09-05）**：`BttRoleDef`（kit/onKill/onTick/use）+`BttRoleDefs` 声明表（20 defs）=身份行为唯一事实源；BttEvents/KillHookMixin/BttGameWorldComponent 全部改为派发/纯数据；build+runServer 冒烟 PASS（`62 identities, 20 defs`）。**新增身份只加 def 条目，禁止 if-chain**。
+- **四项核查轮（2026-09-05，用户指令）**：狂气/理智/商店/假需求全数核实为 wathe 原生（乘客产币封 C-021；误杀 setMood(0) 自取消链路 VERIFIED）；结局换 NRS 式 per-role 单列职业网格（C-022：BttRoundEndRoleMixin+BttEndColumnsMixin，BttRoundEndMixin 删除）；wathe lang 确认可按键覆盖并补 zh_cn 12 键（assets/wathe/lang/zh_cn.json）；原生 backfire 未门控=开放决策 DC-08。
+- **席位解锁+汽笛（2026-09-05，用户指令）**：assignSeats 改 doc 公式 6–18 人（IMPLEMENTED 25 身份优先/BARTENDER 排除/元数据降层补位）；人数门 6–18（btt.start_error.player_range）；宣告计数按席位 flag；汽笛→BTT（C-023 BttHornStartMixin，原硬编码 MURDER；AutoStart 不动）。D13 已登记 ROADMAP §0.1。**新增身份记得同步 BttRoles.IMPLEMENTED**。
+- **BT-P2-UI 选人 UI（2026-09-05）**：预言家/刺客/小说家/魔术师/舞蛇人实装——BttGuessC2SPacket+BttGuessReceiver+BttPlayerWidget/BttRoleWidget+BttGuessScreenMixin/BttScreenDoNotClose（NR Guesser 同构克隆）；冷却=AbilityPlayerComponent；魔术师 instant（100 狂气/次）；小说家 NOVELIST_WIN 独胜；IMPLEMENTED=30。§0a C-024。**下一批=P2-α 补全（P2A-002）→ DEMO-011**。
+- **P2A-002 P2-α 补全（2026-09-05）**：猎人=UI instant 一次性狙击（命中主犯杀/落空无效，"揭示"待作者确认）；清道夫=无声刀（BttCleanerSilentKnifeMixin，"删蓄力"原版本就无）；明星=死亡通知仅乘客（kill hook）；女仆=双倍取餐（BttMaidPlatterMixin，同款<2 可取）+赠予；邮差=双向赠礼。IMPLEMENTED=32。§0a C-025。**下一批=DEMO-011 多人实测**（P2-δ 需 BT-SYS-DRUNK/Spark 移植，随后）。
+- **结局渲染二轮（2026-09-05）**：用户报显示问题并提供 fork 仓库 `github.com/XruiDD/TrainMurderMystery`（已克隆 references/TrainMurderMystery=NRS 依赖的 wathe fork 源码，只读）；按其 RoundTextRenderer 对齐：NONE 独胜可显示+胜负两组卡片网格+职业名 y+18 原尺寸；BttEndColumnsMixin 重写为 HEAD 全自绘（BttEndTextMixin 并入删除）；btt_game.winners 同步字段承载独胜赢家。§0a C-026。**NRS 结局协议从此以 fork 源码为准（不再反推）**。
+- **测试工具轮（2026-09-05）**：修复 BttEndColumnsMixin 非 static 回调（client 专属目标，专用服冒烟盲区，用户 20:58 报告定位）；'
+- **七项修复轮（2026-09-05，用户测试反馈）**：①无人生还结局 ✅（decide 全灭优先）；②③结局音效+胜负=服务端 winners csv 下发（didWin 同口径）；④BTT 局内玩家消息全部 Action Bar（聊天框不可见）；⑤技能去道具化——侦探/绳艺师/卖糖人=G 键开背包选人（BttAbilityKey 自建 G 键，NR wasPressed 竞态不可共用），女仆/邮差/失忆/窃贼保留实体交互；⑥商店隐藏+拒绝匕首/左轮（BttShopGate 反射索引 [0,1]）；⑦/btt:forceRole 身份=子命令带 Tab。§0a C-027。
+- **逐测修复轮一（2026-09-05）**：处子商店/卧底假刀=NR 行为泄漏→四个 NR 商店 mixin+MIMIC 发装备 BTT 门控（C-028）；邮差回退搁置四星（IMPLEMENTED=31）；教父查验角色名改 lang 直译（HML getRoleName 客户端空）；猎人狙击后 UI 变灰+初始 CD=0。
+- **逐测修复轮二（2026-09-05，14 项）**：UseEntityCallback 全量回退（枪刀 bisect；失忆/窃贼尸体交互/女仆赠予待重做）；无人生还=按 doc（外人计数，主犯灭≠审判）；Action Bar 补扫多行 sendMessage（嵌套括号漏网）；刺客暴露只告知被猜者；魔术师免钱 CD2min；女仆取餐总量 2；forceRole <players> <role>；预开局隐藏头顶名；商店删便签；恶魔推迟；lang 阵营杀手→凶手（wathe 覆盖 8 键，身份名不动）。§0a C-029。
+- **读档崩溃修复（2026-09-05）**：per-role 宣告 index 禁入世界存档（HML 注册晚于读档→越界）——结局职业迁 btt_game.endRoles + NBT clamp 防御（C-030）；GodfatherHud 拆 HEAD/TAIL 双 handler（TAIL cancel 无效曾崩）。**教训：写进 wathe CCA 存档的任何 index/枚举序号必须恒定有效，跨组件注册时机不可依赖。**
+- **逐测修复轮三（2026-09-05）**：商店改开局移除/终局恢复 SHOP_ENTRIES（旧"隐藏+拒索引"破坏商店，C-031）；女仆/清道夫/连环杀手 mixin 摘除（枪刀 bisect 继续）；小说家文案固定+猜错不播报；失忆/窃贼=G 键+注视尸体（复用秃鹫交互基建 BttCorpseActionC2SPacket）；偷渡客=接管 phantom（stowaway 键删）；lang 阵营杀手→凶手；文档收敛（IP/TRACE 删除并入 ROADMAP/STATUS）。§0a C-031。**枪刀右键仍未定案——复测后继续 bisect（GunDrop→Horn）。**
+    '自建 /btt:forceRole <path> <players>（wathe forceRole 只写原版记分板选人、BTT 从不消费——BttIdentity.FORCED 优先占用公式配额开局消费）+ clear；'
+    '新增 docs/IMPLEMENTATION_STATUS.md（70 身份三档状态+逐个测试要点，用户逐个测试用）。§0a C-025 附注+IP P2A-002 轮。
+- **BT-ARCH-001 已落地（2026-09-05）**：`BttRoleDef`（kit/onKill/onTick/use）+`BttRoleDefs` 声明表（20 defs）=身份行为唯一事实源；BttEvents/KillHookMixin/BttGameWorldComponent 全部改为派发/纯数据；build+runServer 冒烟 PASS（`62 identities, 20 defs`）。**新增身份只加 def 条目，禁止 if-chain**。
+**下一批=选人 UI 五身份（BT-P2-UI）→ P2-α 补全 → DEMO-011**。
+- **P2G-001（2026-09-05，用户指令"做三星及以下"）**：19 身份有真实行为（P2-α 6 完整+4 部分；P2-β 演员/卧底/巫觋，酒保搁置——NR bartender 与 doc 灌酒不可复用；P2-γ 连环杀手/恶魔/侦探/卖糖人/绳艺师/失忆患者/窃贼+守夜人枪）；新通用机制=祭品池（scoreboard 深绿+辉光）/杀人历史/THIEF_WIN 独胜结局；新 mixin `BttSerialKillerKnifeMixin`（§0a C-019）；顺带修 NR 基线 `psychosis_items.json` JSON 损坏（§0a C-020）。
+- **全面重审（2026-09-05，用户指令）**：代码为事实源对齐全套文档；修复司机×2 误挂 CONDUCTOR→DRIVER（DC-07，Phase 1 测试期列车长在场倒计时双倍速）；决策日志 RM §0.3（DC-01~07）；轮子清理清单 RM §8.7/IP CLEANUP 章；事实源层级 RM §0.0（代码>设计>规范>架构>路线>计划；NRS=REFERENCE ONLY）。- **BT-ARCH-001 已落地（2026-09-05）**：`BttRoleDef`（kit/onKill/onTick/use）+`BttRoleDefs` 声明表（20 defs）=身份行为唯一事实源；BttEvents/KillHookMixin/BttGameWorldComponent 全部改为派发/纯数据；build+runServer 冒烟 PASS（`62 identities, 20 defs`）。**新增身份只加 def 条目，禁止 if-chain**。
+- **BT-ARCH-001 已落地（2026-09-05）**：`BttRoleDef`（kit/onKill/onTick/use）+`BttRoleDefs` 声明表（20 defs）=身份行为唯一事实源；BttEvents/KillHookMixin/BttGameWorldComponent 全部改为派发/纯数据；build+runServer 冒烟 PASS（`62 identities, 20 defs`）。**新增身份只加 def 条目，禁止 if-chain**。
+**下一批=选人 UI 五身份（BT-P2-UI）→ P2-α 补全 → DEMO-011**。

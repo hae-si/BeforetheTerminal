@@ -1,0 +1,23 @@
+{
+  "tip.skin": "皮肤：",
+  "tip.change_skin": " [右键更换（赞助者专属）]",
+  "wathe.argument.game_mode.invalid": "找不到该游戏模式",
+  "wathe.argument.map_effect.invalid": "找不到该地图效果",
+  "wathe.game_settings.help": "    weights: 身份权重系统，记录玩家的历史身份并优先让尚未当过义警/凶手的玩家获得该身份。若希望完全随机可关闭。\n    autoStart: 人数足够并上车后自动开局的时间（秒）。\n    backfire: 乘客误伤无辜时，将自己反杀的概率。0（默认）为 0%，1 为 100%。\n    roleDividend: 每多少名玩家产生 1 个对应身份（默认均为 5）。例如 4 -> 每 4 人出 1 个该身份，8 人出 2 个，12 人出 3 个……\n    bounds: 是否启用游戏边界（限制观战者活动范围）。",
+  "wathe.gui.reset": "清空",
+  "wathe.map_variables.help": "    gameModeAndMapEffect: 地图默认使用的游戏模式与地图效果（自动开局或鸣笛开局时生效）。\n    spawnPos: 游戏结束后玩家重置到的出生点与朝向。\n    spectatorSpawnPos: 开局即观战的玩家被传送到的观战点与朝向。\n    readyArea: 玩家需身处其中才会被选入游戏的大厅区域。\n    playAreaOffset: 玩家从大厅区进入游戏区时的传送偏移。\n    playArea: 游戏区域，出界即淘汰。\n    resetTemplateArea: 用于覆盖游戏区以重置地图的模板区域。\n    resetPasteOffset: 模板粘贴的偏移。",
+  "wathe.map_variables.set": "地图变量 %s 已成功设为 %s",
+  "wathe.midnightconfig.disableScreenShake": "禁用屏幕震动",
+  "wathe.midnightconfig.title": "哈皮快车的最后航程 - 配置",
+  "wathe.midnightconfig.ultraPerfMode": "极限性能模式",
+  "wathe.midnightconfig.ultraPerfMode.tooltip": "关闭场景装饰以获得极致性能（画质下降）。渲染距离将被降至 2。",
+  "announcement.role.killer": "凶手！",
+  "announcement.title.killer": "凶手",
+  "announcement.win.killer": "凶手胜利！",
+  "game.win.killers": "凶手达成击杀数，他们获胜了！",
+  "game.win.passengers": "所有凶手已被击倒：乘客胜利！",
+  "game.win.time": "凶手未能在时限内完成击杀：乘客胜利！",
+  "announcement.premise": "列车上潜伏着一名凶手。",
+  "announcement.premises": "列车上潜伏着 %s 名凶手。",
+  "game.tip.cohort": "凶手同伙"
+}

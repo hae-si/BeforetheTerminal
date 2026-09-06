@@ -66,6 +66,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
+        org.agmas.noellesroles.client.ui.btt.BttAbilityKey.register(); // C-027
 
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
