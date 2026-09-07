@@ -40,10 +40,12 @@ public final class BttRoles {
         PRINCIPAL(false, true, Role.MoodType.FAKE, -1, true),
         /** 从犯凶手 */
         ACCOMPLICE(false, true, Role.MoodType.FAKE, -1, true),
-        /** 中立：无理智/体力限制可见性按中立处理（小丑先例=FAKE） */
-        NEUTRAL(false, false, Role.MoodType.FAKE, 200, false),
-        /** 外人：自成阵营，无理智/体力限制，可见倒计时 */
-        OUTSIDER(false, false, Role.MoodType.FAKE, -1, true);
+        /** 中立 · 独行（C-037 三分类）：个人条件独胜、不阻塞任何主结局、有限体力（蓝旗 mood_ghost） */
+        LONE(false, false, Role.MoodType.FAKE, 200, false),
+        /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、可见倒计时、全员尾声（品红旗 mood_jester） */
+        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, true),
+        /** 中立 · 狂人（C-037 三分类）：阵营归属乘客（结局计数随乘客）、正常需求/理智、无独立胜利（绿旗） */
+        MAD(true, false, Role.MoodType.REAL, 200, false);
 
         public final boolean innocent;
         public final boolean canUseKiller;
@@ -97,7 +99,7 @@ public final class BttRoles {
     /** 处子：接管 NR noisemaker 键（死亡发光原生；显示名 lang→处子） */
     public static final Role VIRGIN = takeover(Noellesroles.NOISEMAKER, Faction.CIVILIAN);
     /** 小丑：接管 NR jester 键（NR 旧行为已在 BTT 门控） */
-    public static final Role JESTER = takeover(Noellesroles.JESTER, Faction.NEUTRAL);
+    public static final Role JESTER = takeover(Noellesroles.JESTER, Faction.LONE);
     /** 列车长：复用 NR CONDUCTOR 键（万能钥匙链路原样） */
     public static final Role CONDUCTOR = takeover(Noellesroles.CONDUCTOR, Faction.CIVILIAN);
     /** 酒保：接管 NR bartender 键（doc 酒保=灌酒，与 NR 防御药水机制不同——行为差异随实现轮门控） */
@@ -181,36 +183,32 @@ public final class BttRoles {
     public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.ACCOMPLICE);
     public static final Role EX_TRAITOR = register("ex_traitor", 0x2F4F4F, Faction.ACCOMPLICE);
 
-    // ===== 中立（槽位 = 1 + N//12） =====
+    // ===== 中立 · 独行（C-037 三分类；合计中立槽位 = N//6） =====
 
-    public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.NEUTRAL);
+    public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.LONE);
     /** 窃贼：接管 NR vulture（透视尸体/G 键吃尸原生；胜利=吃尸体过半而非变杀手，C-039） */
-    public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.NEUTRAL);
+    public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.LONE);
     /** 纵火犯：接管 NR infected（感染链基建原生；pyromaniac 键删） */
-    public static final Role PYROMANIAC = takeover(Noellesroles.INFECTED, Faction.NEUTRAL);
-    public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.NEUTRAL,
-            true, false, Role.MoodType.REAL, 200, false);
-    public static final Role GOON = register("goon", 0xADD8E6, Faction.NEUTRAL,
-            true, false, Role.MoodType.REAL, 200, false);
-    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.NEUTRAL,
-            true, false, Role.MoodType.REAL, 200, false);
-    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.NEUTRAL,
-            true, false, Role.MoodType.REAL, 200, false);
-    /** 酒鬼：占据中立坑位的**乘客**（doc 原文）——旗标按乘客（innocent），分类归中立 */
-    public static final Role DRUNK = register("drunk", 0xDB7093, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
-    /** 疯子：占据中立坑位的**乘客**（doc 原文）——同上 */
-    public static final Role LUNATIC = register("lunatic", 0xDB7093, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
+    public static final Role PYROMANIAC = takeover(Noellesroles.INFECTED, Faction.LONE);
+    public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
+    public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
+    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.MAD);
+    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.MAD);
+    /** 酒鬼：狂人中立（乘客旗标、永久醉酒设计） */
+    public static final Role DRUNK = register("drunk", 0xDB7093, Faction.MAD);
+    /** 疯子：狂人中立（同上） */
+    public static final Role LUNATIC = register("lunatic", 0xDB7093, Faction.MAD);
 
-    // ===== 外人（槽位 = N//12；全员有尾声） =====
+    // ===== 中立 · 外人（自成阵营；无限体力、可见倒计时、全员尾声） =====
 
-    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER);
-    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER);
-    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER);
-    public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER);
-    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.OUTSIDER,
-            false, false, Role.MoodType.REAL, 200, false);
-    /** 异端分子：doc“属于乘客阵营”——旗标按乘客；胜负对调为实现期逻辑（分类仍归外人） */
-    public static final Role HERETIC = register("heretic", 0x800000, Faction.OUTSIDER, true, false, Role.MoodType.REAL, 200, false);
+    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER_NEUTRAL);
+    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER_NEUTRAL);
+    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
+    public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
+    /** 黑死病：狂人中立（C-038 裁定修正）——乘客旗标、正常需求/理智 */
+    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.MAD);
+    /** 异端分子：狂人中立——乘客旗标；胜负对调为实现期逻辑（特殊结局） */
+    public static final Role HERETIC = register("heretic", 0x800000, Faction.MAD);
 
     // ===== 查询 =====
 

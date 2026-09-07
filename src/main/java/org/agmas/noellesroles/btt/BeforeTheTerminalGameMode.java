@@ -98,15 +98,15 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
         return p -> {
-            Role r = gwc.getRole(p);
-            return r != null && r.canUseKiller();
+            var f = BttRoles.factionOf(gwc.getRole(p));
+            return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE;
         };
     }
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByInnocent(GameWorldComponent gwc) {
         return p -> {
-            Role r = gwc.getRole(p);
-            return r != null && r.isInnocent();
+            var f = BttRoles.factionOf(gwc.getRole(p));
+            return f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD;
         };
     }
 
@@ -142,11 +142,12 @@ public class BeforeTheTerminalGameMode extends GameMode {
             anySeats = true;
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
                 var faction = org.agmas.noellesroles.btt.BttRoles.factionOf(role);
-                if (role.isInnocent()) alivePassengers++;
-                else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
+                // C-037 三分类：狂人中立=MAD（乘客阵营，计入乘客侧）；独行不阻塞任何结局
+                if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
                 else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
-                else if (faction == BttRoles.Faction.OUTSIDER) aliveOutsiderNeutrals++;
-                // 独行/狂人中立：不阻塞任何结局
+                else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) aliveOutsiderNeutrals++;
+                else if (faction == BttRoles.Faction.ENFORCER || faction == BttRoles.Faction.CIVILIAN
+                        || faction == BttRoles.Faction.MAD) alivePassengers++;
             }
         }
         if (!anySeats) return; // 防御：尚无座位（不应发生）
@@ -159,14 +160,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 alivePassengers, aliveOutsiderNeutrals, stationReached);
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
+        // C-037：按 BTT 阵营判定（接管键的 NR 原生 innocent 旗标不可靠，如 jester）——
+        // 乘客侧=执法/平民/狂人；凶手侧=主犯/从犯；独行/外人中立不随主结局胜负
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
             case TRIAL_COMPLETE, JOURNEY_END -> p -> {
-                Role r = gameWorld.getRole(p);
-                return r != null && r.isInnocent();
+                var f = BttRoles.factionOf(gameWorld.getRole(p));
+                return f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD;
             };
             case BLOOD_EXPRESS, NAKU_KORO -> p -> {
-                Role r = gameWorld.getRole(p);
-                return r != null && r.canUseKiller();
+                var f = BttRoles.factionOf(gameWorld.getRole(p));
+                return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE;
             };
             default -> p -> false;
         };

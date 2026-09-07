@@ -42,9 +42,9 @@ public abstract class BttMoodFlagMixin {
         Role role = gwc.getRole(viewer);
         if (role == null) return;
         Identifier tex = null;
-        if (BttRoles.LONE_NEUTRALS.contains(role)) tex = GHOST;
-        else if (BttRoles.factionOf(role) == BttRoles.Faction.OUTSIDER
-                && role != BttRoles.BLACKDEATH && role != BttRoles.HERETIC) tex = JESTER;
+        var faction = BttRoles.factionOf(role);
+        if (faction == BttRoles.Faction.LONE) tex = GHOST;
+        else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) tex = JESTER;
         if (tex == null) return;
         context.getMatrices().push();
         context.getMatrices().translate(0.0F, 3.0F * moodOffset, 0.0F);

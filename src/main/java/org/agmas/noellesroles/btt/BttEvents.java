@@ -197,7 +197,8 @@ public final class BttEvents {
             Role role = gwc.getRole(p);
             if (role == null) continue;
             BttRoles.Faction f = BttRoles.factionOf(role);
-            if (f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.NEUTRAL) candidates.add(p);
+            if (f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.LONE
+                    || f == BttRoles.Faction.OUTSIDER_NEUTRAL || f == BttRoles.Faction.MAD) candidates.add(p);
         }
         int need = candidates.size() / 10;
         if (need == 0) return;

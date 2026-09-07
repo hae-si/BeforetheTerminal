@@ -43,9 +43,10 @@ public final class BttIdentity {
     }
 
     /**
-     * 纯函数：doc 席位公式分配（GD §1.3，解锁 Phase 1 固定六身份）：
-     * 主犯 1；从犯 N//6−1；中立 1+N//12；外人 N//12；执法 N//6；平民=余量。
+     * 纯函数：doc 席位公式分配（2026-09-06 策划大改/C-037 适配）：
+     * 主犯 1；从犯 N//6−1；执法 N//6；中立 N//6（独行/外人/狂人三分类合并池）；平民=余量。
      * 每阵营先抽"已实装"层（洗牌），不足降层补元数据身份；BARTENDER 排除。
+     * **同色互斥**（C-037）：强制身份与席位身份颜色两两不同；池内无法满足时降级为跨池替换，仍不足则保留重复（防御）。
      * 人数 6–18 之外返回 null（拒绝开局）。FORCED 优先占用（配额按阵营扣减），用后清空。
      */
     public static Map<UUID, Role> assignSeats(List<UUID> players) {
@@ -57,32 +58,34 @@ public final class BttIdentity {
 
         int principal = 1;
         int accomplice = Math.max(0, n / 6 - 1);
-        int neutral = 1 + n / 12;
-        int outsider = n / 12;
         int enforcer = n / 6;
-        int civilian;
+        int neutral = n / 6;
         // 强制占用按阵营扣减公式配额（CIVILIAN=余量兜底，无需扣减）
         for (Role r : forced.values()) {
             BttRoles.Faction f = BttRoles.factionOf(r);
             if (f == BttRoles.Faction.PRINCIPAL) principal = Math.max(0, principal - 1);
             else if (f == BttRoles.Faction.ACCOMPLICE) accomplice = Math.max(0, accomplice - 1);
-            else if (f == BttRoles.Faction.NEUTRAL) neutral = Math.max(0, neutral - 1);
-            else if (f == BttRoles.Faction.OUTSIDER) outsider = Math.max(0, outsider - 1);
+            else if (f == BttRoles.Faction.LONE || f == BttRoles.Faction.OUTSIDER_NEUTRAL
+                    || f == BttRoles.Faction.MAD) neutral = Math.max(0, neutral - 1);
             else if (f == BttRoles.Faction.ENFORCER) enforcer = Math.max(0, enforcer - 1);
         }
         int remaining = n - forced.size();
-        civilian = remaining - (principal + accomplice + neutral + outsider + enforcer);
+        int civilian = remaining - (principal + accomplice + neutral + enforcer);
         if (civilian < 0) return null; // 强制过多挤爆公式
 
         Map<BttRoles.Faction, List<Role>> pools = BttRoles.factionPools();
         List<Role> seats = new ArrayList<>();
         take(seats, pools, BttRoles.Faction.PRINCIPAL, principal);
         take(seats, pools, BttRoles.Faction.ACCOMPLICE, accomplice);
-        take(seats, pools, BttRoles.Faction.NEUTRAL, neutral);
-        take(seats, pools, BttRoles.Faction.OUTSIDER, outsider);
+        takeUnion(seats, pools, NEUTRAL_FACTIONS, neutral);
         take(seats, pools, BttRoles.Faction.ENFORCER, enforcer);
         take(seats, pools, BttRoles.Faction.CIVILIAN, civilian);
         if (seats.size() != remaining) return null; // 池不足（防御）
+
+        // 同色互斥（C-037）：强制身份颜色先占坑，重复色按"同池优先→跨池"替换
+        java.util.Set<Integer> usedColors = new java.util.HashSet<>();
+        for (Role r : forced.values()) usedColors.add(r.color());
+        seats = dedupeColors(seats, pools, usedColors);
 
         Collections.shuffle(seats);
         Map<UUID, Role> result = new HashMap<>();
@@ -98,19 +101,31 @@ public final class BttIdentity {
         return result;
     }
 
-    /** 公式配额（含强制扣减后）测试用快照 */
+    /** 中立三分类（合并席位池） */
+    private static final List<BttRoles.Faction> NEUTRAL_FACTIONS = List.of(
+            BttRoles.Faction.LONE, BttRoles.Faction.OUTSIDER_NEUTRAL, BttRoles.Faction.MAD);
+
+    /** 公式配额（含强制扣减前）测试用快照：主犯/从犯/中立/执法 */
     static int[] quotasForTest(int n) {
-        return new int[]{1, Math.max(0, n / 6 - 1), 1 + n / 12, n / 12, n / 6};
+        return new int[]{1, Math.max(0, n / 6 - 1), n / 6, n / 6};
     }
 
-    /** 从阵营池抽 count 席：已实装层优先（同层洗牌），不足降层补元数据身份 */
+    /** 从单一阵营池抽 count 席：已实装层优先（同层洗牌），不足降层补元数据身份 */
     private static void take(List<Role> out, Map<BttRoles.Faction, List<Role>> pools, BttRoles.Faction faction, int count) {
         if (count <= 0) return;
-        List<Role> pool = pools.getOrDefault(faction, List.of());
+        takeUnion(out, pools, List.of(faction), count);
+    }
+
+    /** 从多阵营合并池抽 count 席（已实装层优先，同层洗牌） */
+    private static void takeUnion(List<Role> out, Map<BttRoles.Faction, List<Role>> pools,
+                                  List<BttRoles.Faction> factions, int count) {
+        if (count <= 0) return;
         List<Role> tier1 = new ArrayList<>();
         List<Role> tier2 = new ArrayList<>();
-        for (Role r : pool) {
-            (BttRoles.isImplemented(r) ? tier1 : tier2).add(r);
+        for (BttRoles.Faction f : factions) {
+            for (Role r : pools.getOrDefault(f, List.of())) {
+                (BttRoles.isImplemented(r) ? tier1 : tier2).add(r);
+            }
         }
         Collections.shuffle(tier1);
         Collections.shuffle(tier2);
@@ -125,6 +140,45 @@ public final class BttIdentity {
             out.add(r);
             added++;
         }
+    }
+
+    /** 同色互斥：对 seats 就地替换重复色（同阵营池优先，其次跨阵营池；均无候选则保留重复——防御分支） */
+    private static List<Role> dedupeColors(List<Role> seats, Map<BttRoles.Faction, List<Role>> pools,
+                                           java.util.Set<Integer> usedColors) {
+        List<Role> result = new ArrayList<>();
+        for (Role r : seats) {
+            if (usedColors.add(r.color())) {
+                result.add(r);
+                continue;
+            }
+            Role rep = findColorFreeReplacement(r, pools, usedColors, result);
+            if (rep != null) {
+                usedColors.add(rep.color());
+                result.add(rep);
+            } else {
+                result.add(r); // 池尽：保留重复（理论不应发生——70 身份色值冗余足够）
+            }
+        }
+        return result;
+    }
+
+    private static Role findColorFreeReplacement(Role original, Map<BttRoles.Faction, List<Role>> pools,
+                                                 java.util.Set<Integer> usedColors, List<Role> alreadyPicked) {
+        List<BttRoles.Faction> order = new ArrayList<>();
+        order.add(BttRoles.factionOf(original));
+        for (BttRoles.Faction f : pools.keySet()) if (!order.contains(f)) order.add(f);
+        for (BttRoles.Faction f : order) {
+            if (f == null) continue;
+            List<Role> pool = pools.getOrDefault(f, List.of());
+            for (int tier = 0; tier < 2; tier++) {
+                for (Role r : pool) {
+                    if (BttRoles.isImplemented(r) != (tier == 0)) continue;
+                    if (r == original || alreadyPicked.contains(r) || usedColors.contains(r.color())) continue;
+                    return r;
+                }
+            }
+        }
+        return null;
     }
 
     /** 身份显示名（走 lang：announcement.role.<ns>.<path>） */
