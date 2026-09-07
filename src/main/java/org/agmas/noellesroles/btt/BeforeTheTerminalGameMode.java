@@ -191,6 +191,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         GameTimeComponent gameTime = GameTimeComponent.KEY.get(world);
 
+        // ===== 独胜即时判定（docx 胜利条件，C-059）：杀光所有人=魔女立即胜利；只剩教团=教团立即胜利 =====
+        // （与"无外人时乘客团灭/凶手团灭直接赢"同构；尾声存活胜利（v3）为其补充路径，见下）
+        boolean majoWin = majoAlive && alivePrincipals == 0 && aliveAccomplices == 0
+                && alivePassengers == 0 && aliveOutsiderNeutrals == 1; // 场上仅剩魔女（独行可不杀）
+        boolean cultWin = aliveCult > 0 && alivePrincipals == 0 && aliveAccomplices == 0
+                && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0; // 只剩教团阵营
+
         // ===== 尾声（BT-SYS-EPILOGUE v3，C-058：作者澄清） =====
         // ①凶手数>乘客数 → 倒计时**减至两分钟**；②倒计时 ≤2min → **必然进入尾声**（期间 BGM【GAP】）。
         // 主持人翁按 魔女/救世主>饕餮/花匠>凶手(生还尾声) 动态认领：当前主持人翁**阵营全灭**且有其他凶手/外人存在时，
@@ -198,13 +205,17 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 生还尾声 → 旅途结束/乘客胜利（正常 decide）。尾声期间常规结局判定暂停。
         int murderers = alivePrincipals + aliveAccomplices;
         // 压表（2026-09-07 澄清）：**凶手 + 外人 > 乘客**（外人=外人中立+教团成员；黑死病计入凶手侧）。
-        // 覆盖"魔女杀光其他人"场景（魔女自己是外人 1>0）；time>1200 守卫防尾声进行中回拨。
+        // time>1200 守卫防尾声进行中回拨。
         int outsidersTotal = aliveOutsiderNeutrals + aliveCult;
         if (gameTime.getTime() > 1200 && murderers + outsidersTotal > alivePassengers) {
             gameTime.setTime(1200); // 倒计时减至两分钟
         }
         BttEndings.Ending ending = BttEndings.Ending.NONE;
-        if (gameTime.getTime() <= 1200) {
+        if (majoWin) {
+            ending = BttEndings.Ending.MAJO_WIN;
+        } else if (cultWin) {
+            ending = BttEndings.Ending.CULT_WIN;
+        } else if (gameTime.getTime() <= 1200) {
             // 主持人翁动态认领（存活者中按优先级）；当前主持人翁阵营全灭 → desired 自动落到下一位 → 链式切换
             String desired = majoAlive ? "MAJO" : messiahAlive ? "CULT"
                     : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
@@ -213,7 +224,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 startEpilogueBroadcast(desired, players);
             }
             if (gameTime.getTime() <= 0) {
-                // 倒计时归零结算：外人主角存活 → 各自胜利；生还尾声 → 正常到站判定（旅途结束/乘客胜利）
+                // 倒计时归零结算：主持人翁=外人且存活 → 各自胜利；生还尾声 → 正常到站判定（旅途结束/乘客胜利）
                 ending = switch (desired) {
                     case "MAJO" -> BttEndings.Ending.MAJO_WIN;
                     case "CULT" -> BttEndings.Ending.CULT_WIN;
