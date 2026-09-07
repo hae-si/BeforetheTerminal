@@ -2,6 +2,7 @@ package org.agmas.noellesroles.mixin.btt;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import dev.doctor4t.wathe.api.Role;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.util.GunShootPayload;
@@ -66,12 +67,15 @@ public abstract class BttExecutionMixin {
     private static void bttExecutionCd(ItemCooldownManager instance, Item item, int ticks, Operation<Void> op,
                                        GunShootPayload payload, ServerPlayNetworking.Context context) {
         int adjusted = ticks;
-        ServerPlayerEntity shooter = context.player();
+        PlayerEntity shooter = context.player();
         if (BttIdentity.isBttMode(shooter.getWorld())
-                && shooter.getWorld().getEntityById(payload.target()) instanceof PlayerEntity victim) {
+                && shooter.getWorld().getEntityById(payload.target()) instanceof PlayerEntity) {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(shooter.getWorld());
-            if (gwc.isInnocent(shooter)) adjusted = 1200;
-            else if (gwc.isRole(shooter, BttRoles.BANDIT) && gwc.isInnocent(victim)) adjusted = 1200;
+            Role shooterRole = gwc.getRole(shooter);
+            var faction = BttRoles.factionOf(shooterRole);
+            if (gwc.isInnocent(shooter)) adjusted = 1200;                 // 处决（含误杀）= 60s
+            else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) adjusted = 1200; // 魔女等外人枪：doc 一分钟
+            else if (shooterRole == BttRoles.BANDIT) adjusted = 1200;     // 强盗：冷却一分钟（docx 2026-09-07）
         }
         op.call(instance, item, adjusted);
     }

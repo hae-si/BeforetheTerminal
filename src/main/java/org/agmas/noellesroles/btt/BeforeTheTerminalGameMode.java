@@ -66,6 +66,12 @@ public class BeforeTheTerminalGameMode extends GameMode {
             GameFunctions.stopGame(world);
             return;
         }
+        // 乘客侧（执法/平民/狂人）初始总数——审判落幕牺牲条件（docx 2026-09-07）
+        BttState.initialPassengerSide = (int) seats.values().stream()
+                .map(BttRoles::factionOf)
+                .filter(f -> f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN
+                        || f == BttRoles.Faction.MAD)
+                .count();
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
             gameWorld.addRole(player, role);
@@ -157,7 +163,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 独胜判定：窃贼（BttWatheVultureThiefMixin）与小说家（BttGuessReceiver）均在行为点直接
         // lastEnding+winners+setRoundEndData+stopGame，不在此 tick 判定（2026-09-07 用户指令）
         BttEndings.Ending ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
-                alivePassengers, aliveOutsiderNeutrals, stationReached);
+                alivePassengers, aliveOutsiderNeutrals, stationReached,
+                BttState.initialPassengerSide - alivePassengers, BttState.initialPassengerSide);
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
         // C-037：按 BTT 阵营判定（接管键的 NR 原生 innocent 旗标不可靠，如 jester）——

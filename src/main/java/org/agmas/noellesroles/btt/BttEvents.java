@@ -189,6 +189,8 @@ public final class BttEvents {
     // ===== 祭品（连环杀手/恶魔共用）：每 10 平民或中立出 1 祭品，深绿显示 =====
 
     private static void assignSacrificesIfNeeded(ServerWorld world, GameWorldComponent gwc) {
+        // 恶魔/连环杀手已从策划案移除（docx 2026-09-07，EXCLUDED 不入池）——祭品暂无消费者，停用分配（代码保留，便于回调）
+        if (true) return;
         if (BttState.sacrificesAssigned()) return;
         BttState.markSacrificesAssigned();
 

@@ -42,8 +42,8 @@ public final class BttRoles {
         ACCOMPLICE(false, true, Role.MoodType.FAKE, -1, true),
         /** 中立 · 独行（C-037 三分类）：个人条件独胜、不阻塞任何主结局、有限体力（蓝旗 mood_ghost） */
         LONE(false, false, Role.MoodType.FAKE, 200, false),
-        /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、可见倒计时、全员尾声（品红旗 mood_jester） */
-        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, true),
+        /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、全员尾声；到站倒计时仅凶手可见（docx 2026-09-07），外人不可见 */
+        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, false),
         /** 中立 · 狂人（C-037 三分类）：阵营归属乘客（结局计数随乘客）、正常需求/理智、无独立胜利（绿旗） */
         MAD(true, false, Role.MoodType.REAL, 200, false);
 
@@ -170,7 +170,8 @@ public final class BttRoles {
 
     // ===== 从犯凶手（槽位 = N//6 − 1） =====
 
-    public static final Role KILLER = register("killer", 0xC41E3A, Faction.ACCOMPLICE);
+    /** 剑客（docx 2026-09-07 由"杀手"改名）：[剑] 飞剑为 GAP，暂以刀代 kit */
+    public static final Role SWORDSMAN = register("swordsman", 0xC41E3A, Faction.ACCOMPLICE);
     public static final Role PSYCHOPATH = register("psychopath", 0xC41E3A, Faction.ACCOMPLICE);
     public static final Role ALCHEMIST = register("alchemist", 0x8B008B, Faction.ACCOMPLICE);
     public static final Role TERRORIST = register("terrorist", 0x8B008B, Faction.ACCOMPLICE);
@@ -205,8 +206,9 @@ public final class BttRoles {
     public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER_NEUTRAL);
     public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
     public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
-    /** 黑死病：狂人中立（C-038 裁定修正）——乘客旗标、正常需求/理智 */
-    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.MAD);
+    /** 黑死病：狂人中立席位但**阵营归属凶手**（docx 2026-09-07），不作乘客侧计数；个人胜负=特殊结局【待作者：映射细节】 */
+    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.MAD,
+            false, false, Role.MoodType.REAL, 200, false);
     /** 异端分子：狂人中立——乘客旗标；胜负对调为实现期逻辑（特殊结局） */
     public static final Role HERETIC = register("heretic", 0x800000, Faction.MAD);
 
@@ -217,13 +219,13 @@ public final class BttRoles {
             GODFATHER, VIGILANTE, DOCTOR, VIRGIN, JESTER, CONDUCTOR,
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
-            PHARMACIST, RIGGER, DEMON, SERIAL_KILLER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, KILLER, STOWAWAY,
+            PHARMACIST, RIGGER, DEMON, SERIAL_KILLER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, PYROMANIAC);
 
-    /** BTT 席位池排除表（BARTENDER 搁置：NR 原生行为会泄漏进 BTT 局，用户裁定 2026-09-05） */
-    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER);
+    /** BTT 席位池排除表：BARTENDER（NR 行为泄漏，2026-09-05 裁定）；恶魔/连环杀手（docx 2026-09-07 从策划案移除，实现保留但不入池） */
+    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER, DEMON, SERIAL_KILLER);
 
     public static boolean isImplemented(Role role) {
         return IMPLEMENTED.contains(role);

@@ -2,6 +2,7 @@ package org.agmas.noellesroles.btt;
 
 import dev.doctor4t.wathe.api.Role;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -79,7 +80,7 @@ public final class BttGuessReceiver {
             setCd(ability, GameConstants.getInTicks(1, 0));
         } else {
             user.sendMessage(Text.literal("你猜错了。").formatted(Formatting.RED), true);
-            GameFunctions.killPlayer(user, true, null, GameConstants.DeathReasons.KNIFE);
+            GameFunctions.killPlayer(user, true, null, BttDeathReasons.PROPHECY_INTERRUPTED);
         }
     }
 
@@ -133,7 +134,7 @@ public final class BttGuessReceiver {
                 net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 15), 250, false, true));
     }
 
-    // ===== 卖糖人：<给糖> 解毒，CD 60s =====
+    // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====
 
     private static void candy(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
@@ -141,6 +142,7 @@ public final class BttGuessReceiver {
         setCd(ability, GameConstants.getInTicks(1, 0));
         PlayerPoisonComponent poison = PlayerPoisonComponent.KEY.get(target);
         if (poison.poisonTicks > 0) poison.reset();
+        else PlayerMoodComponent.KEY.get(target).setMood(1.0f);
     }
 
     // ===== 猎人：仅限一次 <狙击>——目标为主犯则死亡，否则无效（揭示与否=作者确认 TODO）；UI instant 复用 =====
@@ -158,8 +160,8 @@ public final class BttGuessReceiver {
         Role targetRole = gwc.getRole(target);
         if (targetRole != null && BttRoles.factionOf(targetRole) == BttRoles.Faction.PRINCIPAL) {
             broadcast(user, Text.literal("猎人狙击成功了！").formatted(Formatting.GREEN));
-            // 能杀死人而非枪击：用 KNIFE 口径避免触发处决链（doc 狙击=授权能力）
-            GameFunctions.killPlayer(target, true, user, GameConstants.DeathReasons.KNIFE);
+            // 能杀死人而非枪击：用狙击魔法死因（doc 死因表），避开处决链
+            GameFunctions.killPlayer(target, true, user, BttDeathReasons.SNIPE_MAGIC);
         } else {
             user.sendMessage(Text.literal("狙击落空。").formatted(Formatting.RED), true);
         }

@@ -29,21 +29,25 @@ public final class BttEndings {
     }
 
     /**
-     * 纯函数：aliveMurderers=存活主犯数; alivePassengers=存活乘客数; aliveOutsiders=存活中立+外人数; stationReached=到站。
-     * 判定优先级：乘客+外人全灭(主犯灭=无人生还/主犯活=血染) → 凶手团灭(审判) → 到站(旅途)。
+     * 纯函数：aliveMurderers=存活主犯数; aliveAccomplices=存活从犯数; alivePassengers=存活乘客侧（执法/平民/狂人）;
+     * aliveOutsiderNeutrals=存活外人中立; stationReached=到站;
+     * deadPassengerSide/initialPassengerSide=乘客侧已死亡数/初始总数（审判落幕牺牲条件，docx 2026-09-07：
+     * 牺牲的乘客 ≤ 乘客人数的一半）。
+     * 判定优先级（裁定：外人>独行>凶手>乘客）：独胜在 GameMode tick 先判 → 凶手团灭/乘客团灭 → 审判（含牺牲条件） → 到站。
      */
     public static Ending decide(int alivePrincipals, int aliveAccomplices, int alivePassengers,
-                                int aliveOutsiderNeutrals, boolean stationReached) {
-        // 2026-09-06 策划修订：审判落幕=杀光凶手和外人中立（独行/狂人不阻塞）；
-        // 血染=杀光乘客和外人且主犯未死；鸣泣之时=主犯死后从犯杀光乘客和外人。
-        // aliveOutsiderNeutrals 仅数外人中立（魔女/救世主/饕餮/花匠）；独行/狂人不参与结局阻塞。
+                                int aliveOutsiderNeutrals, boolean stationReached,
+                                int deadPassengerSide, int initialPassengerSide) {
+        // C-037/C-038：审判落幕=杀光凶手和外人中立（独行/狂人不阻塞）；狂人中立计入乘客侧（凶手须杀）；
+        // 血染=杀光乘客侧和外人且主犯未死；鸣泣之时=主犯死后从犯杀光乘客侧和外人。
         if (alivePassengers <= 0 && aliveOutsiderNeutrals <= 0) {
             if (alivePrincipals > 0) return Ending.BLOOD_EXPRESS;
             if (aliveAccomplices > 0) return Ending.NAKU_KORO;
-            return Ending.TRIAL_COMPLETE; // 审判落幕：凶手全灭+外人中立全灭
+            return Ending.TRIAL_COMPLETE; // 全灭兜底（防御：避免无人局挂起；牺牲条件必不满足但无可判者）
         }
-        if (alivePrincipals <= 0 && aliveAccomplices <= 0 && aliveOutsiderNeutrals <= 0) {
-            return Ending.TRIAL_COMPLETE; // 审判落幕（乘客存活路径）
+        if (alivePrincipals <= 0 && aliveAccomplices <= 0 && aliveOutsiderNeutrals <= 0
+                && deadPassengerSide * 2 <= initialPassengerSide) {
+            return Ending.TRIAL_COMPLETE; // 审判落幕（乘客存活路径 + 牺牲不超半）
         }
         // 主犯全灭：有从犯存活 → 游戏继续（鸣泣之时候选，到站仍=旅途结束）；无从犯 → 等待/到站
         if (alivePrincipals <= 0) {

@@ -22,6 +22,8 @@ public final class BttState {
      * 仅由 BttKillHookMixin（killPlayer 内）写入、BttSerialKillerKnifeMixin（同线程随后消费）读取。
      */
     public static boolean lastKillWasSacrifice = false;
+    /** 本局乘客侧（执法/平民/狂人）初始总数——审判落幕牺牲条件用（docx 2026-09-07） */
+    public static int initialPassengerSide = 0;
 
     public static int getInt(UUID player, String key) {
         Map<String, Integer> m = INTS.get(player);
@@ -57,5 +59,6 @@ public final class BttState {
         INTS.clear();
         sacrificesAssigned = false;
         lastKillWasSacrifice = false;
+        initialPassengerSide = 0;
     }
 }

@@ -50,7 +50,7 @@ public final class BttRoleDefs {
         def(BttRoles.DEMON).kit(knife());
         def(BttRoles.SERIAL_KILLER).kit(knife());
         def(BttRoles.CLEANER).kit(knife());
-        def(BttRoles.KILLER).kit(knife()); // 从犯：初始[刀]
+        def(BttRoles.SWORDSMAN).kit(knife()); // 剑客（docx 改名）：[剑] 飞剑 GAP，暂以刀代
         def(BttRoles.VETERAN).kit(p -> {
             knife().give(p);
             BttState.setInt(p.getUuid(), "veteranUses", VETERAN_KNIFE_USES);
