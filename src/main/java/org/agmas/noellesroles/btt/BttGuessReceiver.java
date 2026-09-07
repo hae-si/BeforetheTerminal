@@ -13,6 +13,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 
+import java.util.ArrayList;
+
 /**
  * BT-P2-UI 服务端分派：预言家/刺客/小说家/魔术师/舞蛇人 共用选人 UI 的语义。
  * 冷却载体（CLEAN-004 约定的例外）：本批身份用 NR {@link AbilityPlayerComponent}（自动同步，客户端 UI 显示倒计时）。
@@ -92,6 +94,19 @@ public final class BttGuessReceiver {
             BttState.setInt(user.getUuid(), "novelistHits", hits);
             // doc 口径文案（用户指定 2026-09-05）；猜错不播报
             broadcast(user, Text.literal("小说家进行了正确的猜测！").formatted(Formatting.LIGHT_PURPLE));
+            // 独胜判定前移到 receiver（2026-09-07 用户指令，与窃贼 BttWatheVultureThiefMixin 同模式）：
+            // 猜对过半 → 立即写结局并 stopGame，不再等 GameMode tick
+            if (hits * 2 >= user.getServerWorld().getPlayers().size()) {
+                BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(user.getWorld());
+                btt.lastEnding = BttEndings.Ending.NOVELIST_WIN.name();
+                btt.winners = user.getUuid().toString();
+                btt.sync();
+                // 与 GameMode 终局路径同构：per-role 结局数据 + stopGame（独胜 WinStatus=NONE）
+                dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(user.getServerWorld())
+                        .setRoundEndData(new ArrayList<>(user.getServerWorld().getPlayers()),
+                                GameFunctions.WinStatus.NONE);
+                GameFunctions.stopGame(user.getServerWorld());
+            }
         } else {
             setCd(ability, GameConstants.getInTicks(0, 30));
         }

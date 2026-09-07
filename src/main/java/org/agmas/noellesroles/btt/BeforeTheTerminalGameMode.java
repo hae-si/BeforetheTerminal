@@ -153,21 +153,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         boolean stationReached = !GameTimeComponent.KEY.get(world).hasTime();
 
-        // 独胜判定（优先于常规）：小说家猜对 ≥ 一半人数
-        // 窃贼独胜已由 BttWatheVultureThiefMixin 直接 stopGame（不走 tick 判定）
-        BttEndings.Ending ending = null;
-        for (ServerPlayerEntity p : players) {
-            if (gameWorld.getRole(p) == null || !gameWorld.getRole(p).equals(BttRoles.NOVELIST)) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-            int hits = BttState.getInt(p.getUuid(), "novelistHits");
-            if (hits > 0 && hits * 2 >= players.size()) {
-                ending = BttEndings.Ending.NOVELIST_WIN;
-                break;
-            }
-        }
-        if (ending == null) {
-            ending = BttEndings.decide(alivePrincipals, aliveAccomplices, alivePassengers, aliveOutsiderNeutrals, stationReached);
-        }
+        // 独胜判定：窃贼（BttWatheVultureThiefMixin）与小说家（BttGuessReceiver）均在行为点直接
+        // lastEnding+winners+setRoundEndData+stopGame，不在此 tick 判定（2026-09-07 用户指令）
+        BttEndings.Ending ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
+                alivePassengers, aliveOutsiderNeutrals, stationReached);
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
@@ -179,21 +168,21 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 Role r = gameWorld.getRole(p);
                 return r != null && r.canUseKiller();
             };
-            case THIEF_WIN -> p -> gameWorld.getRole(p) != null && gameWorld.getRole(p).equals(BttRoles.THIEF);
-            case NOVELIST_WIN -> p -> gameWorld.getRole(p) != null && gameWorld.getRole(p).equals(BttRoles.NOVELIST)
-                    && BttState.getInt(p.getUuid(), "novelistHits") * 2 >= players.size();
             default -> p -> false;
         };
         String winners = players.stream().filter(isWinner)
                 .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
 
-        // 异端分子：对调乘客与凶手的胜负结果（即使已死亡；GAME_DESIGN 未决点#5 字面口径，
-        // 异端本人按乘客阵营=翻转到乘客侧胜时获胜——REVIEW 待作者确认）
+        // 异端分子：对调乘客与凶手的胜负结果（即使已死亡）——翻转为 doc"特殊的乘客/凶手胜利结局，
+        // 伴有特殊胜利宣言"：结局改写为 HERETIC_KILLER / HERETIC_PASSENGER（宣言键 noellesroles.special.heretic.*）
         GameFunctions.WinStatus ws = BttEndings.winStatusOf(ending);
         boolean heretic = players.stream()
                 .anyMatch(p -> gameWorld.getRole(p) == BttRoles.HERETIC);
         if (heretic && ws != GameFunctions.WinStatus.NONE) {
             ws = BttEndings.flip(ws);
+            ending = ws == GameFunctions.WinStatus.KILLERS
+                    ? BttEndings.Ending.HERETIC_KILLER
+                    : BttEndings.Ending.HERETIC_PASSENGER;
         }
         java.util.function.Predicate<ServerPlayerEntity> flipWinner = ws == GameFunctions.WinStatus.KILLERS
                 ? (java.util.function.Predicate<ServerPlayerEntity>) isWinnerByKiller(gameWorld)

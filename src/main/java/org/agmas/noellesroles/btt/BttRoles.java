@@ -188,10 +188,14 @@ public final class BttRoles {
     public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.NEUTRAL);
     /** 纵火犯：接管 NR infected（感染链基建原生；pyromaniac 键删） */
     public static final Role PYROMANIAC = takeover(Noellesroles.INFECTED, Faction.NEUTRAL);
-    public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.NEUTRAL);
-    public static final Role GOON = register("goon", 0xADD8E6, Faction.NEUTRAL);
-    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.NEUTRAL);
-    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.NEUTRAL);
+    public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.NEUTRAL,
+            true, false, Role.MoodType.REAL, 200, false);
+    public static final Role GOON = register("goon", 0xADD8E6, Faction.NEUTRAL,
+            true, false, Role.MoodType.REAL, 200, false);
+    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.NEUTRAL,
+            true, false, Role.MoodType.REAL, 200, false);
+    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.NEUTRAL,
+            true, false, Role.MoodType.REAL, 200, false);
     /** 酒鬼：占据中立坑位的**乘客**（doc 原文）——旗标按乘客（innocent），分类归中立 */
     public static final Role DRUNK = register("drunk", 0xDB7093, Faction.NEUTRAL, true, false, Role.MoodType.REAL, 200, false);
     /** 疯子：占据中立坑位的**乘客**（doc 原文）——同上 */
@@ -203,7 +207,8 @@ public final class BttRoles {
     public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER);
     public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER);
     public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER);
-    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.OUTSIDER);
+    public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.OUTSIDER,
+            false, false, Role.MoodType.REAL, 200, false);
     /** 异端分子：doc“属于乘客阵营”——旗标按乘客；胜负对调为实现期逻辑（分类仍归外人） */
     public static final Role HERETIC = register("heretic", 0x800000, Faction.OUTSIDER, true, false, Role.MoodType.REAL, 200, false);
 

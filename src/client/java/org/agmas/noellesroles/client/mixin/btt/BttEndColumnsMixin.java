@@ -3,7 +3,6 @@ package org.agmas.noellesroles.client.mixin.btt;
 import dev.doctor4t.wathe.cca.GameRoundEndComponent;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
-import dev.doctor4t.wathe.client.gui.RoleAnnouncementTexts;
 import dev.doctor4t.wathe.client.gui.RoundTextRenderer;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -34,6 +33,8 @@ import java.util.UUID;
  * <ul>
  *   <li>WinStatus==NONE 仍渲染（BTT 独胜结局 THIEF_WIN/NOVELIST_WIN 不再整屏空白）；</li>
  *   <li>玩家卡片按**胜/负两组**网格（winners 无标题、losers 有 announcement.result.losers 标题）；</li>
+ *   <li>宣言=结局配套键 noellesroles.ending.quote.*（docx 结局章斜体句；**胜/败双方同文**，
+ *       仅 didWin 音效区分——2026-09-06 用户裁定，原 per-role winText 分歧口径废除）；</li>
  *   <li>卡片 = 头像（脸+帽）+ 死亡 X + **角色名原尺寸在头像下方 y+18**（带角色色）；</li>
  *   <li>布局参数：cardWidth 36 / cardHeight 28 / 每行 ≥6 / 最多 4 行 / 行内居中。</li>
  * </ul>
@@ -87,8 +88,9 @@ public abstract class BttEndColumnsMixin {
                 case "journey" -> 0xFF55FFFF;
                 case "blood" -> 0xFFFF5555;
                 case "thief" -> 0xFFAA00AA;
-                case "novelist" -> 0xFFAF7ADB;
+                case "novelist" -> 0xFF00FFFF; // 小说家=角色青色（用户 2026-09-06；原 0xFFAF7ADB 紫）
                 case "naku" -> 0xFF8B0000;
+                case "heretic_killer", "heretic_passenger" -> 0xFF800000; // 异端特殊结局=角色色
                 default -> 0xFFFFFFFF;
             };
             Text endText = Text.translatable("noellesroles.ending." + key).withColor(color);
@@ -98,19 +100,18 @@ public abstract class BttEndColumnsMixin {
             context.getMatrices().pop();
         }
 
-        // ===== 引语（wathe 口径：胜者看己方胜利宣言，败者看胜方宣言）=====
-        GameRoundEndComponent.RoundEndData own = entries.stream()
-                .filter(e -> e.player().getId().equals(player.getUuid())).findFirst().orElse(null);
-        if (own != null) {
-            boolean ownWon = winnerIds.contains(player.getUuid().toString());
-            Text winMessage = ownWon
-                    ? own.role().winText
-                    : (status == GameFunctions.WinStatus.KILLERS
-                        ? RoleAnnouncementTexts.CIVILIAN.winText
-                        : RoleAnnouncementTexts.KILLER.winText);
+        // ===== 宣言（结局配套，胜/败双方同文；仅 didWin 音效区分——用户裁定 2026-09-06）=====
+        // 异端特殊结局宣言 = docx 特殊胜利宣言（noellesroles.special.heretic.*，C-033 预存键）
+        if (key != null) {
+            String quoteKey = switch (key) {
+                case "heretic_killer" -> "noellesroles.special.heretic.killer_win";
+                case "heretic_passenger" -> "noellesroles.special.heretic.passenger_win";
+                default -> "noellesroles.ending.quote." + key;
+            };
+            Text declaration = Text.translatable(quoteKey);
             context.getMatrices().push();
             context.getMatrices().scale(1.2f, 1.2f, 1f);
-            context.drawTextWithShadow(renderer, winMessage, -renderer.getWidth(winMessage) / 2, -4, 0xFFFFFF);
+            context.drawTextWithShadow(renderer, declaration, -renderer.getWidth(declaration) / 2, -4, 0xFFFFFF);
             context.getMatrices().pop();
         }
 
@@ -195,6 +196,8 @@ public abstract class BttEndColumnsMixin {
             case "THIEF_WIN" -> "thief";
             case "NOVELIST_WIN" -> "novelist";
             case "NAKU_KORO" -> "naku";
+            case "HERETIC_KILLER" -> "heretic_killer";
+            case "HERETIC_PASSENGER" -> "heretic_passenger";
             default -> null;
         };
     }

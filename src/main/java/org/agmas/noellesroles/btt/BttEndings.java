@@ -21,7 +21,11 @@ public final class BttEndings {
         /** 窃贼独胜：搜刮过半（BT-THIEF-SOLO：wathe WinStatus 无单人位，暂映射 NONE，文本由 BttEndTextMixin 呈现） */
         THIEF_WIN,
         /** 小说家独胜：猜对过半（同上 BT-NOVELIST-SOLO） */
-        NOVELIST_WIN
+        NOVELIST_WIN,
+        /** 异端分子特殊结局（doc：对调胜负+特殊宣言）：乘客达成条件→翻转为凶手胜 */
+        HERETIC_KILLER,
+        /** 异端分子特殊结局：凶手达成条件→翻转为乘客胜 */
+        HERETIC_PASSENGER
     }
 
     /**
@@ -66,6 +70,8 @@ public final class BttEndings {
             case BLOOD_EXPRESS, NAKU_KORO -> GameFunctions.WinStatus.KILLERS;
             case JOURNEY_END -> GameFunctions.WinStatus.TIME;
             case TRIAL_COMPLETE -> GameFunctions.WinStatus.PASSENGERS;
+            case HERETIC_KILLER -> GameFunctions.WinStatus.KILLERS;
+            case HERETIC_PASSENGER -> GameFunctions.WinStatus.PASSENGERS;
             default -> GameFunctions.WinStatus.NONE;
         };
     }

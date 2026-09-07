@@ -134,8 +134,8 @@ public final class BttRoleDefs {
 
         // ===== tick 钩子 =====
 
-        // 乘警：理智锁满（doc：无理智限制）
-        def(BttRoles.RAILWAY_POLICE).onTick((player, world, gwc) ->
+        // 义警：理智锁满（docx 2026-09-07 更新：义警=无理智限制；乘警改为无体力限制，注册旗标 maxSprintTime=-1 已覆盖）
+        def(BttRoles.VIGILANTE).onTick((player, world, gwc) ->
                 PlayerMoodComponent.KEY.get(player).setMood(1.0f));
 
         // 司机：存活 → 倒计时额外 -1 tick/tick（×2 速率；审计修复后挂 DRIVER）

@@ -10,6 +10,7 @@
     "btt.BttScreenDoNotClose",
     "btt.BttGodfatherHudMixin",
     "btt.BttMoodGateMixin",
+    "btt.BttMoodFlagMixin",
     "bartender.BartenderShopMixin",
     "bartender.DefenseVialHandMixin",
     "chameleon.ChameleonCapeMixin",
@@ -38,8 +39,8 @@
     "voodoo.VoodoScreenMixin",
     "vulture.VultureEatenBodyMixin",
     "vulture.VultureHudMixin",
-    "btt.BttShopFilterMixin",
-    "btt.BttInstinctColorMixin"
+    "btt.BttShopClientMixin",
+    "btt.BttShoujoInstinctMixin"
   ],
   "injectors": {
     "defaultRequire": 1

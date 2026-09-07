@@ -39,7 +39,7 @@ public abstract class BartenderPlayerShopComponentMixin {
 
     @Inject(method = "tryBuy", at = @At("HEAD"), cancellable = true)
     void bartenderBuy(int index, CallbackInfo ci) {
-        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) { ci.cancel(); return; } // C-028
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) { return; } // C-028/C-047：BTT 局跳过 NR 店逻辑（不 cancel，放行后续处理器）
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.BARTENDER)) {
             if (ConfigWorldComponent.KEY.get(player.getWorld()).maximumDefenseVials == 0 || BartenderPlayerComponent.KEY.get(player).vialsBought < ConfigWorldComponent.KEY.get(player.getWorld()).maximumDefenseVials) {

@@ -1,92 +1,52 @@
-# You will need doctor4t's train mod placed inside the "libs" folder (alongside HarpyModLoader). Please install it yourself.
-New roles for [The Last Voyage of the Harpy Express](https://modrinth.com/modpack/harpy-express) created by [doctor4t](https://www.youtube.com/@doctor4t).
+# 终点站抵达之前 (Before the Terminal / BTT)
 
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/h_c-dpjlONY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-Role List:
+在一列驶向终点站的列车上进行的社交推理玩法。
 
-## Killers & Non-Innocents
+- 本体：`agmass/NoellesRoles` 的替换式演进 fork（命名空间仍为 `noellesroles`）
+- 引擎：[wathe](https://modrinth.com/mod/XoU7Lf7D) 1.3.2 + [HarpyModLoader](https://modrinth.com/mod/JRhdijgD) 1.2.4
+- 平台：Minecraft 1.21.1 / Fabric / Java 21
+- 当前版本：`0.2.0-alpha-h1.3`（版本规则见 `docs/RELEASE.md`）
 
-- Jester
-  - Wins with the killers, but cannot use any killer menus.
-  - Has a fake knife and a fake revolver
-  - **When shot, goes psycho mode**. Does not have a shield, so one more shot will kill the jester.
-  - Can accidentaly kill their killer teammates and end the game, make sure to co-operate!
-  - Has a shop with tools to frame people; gains money passively.
+## 如何运行
 
-- Executioner
-  - Gains a target at the start of the game
-  - If the target dies to a civillian or natural causes, the Executioner becomes a random Killer role.
-  - If the target dies to a killer, the executioner re-targets.
-  - Has a shop with tools to frame people; gains money passively.
+```powershell
+.\gradlew.bat build        # 编译 + 打 jar（产物 build/libs/noellesroles-<版本>.jar）
+.\gradlew.bat runServer    # 专用服冒烟（需 run/eula.txt=true）
+.\gradlew.bat runClient    # 客户端
+```
 
-- Morphling
-  - Can morph into any **alive** player on a cooldown.
+- 依赖 jar（`libs/`，不入库）：`wathe-1.3.2-1.21.1.jar`、`harpymodloader-1.2.4-h1.3.jar`；ratatouille 必须 1.4.3（见 `gradle.properties`）。
+- 开局：拉汽笛，或 `/wathe:start noellesroles:before_the_terminal wathe:harpy_express_night`（6–18 人）。
+- `release/` 为完整部署包（本 mod + wathe + HML + ratatouille + Simple Voice Chat + 配置垫片说明）。
+- 详细测试方法与环境陷阱见 `docs/TESTING.md`。
 
-- Phantom
-  - Can gain temporary invisibility on a cooldown. Watch out- your items are still visible! (ps. may break with mods that add extra things to your character)
+## 当前状态（快照）
 
-- Swapper
-  - Can swap two people around the map on a cooldown.
+- 核心闭环可玩：开局 → 席位分配 → 迎新 → 对局（击杀/处决/商店/理智）→ 三主结局判定 → 结局覆盖层 → 清理再开。
+- 70 身份全量注册（57 新键 + 13 接管 NR 旧键）；**33 身份有真实行为**，其余仅注册元数据；醉酒/尾声/本能透视豁免等系统未做。
+- 2026-09-06 策划案大改（中立三分类、席位公式、同色互斥等）**尚未落入代码**，已登记 GAP。
+- 精确进度见 `docs/IMPLEMENTATION_STATUS.md`；下一步见 `docs/ROADMAP.md`。
 
-- Vulture
-  - Eat bodies to turn into a killer!
-  - Only enables past 8 players.
-  - Neutral role.
+## 文档地图
 
+| 文档                              | 职责                           |
+| ------------------------------- | ---------------------------- |
+| `docs/GAME_DESIGN.md`           | 游戏规则（"应该是什么"的设计事实源）          |
+| `docs/ROLE_DESIGN.md`           | 全部 70 身份的设计规格与身份目录           |
+| `docs/ROLE_INTERACTIONS.md`     | 身份/系统间交互、冲突矩阵                |
+| `docs/SYSTEM_SPEC.md`           | 技术规范、wathe/HML API 结论、基线改动登记 |
+| `docs/ARCHITECTURE.md`          | 当前实际架构（类/时序/同步/门控）           |
+| `docs/IMPLEMENTATION_STATUS.md` | 现在做到哪（唯一来源）                  |
+| `docs/ROADMAP.md`               | 接下来做什么（唯一来源）                 |
+| `docs/TESTING.md`               | 测试方法、环境、陷阱、已验证清单             |
+| `docs/RELEASE.md`               | 构建产物、版本规则、发布检查               |
+| `docs/ARCHAEOLOGY.md`           | 谱系考古、参考项目、历史决策（唯一历史区）        |
+| `docs/终点站抵达之前.docx`             | 策划案原件（只读）                    |
 
-## Civillians
+AI 协作者请先读 `AGENTS.md`。
 
-- Conductor
-  - Has a key to every door on the train.
-  - This key will drop after the host dies- make sure everyone knows you have it, or the killers can clear themselves with it!
+## 致谢
 
-- Bartender
-  - See people who drink through walls temporarily.
-  - Bartender can see poison and poisoned players
-  - Bartender can buy a "defense vial" for 100 dollars (50 dollars per task done)
-    - Defense vial can make drinks give whoever drinks them an extra hit (like psycho armor)
-
-- Noisemaker
-  - On death, your body will glow.
-  - Can buy firecrackers in the store.
-
-- Recaller
-  - Save a location to teleport to later
-  - Use your ability key to teleport to your saved location for 100 dollars (50 dollars per task done)
-
-- Coroner
-  - See the time of death and death reason of bodies. (also enabled in spectator mode!)
-
-- Voodoo
-  - Choose one person to die alongside you.
-
-## ???? (disabled by default, turn on a config option to get them back on!)
-
-- Awesome Binglus
-  - Awesome Binglu
-  - Spawns with a lot of notes
-- The Insane Damned Paranoid Killer Of Doom Death Destruction And Waffles
-  - Killer Role
-  - Can hear ghosts
-- Better Vigilante
-  - Spawns with a grenade
-
-## Extras
-- Coroner's ability can be used by spectators when looking at a body
-- (Configurable) Players will start morphing skins and have a hidden name when having extremely low mood.
-
-## Config Note
-Use /setEnabledRole and /listRoles (from HarpyModLoader) to enable or disable roles.
-
-
-"Why _Noelle's_ Roles?" because i had a noelle deltarune minecraft skin at the time of making this mod and i thought it was funny
-
-**Special Thanks:**
-
-- eyelego for the "Master Key" item art
-- DragonSlayr15001 for the Mood icons
-- Alazi for Russian Translation
-- ZeroIcceBear, Qlicky, YourZi for Chinese Translation
-- LucCraftGHG for the German Translation
-- Hugo0272 for the Spanish Translation
-- All the testers in this mod's discord, for giving out so many cool ideas!
+- 玩法策划：《终点站抵达之前》策划案（见 docs/）
+- 上游：[agmass/NoellesRoles](https://github.com/agmass/NoellesRoles)（原 README 的 NR 角色清单与致谢随上游保留在 git 历史；本 fork 当前状态以本文档为准）
+- 引擎：doctor4t 的 Wathe（All Rights Reserved，源码仅作只读参考）
