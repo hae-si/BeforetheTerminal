@@ -197,11 +197,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // **链式切换**到下一位（重新广播标题）。倒计时归零结算：主持人翁=外人且存活 → 各自胜利；
         // 生还尾声 → 旅途结束/乘客胜利（正常 decide）。尾声期间常规结局判定暂停。
         int murderers = alivePrincipals + aliveAccomplices;
-        // 压表：①凶手数>乘客数（doc 字面）；②乘客侧全灭（实现补充：乘客阵营陷入不利的极端情形，
-        // 使魔女/教团尾声在早期清场后仍可触达——否则 0>0 不成立需干等 6 分钟；请作者复核）。
-        // time>1200 守卫罩住全部分支：尾声进行中不得回拨
-        if (gameTime.getTime() > 1200
-                && (murderers > alivePassengers || (alivePassengers == 0 && murderers == 0))) {
+        // 压表（2026-09-07 澄清）：**凶手 + 外人 > 乘客**（外人=外人中立+教团成员；黑死病计入凶手侧）。
+        // 覆盖"魔女杀光其他人"场景（魔女自己是外人 1>0）；time>1200 守卫防尾声进行中回拨。
+        int outsidersTotal = aliveOutsiderNeutrals + aliveCult;
+        if (gameTime.getTime() > 1200 && murderers + outsidersTotal > alivePassengers) {
             gameTime.setTime(1200); // 倒计时减至两分钟
         }
         BttEndings.Ending ending = BttEndings.Ending.NONE;
