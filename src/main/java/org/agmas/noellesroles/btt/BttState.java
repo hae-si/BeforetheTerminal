@@ -17,8 +17,6 @@ public final class BttState {
     private static final UUID GLOBAL = new UUID(0L, 0x6C0BA17L);
     /** 活跃尾声（BT-SYS-EPILOGUE 最小实现）："MAJO"/"CULT"；空=无 */
     public static String epilogueType = "";
-    /** 尾声剩余 tick */
-    public static int epilogueTicks = 0;
 
     public static int getInt(UUID player, String key) {
         Map<String, Integer> m = INTS.get(player);
@@ -44,7 +42,6 @@ public final class BttState {
 
     public static void resetRound() {
         INTS.clear();
-        epilogueTicks = 0;
         epilogueType = "";
     }
 }

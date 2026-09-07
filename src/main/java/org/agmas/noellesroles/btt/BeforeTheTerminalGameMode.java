@@ -96,9 +96,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
     }
 
-    private static void startEpilogue(String type, java.util.List<ServerPlayerEntity> players) {
-        BttState.epilogueTicks = 1200; // 2 分钟
-        BttState.epilogueType = type;
+    private static void startEpilogueBroadcast(String type, java.util.List<ServerPlayerEntity> players) {
         String key = switch (type) {
             case "MAJO" -> "majo";
             case "CULT" -> "cult";
@@ -191,56 +189,41 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
         if (!anySeats) return; // 防御：尚无座位（不应发生）
 
-        boolean stationReached = !GameTimeComponent.KEY.get(world).hasTime();
         GameTimeComponent gameTime = GameTimeComponent.KEY.get(world);
 
-        // ===== 尾声（BT-SYS-EPILOGUE v2，C-057：docx 2026-09-07 尾声规则更新） =====
-        // 触发（乘客阵营不利）：①凶手存活且倒计时≤2min → 在场外人按 魔女/救世主>饕餮/花匠>凶手 优先认领（无人认领=生还尾声）；
-        // ②凶手数>乘客数且无外人在场 → 倒计时压至 2min，生还尾声（凶手）。
-        // 尾声 2 分钟：常规结局判定暂停；**外人不再获得强化（雷达/获枪为过时设定已移除），坚持到尾声结束即各自胜利**；
-        // 结束时主持人翁死亡 → 尾声提前终止无胜利；生还尾声结束 → 正常到站判定（旅途结束）。
+        // ===== 尾声（BT-SYS-EPILOGUE v3，C-058：作者澄清） =====
+        // ①凶手数>乘客数 → 倒计时**减至两分钟**；②倒计时 ≤2min → **必然进入尾声**（期间 BGM【GAP】）。
+        // 主持人翁按 魔女/救世主>饕餮/花匠>凶手(生还尾声) 动态认领：当前主持人翁**阵营全灭**且有其他凶手/外人存在时，
+        // **链式切换**到下一位（重新广播标题）。倒计时归零结算：主持人翁=外人且存活 → 各自胜利；
+        // 生还尾声 → 旅途结束/乘客胜利（正常 decide）。尾声期间常规结局判定暂停。
+        int murderers = alivePrincipals + aliveAccomplices;
+        if (murderers > alivePassengers && gameTime.getTime() > 1200) {
+            gameTime.setTime(1200); // 凶手数>乘客数 → 倒计时减至两分钟
+        }
         BttEndings.Ending ending = BttEndings.Ending.NONE;
-        if (BttState.epilogueTicks > 0) {
-            BttState.epilogueTicks--;
-            String type = BttState.epilogueType;
-            boolean hostAlive = switch (type) {
-                case "MAJO" -> majoAlive;
-                case "CULT" -> messiahAlive;
-                case "KIDNAPPER" -> kidnapperAlive;
-                case "GARDENER" -> gardenerAlive;
-                default -> true; // SURVIVAL：凶手侧无单一主持人翁
-            };
-            if (BttState.epilogueTicks == 0 || !hostAlive) {
-                boolean naturalEnd = BttState.epilogueTicks == 0;
-                BttState.epilogueTicks = 0;
-                BttState.epilogueType = "";
-                // 外人坚持到尾声结束（自然结束且主持人翁存活）→ 各自胜利
-                if (naturalEnd && hostAlive) {
-                    ending = switch (type) {
-                        case "MAJO" -> BttEndings.Ending.MAJO_WIN;
-                        case "CULT" -> BttEndings.Ending.CULT_WIN;
-                        case "KIDNAPPER" -> BttEndings.Ending.KIDNAPPER_WIN;
-                        case "GARDENER" -> BttEndings.Ending.GARDENER_WIN;
-                        default -> BttEndings.Ending.NONE; // 生还尾声：无特殊结局，落入正常到站判定
-                    };
-                }
+        if (gameTime.getTime() <= 1200) {
+            // 主持人翁动态认领（存活者中按优先级）；当前主持人翁阵营全灭 → desired 自动落到下一位 → 链式切换
+            String desired = majoAlive ? "MAJO" : messiahAlive ? "CULT"
+                    : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
+            if (!desired.equals(BttState.epilogueType)) {
+                BttState.epilogueType = desired;
+                startEpilogueBroadcast(desired, players);
+            }
+            if (gameTime.getTime() <= 0) {
+                // 倒计时归零结算：外人主角存活 → 各自胜利；生还尾声 → 正常到站判定（旅途结束/乘客胜利）
+                ending = switch (desired) {
+                    case "MAJO" -> BttEndings.Ending.MAJO_WIN;
+                    case "CULT" -> BttEndings.Ending.CULT_WIN;
+                    case "KIDNAPPER" -> BttEndings.Ending.KIDNAPPER_WIN;
+                    case "GARDENER" -> BttEndings.Ending.GARDENER_WIN;
+                    default -> BttEndings.decide(alivePrincipals, aliveAccomplices,
+                            alivePassengers, aliveOutsiderNeutrals, true);
+                };
             }
         } else {
-            int murderers = alivePrincipals + aliveAccomplices;
-            if (murderers > 0 && gameTime.getTime() <= 1200) {
-                // ①凶手存活 + 倒计时≤2min：外人按优先级认领，否则生还尾声
-                String type = majoAlive ? "MAJO" : messiahAlive ? "CULT"
-                        : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
-                startEpilogue(type, players);
-            } else if (murderers > alivePassengers && aliveOutsiderNeutrals == 0 && aliveCult == 0) {
-                // ②凶手数>乘客数且无外人在场：倒计时压至 2 分钟，生还尾声
-                gameTime.setTime(1200);
-                startEpilogue("SURVIVAL", players);
-            }
-        }
-        if (ending == BttEndings.Ending.NONE && BttState.epilogueTicks == 0) {
+            BttState.epilogueType = "";
             ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
-                    alivePassengers, aliveOutsiderNeutrals, stationReached);
+                    alivePassengers, aliveOutsiderNeutrals, false);
         }
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
@@ -286,9 +269,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 ? winners
                 : players.stream().filter(flipWinner)
                         .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
-if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
+        if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
             LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",
-                    ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals, stationReached);
+                    ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals,
+                    gameTime.getTime() <= 0);
             // doc 结局写入同步组件：客户端 BttEndTextMixin 直接改写 wathe 结束覆盖层文本（不在聊天框输出）
             BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
             btt.lastEnding = ending.name();
