@@ -43,9 +43,6 @@ public abstract class BttKillHookMixin {
             dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(shooter).addToBalance(100);
         }
 
-        // === ① 全局：祭品协议复位（连环杀手 def 内按需置位） ===
-        BttState.lastKillWasSacrifice = false;
-
         // === ① 全局：明星死亡通知仅乘客（doc：中立/凶手/外人不收；P2A-002） ===
         if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.STAR)) {
             for (ServerPlayerEntity p : world.getPlayers()) {

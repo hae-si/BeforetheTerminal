@@ -66,12 +66,6 @@ public class BeforeTheTerminalGameMode extends GameMode {
             GameFunctions.stopGame(world);
             return;
         }
-        // 乘客侧（执法/平民/狂人）初始总数——审判落幕牺牲条件（docx 2026-09-07）
-        BttState.initialPassengerSide = (int) seats.values().stream()
-                .map(BttRoles::factionOf)
-                .filter(f -> f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN
-                        || f == BttRoles.Faction.MAD)
-                .count();
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
             gameWorld.addRole(player, role);
@@ -104,15 +98,18 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
         return p -> {
-            var f = BttRoles.factionOf(gwc.getRole(p));
-            return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE;
+            Role r = gwc.getRole(p);
+            var f = BttRoles.factionOf(r);
+            return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE || r == BttRoles.BLACKDEATH;
         };
     }
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByInnocent(GameWorldComponent gwc) {
         return p -> {
-            var f = BttRoles.factionOf(gwc.getRole(p));
-            return f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD;
+            Role r = gwc.getRole(p);
+            var f = BttRoles.factionOf(r);
+            return (f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD)
+                    && r != BttRoles.BLACKDEATH;
         };
     }
 
@@ -148,8 +145,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
             anySeats = true;
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
                 var faction = org.agmas.noellesroles.btt.BttRoles.factionOf(role);
-                // C-037 三分类：狂人中立=MAD（乘客阵营，计入乘客侧）；独行不阻塞任何结局
-                if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
+                // C-037 三分类 + docx 2026-09-07：黑死病=狂人中立席位但阵营归属**凶手**（额外的凶手，
+                // 胜负与其他凶手一致）——计入凶手侧、不计入乘客侧
+                if (role == BttRoles.BLACKDEATH) alivePrincipals++;
+                else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
                 else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
                 else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) aliveOutsiderNeutrals++;
                 else if (faction == BttRoles.Faction.ENFORCER || faction == BttRoles.Faction.CIVILIAN
@@ -163,20 +162,22 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 独胜判定：窃贼（BttWatheVultureThiefMixin）与小说家（BttGuessReceiver）均在行为点直接
         // lastEnding+winners+setRoundEndData+stopGame，不在此 tick 判定（2026-09-07 用户指令）
         BttEndings.Ending ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
-                alivePassengers, aliveOutsiderNeutrals, stationReached,
-                BttState.initialPassengerSide - alivePassengers, BttState.initialPassengerSide);
+                alivePassengers, aliveOutsiderNeutrals, stationReached);
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
         // C-037：按 BTT 阵营判定（接管键的 NR 原生 innocent 旗标不可靠，如 jester）——
-        // 乘客侧=执法/平民/狂人；凶手侧=主犯/从犯；独行/外人中立不随主结局胜负
+        // 乘客侧=执法/平民/狂人（黑死病除外）；凶手侧=主犯/从犯/黑死病（docx：额外的凶手）；独行/外人中立不随主结局胜负
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
             case TRIAL_COMPLETE, JOURNEY_END -> p -> {
-                var f = BttRoles.factionOf(gameWorld.getRole(p));
-                return f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD;
+                Role r = gameWorld.getRole(p);
+                var f = BttRoles.factionOf(r);
+                return (f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD)
+                        && r != BttRoles.BLACKDEATH;
             };
             case BLOOD_EXPRESS, NAKU_KORO -> p -> {
-                var f = BttRoles.factionOf(gameWorld.getRole(p));
-                return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE;
+                Role r = gameWorld.getRole(p);
+                var f = BttRoles.factionOf(r);
+                return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE || r == BttRoles.BLACKDEATH;
             };
             default -> p -> false;
         };

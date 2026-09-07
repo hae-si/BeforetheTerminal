@@ -15,15 +15,6 @@ public final class BttState {
     private static final Map<UUID, Map<String, Integer>> INTS = new HashMap<>();
     /** 全局（回合级）计数键：窃贼搜刮数等。 */
     private static final UUID GLOBAL = new UUID(0L, 0x6C0BA17L);
-    /** 祭品是否已分配（每局一次） */
-    private static boolean sacrificesAssigned = false;
-    /**
-     * 瞬态标记：最近一次 killPlayer 是否为连环杀手击杀祭品。
-     * 仅由 BttKillHookMixin（killPlayer 内）写入、BttSerialKillerKnifeMixin（同线程随后消费）读取。
-     */
-    public static boolean lastKillWasSacrifice = false;
-    /** 本局乘客侧（执法/平民/狂人）初始总数——审判落幕牺牲条件用（docx 2026-09-07） */
-    public static int initialPassengerSide = 0;
 
     public static int getInt(UUID player, String key) {
         Map<String, Integer> m = INTS.get(player);
@@ -47,18 +38,7 @@ public final class BttState {
         setInt(GLOBAL, key, value);
     }
 
-    public static boolean sacrificesAssigned() {
-        return sacrificesAssigned;
-    }
-
-    public static void markSacrificesAssigned() {
-        sacrificesAssigned = true;
-    }
-
     public static void resetRound() {
         INTS.clear();
-        sacrificesAssigned = false;
-        lastKillWasSacrifice = false;
-        initialPassengerSide = 0;
     }
 }

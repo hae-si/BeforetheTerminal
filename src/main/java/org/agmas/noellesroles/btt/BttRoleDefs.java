@@ -47,8 +47,6 @@ public final class BttRoleDefs {
             knife().give(p);
             BttState.setInt(p.getUuid(), "witchUses", 1); // 刀限一次
         });
-        def(BttRoles.DEMON).kit(knife());
-        def(BttRoles.SERIAL_KILLER).kit(knife());
         def(BttRoles.CLEANER).kit(knife());
         def(BttRoles.SWORDSMAN).kit(knife()); // 剑客（docx 改名）：[剑] 飞剑 GAP，暂以刀代
         def(BttRoles.VETERAN).kit(p -> {
@@ -123,15 +121,6 @@ public final class BttRoleDefs {
             shooter.getItemCooldownManager().set(WatheItems.BAT, GameConstants.getInTicks(1, 0));
         });
 
-        // 连环杀手：祭品协议（BttSerialKillerKnifeMixin 消费瞬态标记）+ CD 永减 −10s
-        def(BttRoles.SERIAL_KILLER).onKill((shooter, victim, reason, gwc) -> {
-            if (BttState.getInt(victim.getUuid(), "sacrifice") == 1) {
-                BttState.lastKillWasSacrifice = true;
-                BttState.setInt(shooter.getUuid(), "serialCdDelta",
-                        BttState.getInt(shooter.getUuid(), "serialCdDelta") - 200);
-            }
-        });
-
         // ===== tick 钩子 =====
 
         // 义警：理智锁满（docx 2026-09-07 更新：义警=无理智限制；乘警改为无体力限制，注册旗标 maxSprintTime=-1 已覆盖）
@@ -161,9 +150,6 @@ public final class BttRoleDefs {
                 removeOne(player, WatheItems.BAT);
             }
         });
-
-        // 恶魔：<凝视> 祭品保持视野每 4s 计 1s，累计 30 凝视秒 → 死亡（视线中断归零）
-        def(BttRoles.DEMON).onTick((player, world, gwc) -> demonGaze(world, gwc));
 
         // ===== 实体交互钩子（UseEntityCallback 派发） =====
 
@@ -208,30 +194,6 @@ public final class BttRoleDefs {
     }
 
     // ===== 恶魔凝视（推迟测试：机制保留，2026-09-05 用户裁定往后推） =====
-
-    static final int DEMON_GAZE_QUARTERS = 2400;
-
-    private static void demonGaze(ServerWorld world, GameWorldComponent gwc) {
-        for (ServerPlayerEntity demon : world.getPlayers()) {
-            if (!gwc.isRole(demon, BttRoles.DEMON)) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(demon)) continue;
-            for (ServerPlayerEntity target : world.getPlayers()) {
-                if (BttState.getInt(target.getUuid(), "sacrifice") != 1) continue;
-                if (!GameFunctions.isPlayerAliveAndSurvival(target)) continue;
-                if (inView(world, demon, target)) {
-                    int q = BttState.getInt(target.getUuid(), "demonGazeQ") + 1;
-                    if (q >= DEMON_GAZE_QUARTERS) {
-                        BttState.setInt(target.getUuid(), "demonGazeQ", 0);
-                        GameFunctions.killPlayer(target, true, demon, GameConstants.DeathReasons.KNIFE);
-                    } else {
-                        BttState.setInt(target.getUuid(), "demonGazeQ", q);
-                    }
-                } else {
-                    BttState.setInt(target.getUuid(), "demonGazeQ", 0);
-                }
-            }
-        }
-    }
 
     /** 视野（约 ±60° 锥角）+ 视线（方块遮挡检测） */
     private static boolean inView(ServerWorld world, LivingEntity viewer, LivingEntity target) {

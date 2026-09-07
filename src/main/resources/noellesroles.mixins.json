@@ -42,7 +42,6 @@
     "btt.BttAutoStartMixin",
     "btt.BttShopBuyMixin",
     "btt.BttCleanerSilentKnifeMixin",
-    "btt.BttSerialKillerKnifeMixin",
     "btt.BttMaidPlatterMixin",
     "btt.BttWatheVultureThiefMixin",
     "btt.BttHmlForceRoleMixin"

@@ -38,7 +38,7 @@ public final class BttEvents {
     private BttEvents() {}
 
     /** 祭品得分队（深绿名+辉光轮廓） */
-    private static final String SACRIFICE_TEAM = "sacrifice";
+    private static final String SACRIFICE_TEAM = "sacrifice"; // 保留：祭品系统 dormant（恶魔/连环杀手已移除）
     private static final Random RANDOM = new Random();
 
     public static void init() {
@@ -166,7 +166,7 @@ public final class BttEvents {
     // ===== use 派发：全量回退（2026-09-05 用户裁定——枪/刀对玩家右键失效 bisect；
     // 失忆/窃贼尸体交互与女仆赠予待以 G 键/UI 重做） =====
 
-    // ===== tick 派发（END_SERVER_TICK → defs）+ 全局祭品池 =====
+    // ===== tick 派发（END_SERVER_TICK → defs） =====
 
     static void registerTickHandlers() {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
@@ -180,44 +180,8 @@ public final class BttEvents {
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }
-
-                assignSacrificesIfNeeded(serverWorld, gwc);
             }
         });
-    }
-
-    // ===== 祭品（连环杀手/恶魔共用）：每 10 平民或中立出 1 祭品，深绿显示 =====
-
-    private static void assignSacrificesIfNeeded(ServerWorld world, GameWorldComponent gwc) {
-        // 恶魔/连环杀手已从策划案移除（docx 2026-09-07，EXCLUDED 不入池）——祭品暂无消费者，停用分配（代码保留，便于回调）
-        if (true) return;
-        if (BttState.sacrificesAssigned()) return;
-        BttState.markSacrificesAssigned();
-
-        List<ServerPlayerEntity> candidates = new ArrayList<>();
-        for (ServerPlayerEntity p : world.getPlayers()) {
-            Role role = gwc.getRole(p);
-            if (role == null) continue;
-            BttRoles.Faction f = BttRoles.factionOf(role);
-            if (f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.LONE
-                    || f == BttRoles.Faction.OUTSIDER_NEUTRAL || f == BttRoles.Faction.MAD) candidates.add(p);
-        }
-        int need = candidates.size() / 10;
-        if (need == 0) return;
-
-        Collections.shuffle(candidates, RANDOM);
-        Scoreboard sb = world.getScoreboard();
-        Team team = sb.getTeam(SACRIFICE_TEAM);
-        if (team == null) {
-            team = sb.addTeam(SACRIFICE_TEAM);
-            team.setColor(net.minecraft.util.Formatting.DARK_GREEN);
-        }
-        for (int i = 0; i < need; i++) {
-            ServerPlayerEntity t = candidates.get(i);
-            BttState.setInt(t.getUuid(), "sacrifice", 1);
-            sb.addScoreHolderToTeam(t.getGameProfile().getName(), team);
-            t.setGlowing(true);
-        }
     }
 
     // ===== HML 池隔离 =====

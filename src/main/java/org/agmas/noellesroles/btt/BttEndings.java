@@ -29,25 +29,21 @@ public final class BttEndings {
     }
 
     /**
-     * 纯函数：aliveMurderers=存活主犯数; aliveAccomplices=存活从犯数; alivePassengers=存活乘客侧（执法/平民/狂人）;
-     * aliveOutsiderNeutrals=存活外人中立; stationReached=到站;
-     * deadPassengerSide/initialPassengerSide=乘客侧已死亡数/初始总数（审判落幕牺牲条件，docx 2026-09-07：
-     * 牺牲的乘客 ≤ 乘客人数的一半）。
-     * 判定优先级（裁定：外人>独行>凶手>乘客）：独胜在 GameMode tick 先判 → 凶手团灭/乘客团灭 → 审判（含牺牲条件） → 到站。
+     * 纯函数：alivePrincipals=存活主犯+额外凶手（黑死病）; aliveAccomplices=存活从犯;
+     * alivePassengers=存活乘客侧（执法/平民/狂人，黑死病不计）; aliveOutsiderNeutrals=存活外人中立; stationReached=到站。
+     * 判定优先级（裁定：外人>独行>凶手>乘客）：独胜在 GameMode tick 先判 → 凶手团灭/乘客团灭 → 审判 → 到站。
      */
     public static Ending decide(int alivePrincipals, int aliveAccomplices, int alivePassengers,
-                                int aliveOutsiderNeutrals, boolean stationReached,
-                                int deadPassengerSide, int initialPassengerSide) {
-        // C-037/C-038：审判落幕=杀光凶手和外人中立（独行/狂人不阻塞）；狂人中立计入乘客侧（凶手须杀）；
+                                int aliveOutsiderNeutrals, boolean stationReached) {
+        // C-037/C-038：审判落幕=杀光凶手（含黑死病）和外人中立（独行/狂人不阻塞）；
         // 血染=杀光乘客侧和外人且主犯未死；鸣泣之时=主犯死后从犯杀光乘客侧和外人。
         if (alivePassengers <= 0 && aliveOutsiderNeutrals <= 0) {
             if (alivePrincipals > 0) return Ending.BLOOD_EXPRESS;
             if (aliveAccomplices > 0) return Ending.NAKU_KORO;
-            return Ending.TRIAL_COMPLETE; // 全灭兜底（防御：避免无人局挂起；牺牲条件必不满足但无可判者）
+            return Ending.TRIAL_COMPLETE; // 全灭兜底（防御：避免无人局挂起）
         }
-        if (alivePrincipals <= 0 && aliveAccomplices <= 0 && aliveOutsiderNeutrals <= 0
-                && deadPassengerSide * 2 <= initialPassengerSide) {
-            return Ending.TRIAL_COMPLETE; // 审判落幕（乘客存活路径 + 牺牲不超半）
+        if (alivePrincipals <= 0 && aliveAccomplices <= 0 && aliveOutsiderNeutrals <= 0) {
+            return Ending.TRIAL_COMPLETE; // 审判落幕（乘客存活路径）
         }
         // 主犯全灭：有从犯存活 → 游戏继续（鸣泣之时候选，到站仍=旅途结束）；无从犯 → 等待/到站
         if (alivePrincipals <= 0) {

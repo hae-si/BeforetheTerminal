@@ -42,8 +42,8 @@ public final class BttRoles {
         ACCOMPLICE(false, true, Role.MoodType.FAKE, -1, true),
         /** 中立 · 独行（C-037 三分类）：个人条件独胜、不阻塞任何主结局、有限体力（蓝旗 mood_ghost） */
         LONE(false, false, Role.MoodType.FAKE, 200, false),
-        /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、全员尾声；到站倒计时仅凶手可见（docx 2026-09-07），外人不可见 */
-        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, false),
+        /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、全员尾声；可见倒计时（docx 2026-09-07 恢复外人可见，品红旗 mood_jester） */
+        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, true),
         /** 中立 · 狂人（C-037 三分类）：阵营归属乘客（结局计数随乘客）、正常需求/理智、无独立胜利（绿旗） */
         MAD(true, false, Role.MoodType.REAL, 200, false);
 
@@ -179,8 +179,6 @@ public final class BttRoles {
     public static final Role BANDIT = register("bandit", 0x8B4513, Faction.ACCOMPLICE);
     public static final Role ABUSER = register("abuser", 0xE34234, Faction.ACCOMPLICE);
     public static final Role PARTYHOST = register("partyhost", 0xE34234, Faction.ACCOMPLICE);
-    public static final Role DEMON = register("demon", 0xC08081, Faction.ACCOMPLICE);
-    public static final Role SERIAL_KILLER = register("serial_killer", 0xC08081, Faction.ACCOMPLICE);
     public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.ACCOMPLICE);
     public static final Role EX_TRAITOR = register("ex_traitor", 0x2F4F4F, Faction.ACCOMPLICE);
 
@@ -219,13 +217,13 @@ public final class BttRoles {
             GODFATHER, VIGILANTE, DOCTOR, VIRGIN, JESTER, CONDUCTOR,
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
-            PHARMACIST, RIGGER, DEMON, SERIAL_KILLER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
+            PHARMACIST, RIGGER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, PYROMANIAC);
 
-    /** BTT 席位池排除表：BARTENDER（NR 行为泄漏，2026-09-05 裁定）；恶魔/连环杀手（docx 2026-09-07 从策划案移除，实现保留但不入池） */
-    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER, DEMON, SERIAL_KILLER);
+    /** BTT 席位池排除表（BARTENDER 搁置：NR 原生行为会泄漏进 BTT 局，用户裁定 2026-09-05） */
+    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER);
 
     public static boolean isImplemented(Role role) {
         return IMPLEMENTED.contains(role);
