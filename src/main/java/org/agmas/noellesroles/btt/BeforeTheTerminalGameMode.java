@@ -138,6 +138,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         int aliveAccomplices = 0;
         int alivePassengers = 0;
         int aliveOutsiderNeutrals = 0; // 仅外人中立（魔女/救世主/饕餮/花匠）——结局阻塞项
+        boolean majoAlive = false;
         boolean anySeats = false;
         for (ServerPlayerEntity player : players) {
             Role role = gameWorld.getRole(player);
@@ -153,16 +154,54 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) aliveOutsiderNeutrals++;
                 else if (faction == BttRoles.Faction.ENFORCER || faction == BttRoles.Faction.CIVILIAN
                         || faction == BttRoles.Faction.MAD) alivePassengers++;
+                if (role == BttRoles.MAJO && faction == BttRoles.Faction.OUTSIDER_NEUTRAL) majoAlive = true;
             }
         }
         if (!anySeats) return; // 防御：尚无座位（不应发生）
 
         boolean stationReached = !GameTimeComponent.KEY.get(world).hasTime();
+        BttGameWorldComponent bttState = BttGameWorldComponent.KEY.get(world);
 
-        // 独胜判定：窃贼（BttWatheVultureThiefMixin）与小说家（BttGuessReceiver）均在行为点直接
-        // lastEnding+winners+setRoundEndData+stopGame，不在此 tick 判定（2026-09-07 用户指令）
-        BttEndings.Ending ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
-                alivePassengers, aliveOutsiderNeutrals, stationReached);
+        // ===== 魔女尾声（BT-SYS-EPILOGUE 最小实现，C-054） =====
+        // 触发（魔女存活且外人在场）：①所有凶手（含黑死病）死亡（doc 尾声进入方式 3）；②到站倒计时 ≤ 2 分钟（方式 1）。
+        // 尾声期间 2 分钟：魔女获活人雷达（客户端 glow），常规结局判定暂停（独胜仍可触发）；结束/魔女死亡 → 恢复。
+        if (BttState.majoEpilogueTicks > 0) {
+            BttState.majoEpilogueTicks--;
+            if (BttState.majoEpilogueTicks == 0 || !majoAlive) {
+                BttState.majoEpilogueTicks = 0;
+                if (!bttState.epilogue.isEmpty()) {
+                    bttState.epilogue = "";
+                    bttState.sync();
+                }
+            }
+        } else if (majoAlive && aliveOutsiderNeutrals > 0
+                && (alivePrincipals == 0 && aliveAccomplices == 0
+                    || GameTimeComponent.KEY.get(world).getTime() <= 1200)) {
+            BttState.majoEpilogueTicks = 1200; // 2 分钟
+            bttState.epilogue = "MAJO";
+            bttState.sync();
+            for (ServerPlayerEntity p : players) {
+                p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
+                        Text.translatable("noellesroles.epilogue.majo.title").formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
+                p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
+                        Text.translatable("noellesroles.epilogue.majo.line").formatted(Formatting.LIGHT_PURPLE)));
+                p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
+            }
+            LOGGER.info("[BTT] majo epilogue started (murderers dead = {}).", alivePrincipals == 0 && aliveAccomplices == 0);
+        }
+
+        // 魔女独胜（doc：杀死所有乘客、凶手和外人；独行可不杀；魔女须存活）：先于常规结局（优先级裁定 外人>独行>凶手>乘客）
+        boolean majoWin = majoAlive && alivePrincipals == 0 && aliveAccomplices == 0
+                && alivePassengers == 0 && aliveOutsiderNeutrals == 1; // 场上仅剩魔女自己（外人侧）
+        BttEndings.Ending ending;
+        if (majoWin) {
+            ending = BttEndings.Ending.MAJO_WIN;
+        } else {
+            // 尾声期间常规结局判定暂停（尾声后恢复；到站判定亦延后）
+            ending = BttState.majoEpilogueTicks > 0 ? BttEndings.Ending.NONE
+                    : BttEndings.decide(alivePrincipals, aliveAccomplices,
+                    alivePassengers, aliveOutsiderNeutrals, stationReached);
+        }
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
         // C-037：按 BTT 阵营判定（接管键的 NR 原生 innocent 旗标不可靠，如 jester）——
@@ -179,6 +218,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 var f = BttRoles.factionOf(r);
                 return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE || r == BttRoles.BLACKDEATH;
             };
+            case MAJO_WIN -> p -> gameWorld.getRole(p) == BttRoles.MAJO;
             default -> p -> false;
         };
         String winners = players.stream().filter(isWinner)

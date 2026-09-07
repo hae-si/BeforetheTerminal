@@ -64,6 +64,11 @@ public final class BttRoleDefs {
         });
         revolverKit(BttRoles.BANDIT);
         revolverKit(BttRoles.NIGHT_WATCHMAN);
+        // 魔女：初始[枪]+[撬棍]（docx；外人枪不扔枪/1 分钟 CD 走 BttExecutionMixin 外人分支）
+        def(BttRoles.MAJO).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
+            p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
+        });
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
