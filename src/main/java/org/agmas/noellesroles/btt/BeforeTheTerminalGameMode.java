@@ -96,8 +96,26 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
     }
 
-    private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
-        return p -> {
+    private static void startEpilogue(String type, java.util.List<ServerPlayerEntity> players) {
+        BttState.epilogueTicks = 1200; // 2 分钟
+        BttState.epilogueType = type;
+        String key = switch (type) {
+            case "MAJO" -> "majo";
+            case "CULT" -> "cult";
+            case "KIDNAPPER" -> "kidnapper";
+            case "GARDENER" -> "gardener";
+            default -> "survival";
+        };
+        for (ServerPlayerEntity p : players) {
+            p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
+                    Text.translatable("noellesroles.epilogue." + key + ".title").formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
+            p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
+                    Text.translatable("noellesroles.epilogue." + key + ".line").formatted(Formatting.LIGHT_PURPLE)));
+            p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
+        }
+    }
+
+    private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {        return p -> {
             Role r = gwc.getRole(p);
             var f = BttRoles.factionOf(r);
             return f == BttRoles.Faction.PRINCIPAL || f == BttRoles.Faction.ACCOMPLICE || r == BttRoles.BLACKDEATH;
@@ -139,9 +157,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
         int alivePassengers = 0;
         int aliveOutsiderNeutrals = 0; // 仅外人中立（魔女/救世主/饕餮/花匠）——结局阻塞项
         int aliveLone = 0;
-        int aliveCult = 0; // 救世主+信徒（教团阵营）：不参与常规结局计数，阻塞魔女独胜
+        int aliveCult = 0; // 救世主+信徒（教团阵营）：不参与常规结局计数，视为"外人在场"
         boolean majoAlive = false;
         boolean messiahAlive = false;
+        boolean kidnapperAlive = false;
+        boolean gardenerAlive = false;
         boolean anySeats = false;
         for (ServerPlayerEntity player : players) {
             Role role = gameWorld.getRole(player);
@@ -165,6 +185,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 else if (faction == BttRoles.Faction.ENFORCER || faction == BttRoles.Faction.CIVILIAN
                         || faction == BttRoles.Faction.MAD) alivePassengers++;
                 if (role == BttRoles.MAJO && faction == BttRoles.Faction.OUTSIDER_NEUTRAL) majoAlive = true;
+                if (role == BttRoles.KIDNAPPER) kidnapperAlive = true;
+                if (role == BttRoles.GARDENER) gardenerAlive = true;
             }
         }
         if (!anySeats) return; // 防御：尚无座位（不应发生）
@@ -172,60 +194,52 @@ public class BeforeTheTerminalGameMode extends GameMode {
         boolean stationReached = !GameTimeComponent.KEY.get(world).hasTime();
         GameTimeComponent gameTime = GameTimeComponent.KEY.get(world);
 
-        // ===== 外人尾声（BT-SYS-EPILOGUE 最小实现：魔女/教团，C-054/C-056） =====
-        // 触发（对应外人存活且外人在场）：①所有凶手（含黑死病）死亡（doc 进入方式 3）；②到站倒计时 ≤ 2 分钟（方式 1）。
-        // 尾声期间 2 分钟：常规结局判定暂停（独胜仍可触发）；魔女尾声原"活人雷达"为过时设定已移除（2026-09-07 用户指令）；
-        // 教团尾声：救世主获得[枪]。结束/对应外人死亡 → 恢复。
+        // ===== 尾声（BT-SYS-EPILOGUE v2，C-057：docx 2026-09-07 尾声规则更新） =====
+        // 触发（乘客阵营不利）：①凶手存活且倒计时≤2min → 在场外人按 魔女/救世主>饕餮/花匠>凶手 优先认领（无人认领=生还尾声）；
+        // ②凶手数>乘客数且无外人在场 → 倒计时压至 2min，生还尾声（凶手）。
+        // 尾声 2 分钟：常规结局判定暂停；**外人不再获得强化（雷达/获枪为过时设定已移除），坚持到尾声结束即各自胜利**；
+        // 结束时主持人翁死亡 → 尾声提前终止无胜利；生还尾声结束 → 正常到站判定（旅途结束）。
+        BttEndings.Ending ending = BttEndings.Ending.NONE;
         if (BttState.epilogueTicks > 0) {
             BttState.epilogueTicks--;
-            boolean hostAlive = ("MAJO".equals(BttState.epilogueType) && majoAlive)
-                    || ("CULT".equals(BttState.epilogueType) && messiahAlive);
+            String type = BttState.epilogueType;
+            boolean hostAlive = switch (type) {
+                case "MAJO" -> majoAlive;
+                case "CULT" -> messiahAlive;
+                case "KIDNAPPER" -> kidnapperAlive;
+                case "GARDENER" -> gardenerAlive;
+                default -> true; // SURVIVAL：凶手侧无单一主持人翁
+            };
             if (BttState.epilogueTicks == 0 || !hostAlive) {
+                boolean naturalEnd = BttState.epilogueTicks == 0;
                 BttState.epilogueTicks = 0;
                 BttState.epilogueType = "";
+                // 外人坚持到尾声结束（自然结束且主持人翁存活）→ 各自胜利
+                if (naturalEnd && hostAlive) {
+                    ending = switch (type) {
+                        case "MAJO" -> BttEndings.Ending.MAJO_WIN;
+                        case "CULT" -> BttEndings.Ending.CULT_WIN;
+                        case "KIDNAPPER" -> BttEndings.Ending.KIDNAPPER_WIN;
+                        case "GARDENER" -> BttEndings.Ending.GARDENER_WIN;
+                        default -> BttEndings.Ending.NONE; // 生还尾声：无特殊结局，落入正常到站判定
+                    };
+                }
             }
-        } else if (aliveOutsiderNeutrals > 0) {
-            String type = majoAlive ? "MAJO" : (messiahAlive ? "CULT" : "");
-            if (!type.isEmpty() && (alivePrincipals == 0 && aliveAccomplices == 0
-                    || gameTime.getTime() <= 1200)) {
-                BttState.epilogueTicks = 1200; // 2 分钟
-                BttState.epilogueType = type;
-                String titleKey = type.equals("MAJO") ? "noellesroles.epilogue.majo.title" : "noellesroles.epilogue.cult.title";
-                String lineKey = type.equals("MAJO") ? "noellesroles.epilogue.majo.line" : "noellesroles.epilogue.cult.line";
-                for (ServerPlayerEntity p : players) {
-                    p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
-                            Text.translatable(titleKey).formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
-                    p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
-                            Text.translatable(lineKey).formatted(Formatting.LIGHT_PURPLE)));
-                    p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
-                }
-                if (type.equals("CULT")) {
-                    for (ServerPlayerEntity p : players) {
-                        if (gameWorld.getRole(p) == BttRoles.MESSIAH && GameFunctions.isPlayerAliveAndSurvival(p)) {
-                            p.giveItemStack(new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.REVOLVER));
-                        }
-                    }
-                }
-                LOGGER.info("[BTT] epilogue started: {} (murderers dead = {}).", type, alivePrincipals == 0 && aliveAccomplices == 0);
+        } else {
+            int murderers = alivePrincipals + aliveAccomplices;
+            if (murderers > 0 && gameTime.getTime() <= 1200) {
+                // ①凶手存活 + 倒计时≤2min：外人按优先级认领，否则生还尾声
+                String type = majoAlive ? "MAJO" : messiahAlive ? "CULT"
+                        : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
+                startEpilogue(type, players);
+            } else if (murderers > alivePassengers && aliveOutsiderNeutrals == 0 && aliveCult == 0) {
+                // ②凶手数>乘客数且无外人在场：倒计时压至 2 分钟，生还尾声
+                gameTime.setTime(1200);
+                startEpilogue("SURVIVAL", players);
             }
         }
-
-        // 独胜判定（优先级裁定 外人>独行>凶手>乘客；均要求对应主人翁存活）：
-        // 魔女=杀光乘客/凶手/外人（教团成员也算外人阵营须杀，独行可不杀）；
-        // 教团=只剩教团阵营（含转化的信徒；未转化的独行存活则不满足）。
-        boolean majoWin = majoAlive && alivePrincipals == 0 && aliveAccomplices == 0
-                && alivePassengers == 0 && aliveOutsiderNeutrals == 1 && aliveCult == 0; // 场上仅剩魔女自己（外人侧）
-        boolean cultWin = aliveCult > 0 && alivePrincipals == 0 && aliveAccomplices == 0
-                && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0;
-        BttEndings.Ending ending;
-        if (majoWin) {
-            ending = BttEndings.Ending.MAJO_WIN;
-        } else if (cultWin) {
-            ending = BttEndings.Ending.CULT_WIN;
-        } else {
-            // 尾声期间常规结局判定暂停（尾声后恢复；到站判定亦延后）
-            ending = BttState.epilogueTicks > 0 ? BttEndings.Ending.NONE
-                    : BttEndings.decide(alivePrincipals, aliveAccomplices,
+        if (ending == BttEndings.Ending.NONE && BttState.epilogueTicks == 0) {
+            ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
                     alivePassengers, aliveOutsiderNeutrals, stationReached);
         }
 
@@ -247,6 +261,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case MAJO_WIN -> p -> gameWorld.getRole(p) == BttRoles.MAJO;
             case CULT_WIN -> p -> gameWorld.getRole(p) == BttRoles.MESSIAH
                     || BttState.getInt(p.getUuid(), "cult") == 1;
+            case KIDNAPPER_WIN -> p -> gameWorld.getRole(p) == BttRoles.KIDNAPPER;
+            case GARDENER_WIN -> p -> gameWorld.getRole(p) == BttRoles.GARDENER;
             default -> p -> false;
         };
         String winners = players.stream().filter(isWinner)

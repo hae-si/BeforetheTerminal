@@ -62,7 +62,8 @@ public abstract class BttEndColumnsMixin {
         GameRoundEndComponent roundEnd = GameRoundEndComponent.KEY.get(player.getWorld());
         GameFunctions.WinStatus status = roundEnd.getWinStatus();
         String lastEnding = BttGameWorldComponent.KEY.get(player.getWorld()).lastEnding;
-        boolean soloWin = "THIEF_WIN".equals(lastEnding) || "NOVELIST_WIN".equals(lastEnding) || "MAJO_WIN".equals(lastEnding);
+        boolean soloWin = "THIEF_WIN".equals(lastEnding) || "NOVELIST_WIN".equals(lastEnding) || "MAJO_WIN".equals(lastEnding)
+                || "CULT_WIN".equals(lastEnding) || "KIDNAPPER_WIN".equals(lastEnding) || "GARDENER_WIN".equals(lastEnding);
         if (status == GameFunctions.WinStatus.NONE && !soloWin) return; // 无人结局
 
         List<GameRoundEndComponent.RoundEndData> entries = roundEnd.getPlayers();
@@ -90,6 +91,7 @@ public abstract class BttEndColumnsMixin {
                 case "thief" -> 0xFFAA00AA;
                 case "novelist" -> 0xFF00FFFF; // 小说家=角色青色（用户 2026-09-06；原 0xFFAF7ADB 紫）
                 case "majo" -> 0xFFFF00FF; // 魔女=角色色（洋红）
+                case "cult", "kidnapper", "gardener" -> 0xFFAA00AA; // 教团/饕餮/花匠=尾声紫（色值待定）
                 case "naku" -> 0xFF8B0000;
                 case "heretic_killer", "heretic_passenger" -> 0xFF800000; // 异端特殊结局=角色色
                 default -> 0xFFFFFFFF;
@@ -200,6 +202,9 @@ public abstract class BttEndColumnsMixin {
             case "HERETIC_KILLER" -> "heretic_killer";
             case "HERETIC_PASSENGER" -> "heretic_passenger";
             case "MAJO_WIN" -> "majo";
+            case "CULT_WIN" -> "cult";
+            case "KIDNAPPER_WIN" -> "kidnapper";
+            case "GARDENER_WIN" -> "gardener";
             default -> null;
         };
     }
