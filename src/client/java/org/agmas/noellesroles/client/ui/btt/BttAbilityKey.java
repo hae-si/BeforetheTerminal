@@ -70,11 +70,13 @@ public final class BttAbilityKey {
         // 刺客=NR Guesser 原生 UI（Modifier 门控），不进本列表
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST
                 || role == BttRoles.HUNTER || role == BttRoles.DETECTIVE
-                || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST;
+                || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
+                || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER;
     }
 
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
+        // 仅无需输入猜测的身份（点头像即发动）；蛇魅/救世主需文本框输入，非 instant
         return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER
-                || role == BttRoles.PHARMACIST || role == BttRoles.SNAKE_CHARMER;
+                || role == BttRoles.PHARMACIST;
     }
 }
