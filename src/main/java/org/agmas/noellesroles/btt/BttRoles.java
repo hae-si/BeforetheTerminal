@@ -188,7 +188,7 @@ public final class BttRoles {
     /** 窃贼：接管 NR vulture（透视尸体/G 键吃尸原生；胜利=吃尸体过半而非变杀手，C-039） */
     public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.LONE);
     /** 纵火犯：docx 独立身份——**与 NR 感染体（infected）非同物**，原接管已回滚（2026-09-07 用户指令），改用新键 arsonist；浇油/点燃/雷达未实装 */
-    public static final Role ARSONIST = register("arsonist", 0xA569BD, Faction.LONE);
+    public static final Role ARSONIST = register("arsonist", 0xCD7F32, Faction.LONE);
     public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
     public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
     public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.MAD);
@@ -224,6 +224,46 @@ public final class BttRoles {
 
     /** BTT 席位池排除表（BARTENDER 搁置：NR 原生行为会泄漏进 BTT 局，用户裁定 2026-09-05） */
     private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER);
+
+    /**
+     * 同色身份对（docx 2026-09-07 勘误：同色 = **各阵营内相邻的奇偶编号对**，非 RGB 相等——
+     * 如 arsonist 0xCD7F32 与 folklorist/meyuubyou 同 RGB 但分属不同对，不构成互斥）。
+     * 键=身份，值=其同色搭档；互斥语义：一对中至多一人入场（assignSeats 消费）。
+     */
+    private static final Map<Role, Role> SAME_COLOR_PARTNER = new HashMap<>();
+    static {
+        Role[][] pairs = {
+                // 执法 1-8
+                {VIGILANTE, HUNTER}, {RAILWAY_POLICE, NIGHT_WATCHMAN}, {RANGER, GOLEM}, {WITCH, VETERAN},
+                // 信息 1-8
+                {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
+                // 生死 1-6
+                {PROFESSOR, PHARMACIST}, {VIRGIN, STAR}, {BARTENDER, MINSTREL},
+                // 辅助 1-12
+                {CONDUCTOR, ATTENDANT}, {ARCHITECT, RIGGER}, {SHOUJO, DRIVER}, {MAID, POSTMAN},
+                {CANNIBAL, PHILOSOPHER}, {UNDERCOVER, EX_UNDERCOVER},
+                // 主犯 1-8
+                {ASSASSIN, IMPOSTOR}, {ACTOR, STOWAWAY}, {MAGICIAN, GODFATHER}, {SMUGGLER, DRUG_MAKER},
+                // 从犯 1-10
+                {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, PARTYHOST},
+                {TRAITOR, EX_TRAITOR},
+                // 独行 1-4
+                {NOVELIST, JESTER}, {THIEF, ARSONIST},
+                // 外人 1-4
+                {MAJO, MESSIAH}, {KIDNAPPER, GARDENER},
+                // 狂人 1-8
+                {BLACKDEATH, HERETIC}, {AMNESIAC, GOON}, {SNAKE_CHARMER, CULT_LEADER}, {DRUNK, LUNATIC},
+        };
+        for (Role[] pair : pairs) {
+            SAME_COLOR_PARTNER.put(pair[0], pair[1]);
+            SAME_COLOR_PARTNER.put(pair[1], pair[0]);
+        }
+    }
+
+    /** 同色搭档（无则 null）；互斥语义见 {@link #SAME_COLOR_PARTNER} */
+    public static Role sameColorPartner(Role role) {
+        return SAME_COLOR_PARTNER.get(role);
+    }
 
     public static boolean isImplemented(Role role) {
         return IMPLEMENTED.contains(role);

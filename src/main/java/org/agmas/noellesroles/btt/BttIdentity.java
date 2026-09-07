@@ -46,7 +46,7 @@ public final class BttIdentity {
      * 纯函数：doc 席位公式分配（2026-09-06 策划大改/C-037 适配）：
      * 主犯 1；从犯 N//6−1；执法 N//6；中立 N//6（独行/外人/狂人三分类合并池）；平民=余量。
      * 每阵营先抽"已实装"层（洗牌），不足降层补元数据身份；BARTENDER 排除。
-     * **同色互斥**（C-037）：强制身份与席位身份颜色两两不同；池内无法满足时降级为跨池替换，仍不足则保留重复（防御）。
+     * **同色互斥**（C-052 勘误：同色 = docx 各阵营相邻奇偶编号对，34 对）：强制身份先占坑并封锁其搭档，对内冲突按同池→跨池替换。
      * 人数 6–18 之外返回 null（拒绝开局）。FORCED 优先占用（配额按阵营扣减），用后清空。
      */
     public static Map<UUID, Role> assignSeats(List<UUID> players) {
@@ -82,10 +82,10 @@ public final class BttIdentity {
         take(seats, pools, BttRoles.Faction.CIVILIAN, civilian);
         if (seats.size() != remaining) return null; // 池不足（防御）
 
-        // 同色互斥（C-037）：强制身份颜色先占坑，重复色按"同池优先→跨池"替换
-        java.util.Set<Integer> usedColors = new java.util.HashSet<>();
-        for (Role r : forced.values()) usedColors.add(r.color());
-        seats = dedupeColors(seats, pools, usedColors);
+        // 同色互斥（C-052 勘误：同色 = docx 相邻奇偶编号对，非 RGB 相等）：
+        // 强制身份先占坑（其搭档被封锁），席位中与已用身份同对的按"同池优先→跨池"替换
+        java.util.Set<Role> usedRoles = new java.util.HashSet<>(forced.values());
+        seats = dedupeSameColorPairs(seats, pools, usedRoles);
 
         Collections.shuffle(seats);
         Map<UUID, Role> result = new HashMap<>();
@@ -142,28 +142,31 @@ public final class BttIdentity {
         }
     }
 
-    /** 同色互斥：对 seats 就地替换重复色（同阵营池优先，其次跨阵营池；均无候选则保留重复——防御分支） */
-    private static List<Role> dedupeColors(List<Role> seats, Map<BttRoles.Faction, List<Role>> pools,
-                                           java.util.Set<Integer> usedColors) {
+    /** 同色互斥（docx 相邻奇偶对）：席位中其搭档已入选的身份按"同阵营池优先→跨阵营池"替换；均无候选则保留（防御分支） */
+    private static List<Role> dedupeSameColorPairs(List<Role> seats, Map<BttRoles.Faction, List<Role>> pools,
+                                                   java.util.Set<Role> usedRoles) {
         List<Role> result = new ArrayList<>();
         for (Role r : seats) {
-            if (usedColors.add(r.color())) {
+            Role partner = BttRoles.sameColorPartner(r);
+            if (partner == null || !usedRoles.contains(partner)) {
+                usedRoles.add(r);
                 result.add(r);
                 continue;
             }
-            Role rep = findColorFreeReplacement(r, pools, usedColors, result);
+            Role rep = findPartnerFreeReplacement(r, pools, usedRoles, result);
             if (rep != null) {
-                usedColors.add(rep.color());
+                usedRoles.add(rep);
                 result.add(rep);
             } else {
-                result.add(r); // 池尽：保留重复（理论不应发生——70 身份色值冗余足够）
+                usedRoles.add(r);
+                result.add(r); // 池尽：保留同对（理论不应发生——每阵营池 ≥2 对）
             }
         }
         return result;
     }
 
-    private static Role findColorFreeReplacement(Role original, Map<BttRoles.Faction, List<Role>> pools,
-                                                 java.util.Set<Integer> usedColors, List<Role> alreadyPicked) {
+    private static Role findPartnerFreeReplacement(Role original, Map<BttRoles.Faction, List<Role>> pools,
+                                                   java.util.Set<Role> usedRoles, List<Role> alreadyPicked) {
         List<BttRoles.Faction> order = new ArrayList<>();
         order.add(BttRoles.factionOf(original));
         for (BttRoles.Faction f : pools.keySet()) if (!order.contains(f)) order.add(f);
@@ -173,7 +176,9 @@ public final class BttIdentity {
             for (int tier = 0; tier < 2; tier++) {
                 for (Role r : pool) {
                     if (BttRoles.isImplemented(r) != (tier == 0)) continue;
-                    if (r == original || alreadyPicked.contains(r) || usedColors.contains(r.color())) continue;
+                    if (r == original || alreadyPicked.contains(r) || usedRoles.contains(r)) continue;
+                    Role partner = BttRoles.sameColorPartner(r);
+                    if (partner != null && usedRoles.contains(partner)) continue;
                     return r;
                 }
             }
