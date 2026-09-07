@@ -15,8 +15,10 @@ public final class BttState {
     private static final Map<UUID, Map<String, Integer>> INTS = new HashMap<>();
     /** 全局（回合级）计数键：窃贼搜刮数等。 */
     private static final UUID GLOBAL = new UUID(0L, 0x6C0BA17L);
-    /** 魔女尾声剩余 tick（BT-SYS-EPILOGUE 最小实现；0=无） */
-    public static int majoEpilogueTicks = 0;
+    /** 活跃尾声（BT-SYS-EPILOGUE 最小实现）："MAJO"/"CULT"；空=无 */
+    public static String epilogueType = "";
+    /** 尾声剩余 tick */
+    public static int epilogueTicks = 0;
 
     public static int getInt(UUID player, String key) {
         Map<String, Integer> m = INTS.get(player);
@@ -42,6 +44,7 @@ public final class BttState {
 
     public static void resetRound() {
         INTS.clear();
-        majoEpilogueTicks = 0;
+        epilogueTicks = 0;
+        epilogueType = "";
     }
 }

@@ -24,6 +24,8 @@ public final class BttEndings {
         NOVELIST_WIN,
         /** 魔女独胜：杀死所有乘客、凶手和外人（独行可不杀；魔女存活时判定，BT-SYS-EPILOGUE） */
         MAJO_WIN,
+        /** 教团胜利：只剩教团阵营（救世主+信徒；BT-SYS-EPILOGUE） */
+        CULT_WIN,
         /** 异端分子特殊结局（doc：对调胜负+特殊宣言）：乘客达成条件→翻转为凶手胜 */
         HERETIC_KILLER,
         /** 异端分子特殊结局：凶手达成条件→翻转为乘客胜 */

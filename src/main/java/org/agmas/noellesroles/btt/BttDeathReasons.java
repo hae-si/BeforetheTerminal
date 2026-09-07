@@ -13,4 +13,6 @@ public final class BttDeathReasons {
     public static final Identifier SNIPE_MAGIC = Identifier.of("noellesroles", "snipe_magic");
     /** 预言中断：预言家 <猜测> 猜错自裁 */
     public static final Identifier PROPHECY_INTERRUPTED = Identifier.of("noellesroles", "prophecy_interrupted");
+    /** 殉教：救世主死亡 → 信徒集体殉教 */
+    public static final Identifier MARTYRDOM = Identifier.of("noellesroles", "martyrdom");
 }

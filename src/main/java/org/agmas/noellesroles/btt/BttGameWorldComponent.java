@@ -30,9 +30,6 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
      * fork（TrainMurderMystery）把 isWinner 在服务端算好下发，wathe 的 RoundEndData 无此槽位 → 用本字段承载。
      */
     public String winners = "";
-    /** 活跃尾声（BT-SYS-EPILOGUE 最小实现："MAJO"=魔女尾声进行中，空=无）。同步给客户端驱动活人雷达。 */
-    public String epilogue = "";
-
 
     public BttGameWorldComponent(World world) {
         this.world = world;
@@ -52,7 +49,6 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         tag.putBoolean("active", this.active);
         tag.putString("lastEnding", this.lastEnding);
         tag.putString("winners", this.winners);
-        tag.putString("epilogue", this.epilogue);
 
     }
 
@@ -61,7 +57,6 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         if (tag.contains("active")) this.active = tag.getBoolean("active");
         if (tag.contains("lastEnding")) this.lastEnding = tag.getString("lastEnding");
         if (tag.contains("winners")) this.winners = tag.getString("winners");
-        if (tag.contains("epilogue")) this.epilogue = tag.getString("epilogue");
 
     }
 }

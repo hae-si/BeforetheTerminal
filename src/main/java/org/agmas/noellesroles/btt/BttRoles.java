@@ -188,7 +188,7 @@ public final class BttRoles {
     /** 窃贼：接管 NR vulture（透视尸体/G 键吃尸原生；胜利=吃尸体过半而非变杀手，C-039） */
     public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.LONE);
     /** 纵火犯：docx 独立身份——**与 NR 感染体（infected）非同物**，原接管已回滚（2026-09-07 用户指令），改用新键 arsonist；浇油/点燃/雷达未实装 */
-    public static final Role ARSONIST = register("arsonist", 0xCD7F32, Faction.LONE);
+    public static final Role ARSONIST = register("arsonist", 0xFF4500, Faction.LONE);
     public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
     public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
     public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.MAD);
@@ -218,7 +218,7 @@ public final class BttRoles {
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
             PHARMACIST, RIGGER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
-            PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO);
+            PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 

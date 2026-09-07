@@ -62,6 +62,8 @@ public final class BttGuessReceiver {
                 novelist(user, target, gwc, payload, guessed);
             } else if (gwc.isRole(user, BttRoles.HUNTER)) {
                 hunter(user, target, gwc);
+            } else if (gwc.isRole(user, BttRoles.MESSIAH)) {
+                messiah(user, target, gwc, payload);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
             }
@@ -110,6 +112,26 @@ public final class BttGuessReceiver {
             }
         } else {
             setCd(ability, GameConstants.getInTicks(0, 30));
+        }
+    }
+
+    // ===== 救世主：<预知> 任何人身份（CD 2min 含初始）；对→目标入教团；错→救世主身份暴露 =====
+
+    private static void messiah(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
+                                BttGuessC2SPacket payload) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(2, 0));
+        Role guessed = gwc.getRole(target);
+        if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
+            BttState.setInt(target.getUuid(), "cult", 1);
+            broadcast(user, Text.literal(target.getName().getString() + " 已成为教团信徒！")
+                    .formatted(Formatting.DARK_PURPLE));
+            target.sendMessage(Text.literal("你成为了教团信徒（教团可互相透视）。")
+                    .formatted(Formatting.LIGHT_PURPLE), true);
+        } else {
+            broadcast(user, Text.literal("救世主是 " + user.getName().getString() + "！")
+                    .formatted(Formatting.DARK_RED));
         }
     }
 

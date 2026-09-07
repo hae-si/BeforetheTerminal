@@ -44,6 +44,10 @@
   "noellesroles.ending.quote.naku": "This time the body never returned to the berth — and after that, there was no one at all.",
   "noellesroles.ending.quote.thief": "先是将头牢牢缠住紧粘不放 继而将头盖骨快速溶化",
   "noellesroles.ending.quote.novelist": "那浸染着错号颜色的湿润的眼 想要在磨亮的剪刀上倒映出来",
+  "noellesroles.ending.cult": "Cult Wins",
+  "noellesroles.ending.quote.cult": "Just like what you gave me without knowing, if I could become someone's heart too.",
+  "noellesroles.epilogue.cult.title": "{Cult Epilogue}",
+  "noellesroles.epilogue.cult.line": "Lamenting \u201csuch a world\u201d - can it become a reason for someone to live?",
   "noellesroles.ending.majo": "Majo Wins",
   "noellesroles.ending.quote.majo": "No matter how many times, no matter whose life it is, let me exist as myself.",
   "noellesroles.epilogue.majo.title": "{Witch's Epilogue}",
@@ -331,5 +335,8 @@
   "key.noellesroles.select": "Select target",
   "subtitles.noellesroles.cough": "Cough",
   "subtitles.noellesroles.role_mine_beep": "Role Mine Beeps",
-  "tip.noellesroles.cooldown": "Ability usable in %ss"
+  "tip.noellesroles.cooldown": "Ability usable in %ss",
+  "death_reason.noellesroles.snipe_magic": "Snipe Magic",
+  "death_reason.noellesroles.prophecy_interrupted": "Prophecy Interrupted",
+  "death_reason.noellesroles.martyrdom": "Martyrdom"
 }

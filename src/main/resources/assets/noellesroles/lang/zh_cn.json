@@ -14,6 +14,10 @@
   "noellesroles.ending.quote.naku": "这一次身体再也没有回到地上，之后就一个人都没有了。",
   "noellesroles.ending.quote.thief": "先是将头牢牢缠住紧粘不放 继而将头盖骨快速溶化",
   "noellesroles.ending.quote.novelist": "那浸染着错号颜色的湿润的眼 想要在磨亮的剪刀上倒映出来",
+  "noellesroles.ending.cult": "教团胜利",
+  "noellesroles.ending.quote.cult": "就像不知不觉中你给我的一样 我也能成为谁的心脏的话",
+  "noellesroles.epilogue.cult.title": "{教团尾声}",
+  "noellesroles.epilogue.cult.line": "悲叹着“这样的世界” 就能成为谁活下去的理由吗",
   "noellesroles.ending.majo": "魔女胜利",
   "noellesroles.ending.quote.majo": "无论第几次 无论第几次 为了让我作为我存在",
   "noellesroles.epilogue.majo.title": "{魔女尾声}",
@@ -322,5 +326,8 @@
   "key.noellesroles.select": "选择目标",
   "subtitles.noellesroles.cough": "咳嗽",
   "subtitles.noellesroles.role_mine_beep": "身份地雷发出了哔哔声",
-  "tip.noellesroles.cooldown": "能力在 %s 秒后可用"
+  "tip.noellesroles.cooldown": "能力在 %s 秒后可用",
+  "death_reason.noellesroles.snipe_magic": "狙击魔法",
+  "death_reason.noellesroles.prophecy_interrupted": "预言中断",
+  "death_reason.noellesroles.martyrdom": "殉教"
 }

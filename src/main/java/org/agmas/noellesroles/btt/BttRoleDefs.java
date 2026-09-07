@@ -69,6 +69,11 @@ public final class BttRoleDefs {
             p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
         });
+        // 救世主：初始[撬棍]；<预知> 初始冷却 2 分钟（docx）
+        def(BttRoles.MESSIAH).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
+            initialAbilityCd(p, GameConstants.getInTicks(2, 0));
+        });
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能

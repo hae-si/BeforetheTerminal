@@ -6,6 +6,7 @@ import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import org.agmas.noellesroles.btt.BttDeathReasons;
 import org.agmas.noellesroles.btt.BttIdentity;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
@@ -30,6 +31,19 @@ public abstract class BttKillHookMixin {
             at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/entity/PlayerBodyEntity;setHeadYaw(F)V"))
     private static void bttKillHook(PlayerEntity victim, boolean spawnBody, PlayerEntity killer, Identifier identifier, CallbackInfo ci) {
         if (!BttIdentity.isBttMode(victim.getWorld())) return;
+        // === ① 全局：救世主死亡 → 信徒集体殉教（docx 死因"殉教"；任意死因触发，先于 killer 判空） ===
+        if (victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw0) {
+            GameWorldComponent gwc0 = GameWorldComponent.KEY.get(sw0);
+            if (gwc0.isRole(victim, org.agmas.noellesroles.btt.BttRoles.MESSIAH)) {
+                for (ServerPlayerEntity p : sw0.getPlayers()) {
+                    if (p == victim) continue;
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+                    if (BttState.getInt(p.getUuid(), "cult") == 1) {
+                        GameFunctions.killPlayer(p, true, victim, BttDeathReasons.MARTYRDOM);
+                    }
+                }
+            }
+        }
         if (!(killer instanceof ServerPlayerEntity shooter)) return;
         if (!(victim.getWorld() instanceof net.minecraft.server.world.ServerWorld world)) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
