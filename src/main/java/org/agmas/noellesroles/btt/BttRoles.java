@@ -16,7 +16,7 @@ import java.util.Map;
  * 键名规则（渐进式替换，D7/D8）：
  * - 新身份 = 新键 `noellesroles:<英文身份名 snake_case>`；
  * - NR 已有同身份键 = **接管既有 Role 对象**（coroner=医生 / noisemaker=处子 / jester=小丑 /
- *   conductor=列车长 / bartender=酒保 / voodoo=巫觋），不重复创建；
+ *   conductor=列车长 / voodoo=巫觋），不重复创建；
  * - 仅教父/义警为本轮前新增键。
  *
  * 元数据：阵营分类（{@link Faction}，含 isInnocent/canUseKiller/mood/体力/倒计时可见性的
@@ -43,7 +43,7 @@ public final class BttRoles {
         /** 中立 · 独行（C-037 三分类）：个人条件独胜、不阻塞任何主结局、有限体力（蓝旗 mood_ghost） */
         LONE(false, false, Role.MoodType.FAKE, 200, false),
         /** 中立 · 外人（C-037 三分类）：自成阵营、无限体力、全员尾声；可见倒计时（docx 2026-09-07 恢复外人可见，品红旗 mood_jester） */
-        OUTSIDER_NEUTRAL(false, false, Role.MoodType.FAKE, -1, true),
+        OUTSIDER(false, false, Role.MoodType.FAKE, -1, true),
         /** 中立 · 狂人（C-037 三分类）：阵营归属乘客（结局计数随乘客）、正常需求/理智、无独立胜利（绿旗） */
         MAD(true, false, Role.MoodType.REAL, 200, false);
 
@@ -187,7 +187,6 @@ public final class BttRoles {
     public static final Role NOVELIST = register("novelist", 0x00FFFF, Faction.LONE);
     /** 窃贼：接管 NR vulture（透视尸体/G 键吃尸原生；胜利=吃尸体过半而非变杀手，C-039） */
     public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.LONE);
-    /** 纵火犯：docx 独立身份——**与 NR 感染体（infected）非同物**，原接管已回滚（2026-09-07 用户指令），改用新键 arsonist；浇油/点燃/雷达未实装 */
     public static final Role ARSONIST = register("arsonist", 0xFF4500, Faction.LONE);
     public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
     public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
@@ -200,10 +199,10 @@ public final class BttRoles {
 
     // ===== 中立 · 外人（自成阵营；无限体力、可见倒计时、全员尾声） =====
 
-    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER_NEUTRAL);
-    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER_NEUTRAL);
-    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
-    public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER_NEUTRAL);
+    public static final Role MAJO = register("majo", 0xFF00FF, Faction.OUTSIDER);
+    public static final Role MESSIAH = register("messiah", 0xFF00FF, Faction.OUTSIDER);
+    public static final Role KIDNAPPER = register("kidnapper", 0x7FFFD4, Faction.OUTSIDER);
+    public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER);
     /** 黑死病：狂人中立席位但**阵营归属凶手**（docx 2026-09-07），不作乘客侧计数；个人胜负=特殊结局【待作者：映射细节】 */
     public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.MAD,
             false, false, Role.MoodType.REAL, 200, false);
@@ -218,12 +217,13 @@ public final class BttRoles {
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
             PHARMACIST, RIGGER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
-            PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH);
+            PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
+            BARTENDER, MINSTREL, SMUGGLER, DRUG_MAKER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
-    /** BTT 席位池排除表（BARTENDER 搁置：NR 原生行为会泄漏进 BTT 局，用户裁定 2026-09-05） */
-    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of(BARTENDER);
+    /** BTT 席位池排除表：空（酒保随 C-060 醉酒实装解除搁置；NR 泄漏点已门控） */
+    private static final java.util.Set<Role> EXCLUDED = java.util.Set.of();
 
     /**
      * 同色身份对（docx 2026-09-07 勘误：同色 = **各阵营内相邻的奇偶编号对**，非 RGB 相等——

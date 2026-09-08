@@ -177,6 +177,7 @@ public final class BttEvents {
                 if (!gwc.isRunning()) continue;
 
                 for (var player : world.getPlayers()) {
+                    BttState.decrementDrunk(player.getUuid()); // 醉酒计时（BT-SYS-DRUNK）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }

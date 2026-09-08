@@ -44,7 +44,7 @@ public abstract class BttMoodFlagMixin {
         Identifier tex = null;
         var faction = BttRoles.factionOf(role);
         if (faction == BttRoles.Faction.LONE) tex = GHOST;
-        else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) tex = JESTER;
+        else if (faction == BttRoles.Faction.OUTSIDER) tex = JESTER;
         if (tex == null) return;
         context.getMatrices().push();
         context.getMatrices().translate(0.0F, 3.0F * moodOffset, 0.0F);

@@ -5,7 +5,6 @@ import dev.doctor4t.wathe.cca.GameWorldComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import org.agmas.harpymodloader.Harpymodloader;
 
@@ -65,7 +64,7 @@ public final class BttIdentity {
             BttRoles.Faction f = BttRoles.factionOf(r);
             if (f == BttRoles.Faction.PRINCIPAL) principal = Math.max(0, principal - 1);
             else if (f == BttRoles.Faction.ACCOMPLICE) accomplice = Math.max(0, accomplice - 1);
-            else if (f == BttRoles.Faction.LONE || f == BttRoles.Faction.OUTSIDER_NEUTRAL
+            else if (f == BttRoles.Faction.LONE || f == BttRoles.Faction.OUTSIDER
                     || f == BttRoles.Faction.MAD) neutral = Math.max(0, neutral - 1);
             else if (f == BttRoles.Faction.ENFORCER) enforcer = Math.max(0, enforcer - 1);
         }
@@ -103,7 +102,7 @@ public final class BttIdentity {
 
     /** 中立三分类（合并席位池） */
     private static final List<BttRoles.Faction> NEUTRAL_FACTIONS = List.of(
-            BttRoles.Faction.LONE, BttRoles.Faction.OUTSIDER_NEUTRAL, BttRoles.Faction.MAD);
+            BttRoles.Faction.LONE, BttRoles.Faction.OUTSIDER, BttRoles.Faction.MAD);
 
     /** 公式配额（含强制扣减前）测试用快照：主犯/从犯/中立/执法 */
     static int[] quotasForTest(int n) {

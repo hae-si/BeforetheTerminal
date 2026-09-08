@@ -178,11 +178,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 if (role == BttRoles.BLACKDEATH) alivePrincipals++;
                 else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
                 else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
-                else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) aliveOutsiderNeutrals++;
+                else if (faction == BttRoles.Faction.OUTSIDER) aliveOutsiderNeutrals++;
                 else if (faction == BttRoles.Faction.LONE) aliveLone++;
                 else if (faction == BttRoles.Faction.ENFORCER || faction == BttRoles.Faction.CIVILIAN
                         || faction == BttRoles.Faction.MAD) alivePassengers++;
-                if (role == BttRoles.MAJO && faction == BttRoles.Faction.OUTSIDER_NEUTRAL) majoAlive = true;
+                if (role == BttRoles.MAJO && faction == BttRoles.Faction.OUTSIDER) majoAlive = true;
                 if (role == BttRoles.KIDNAPPER) kidnapperAlive = true;
                 if (role == BttRoles.GARDENER) gardenerAlive = true;
             }

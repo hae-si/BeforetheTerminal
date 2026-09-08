@@ -13,6 +13,7 @@ import net.minecraft.util.Formatting;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.btt.BttIdentity;
 import org.agmas.noellesroles.btt.BttShopGate;
+import org.agmas.noellesroles.btt.BttState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -38,6 +39,11 @@ public abstract class BttShopBuyMixin {
     private void bttTryBuy(int index, CallbackInfo ci) {
         if (!BttIdentity.isBttMode(player.getWorld())) return;
         ci.cancel();
+        // 醉酒：商店失效；凶手用狂气被拒并因此得知自己醉酒（doc：不自知的唯一例外）
+        if (BttState.isDrunk(player.getUuid())) {
+            player.sendMessage(Text.literal("你喝醉了，无法使用商店。").formatted(Formatting.BLUE), true);
+            return;
+        }
         if (index < 0 || index >= BttShopGate.BTT_ENTRIES.size()) return;
         ShopEntry entry = BttShopGate.BTT_ENTRIES.get(index);
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment() && this.balance < entry.price())

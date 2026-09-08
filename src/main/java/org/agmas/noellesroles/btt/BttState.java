@@ -40,6 +40,24 @@ public final class BttState {
         setInt(GLOBAL, key, value);
     }
 
+    // ===== 醉酒（BT-SYS-DRUNK，C-060） =====
+
+    /** 是否醉酒（不自知：调用方不得向本人提示状态，仅在其尝试行动时反馈失败） */
+    public static boolean isDrunk(java.util.UUID player) {
+        return getInt(player, "drunkTicks") > 0;
+    }
+
+    /** 施加/延长醉酒（取较大值，避免叠加覆盖短醉） */
+    public static void applyDrunk(java.util.UUID player, int ticks) {
+        setInt(player, "drunkTicks", Math.max(ticks, getInt(player, "drunkTicks")));
+    }
+
+    /** 每 tick 递减（BttEvents tick 循环调用） */
+    public static void decrementDrunk(java.util.UUID player) {
+        int v = getInt(player, "drunkTicks");
+        if (v > 0) setInt(player, "drunkTicks", v - 1);
+    }
+
     public static void resetRound() {
         INTS.clear();
         epilogueType = "";

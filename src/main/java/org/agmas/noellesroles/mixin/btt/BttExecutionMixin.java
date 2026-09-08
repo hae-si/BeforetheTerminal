@@ -74,7 +74,7 @@ public abstract class BttExecutionMixin {
             Role shooterRole = gwc.getRole(shooter);
             var faction = BttRoles.factionOf(shooterRole);
             if (gwc.isInnocent(shooter)) adjusted = 1200;                 // 处决（含误杀）= 60s
-            else if (faction == BttRoles.Faction.OUTSIDER_NEUTRAL) adjusted = 1200; // 魔女等外人枪：doc 一分钟
+            else if (faction == BttRoles.Faction.OUTSIDER) adjusted = 1200; // 魔女等外人枪：doc 一分钟
             else if (shooterRole == BttRoles.BANDIT) adjusted = 1200;     // 强盗：冷却一分钟（docx 2026-09-07）
         }
         op.call(instance, item, adjusted);

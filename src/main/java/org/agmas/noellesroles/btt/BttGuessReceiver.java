@@ -35,6 +35,8 @@ public final class BttGuessReceiver {
             if (!BttIdentity.isBttMode(user.getWorld())) return;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
+            // 醉酒：技能失效（不自知）
+            if (BttState.isDrunk(user.getUuid())) return;
             if (!gwc.isRole(user, BttRoles.AMNESIAC)) return;
             if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
             if (BttState.getInt(body.getUuid(), "corpseUsed") == 1) return;
@@ -52,6 +54,13 @@ public final class BttGuessReceiver {
             if (!BttIdentity.isBttMode(user.getWorld())) return;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
+            // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
+            if (BttState.isDrunk(user.getUuid())) return;
+            // 吟游诗人：<歌唱> 无需目标（G 键直发），全场醉酒
+            if (gwc.isRole(user, BttRoles.MINSTREL)) {
+                minstrel(user);
+                return;
+            }
             if (!(user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity target)) return;
             if (target == user) return;
             Role guessed = gwc.getRole(target);
@@ -64,6 +73,12 @@ public final class BttGuessReceiver {
                 hunter(user, target, gwc);
             } else if (gwc.isRole(user, BttRoles.MESSIAH)) {
                 messiah(user, target, gwc, payload);
+            } else if (gwc.isRole(user, BttRoles.BARTENDER)) {
+                bartender(user, target);
+            } else if (gwc.isRole(user, BttRoles.SMUGGLER)) {
+                smuggler(user, target);
+            } else if (gwc.isRole(user, BttRoles.DRUG_MAKER)) {
+                drugMaker(user, target);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
             }
@@ -133,6 +148,61 @@ public final class BttGuessReceiver {
             broadcast(user, Text.literal("救世主是 " + user.getName().getString() + "！")
                     .formatted(Formatting.DARK_RED));
         }
+    }
+
+    // ===== 酒保：<灌酒> 身边者醉酒 1 分钟，CD 1 分钟（docx 2026-09-07） =====
+
+    private static void bartender(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
+        setCd(ability, GameConstants.getInTicks(1, 0));
+        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
+        user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
+    }
+
+    // ===== 吟游诗人：<歌唱> 全场醉酒 1 分钟，CD 2 分钟（docx 2026-09-07） =====
+
+    private static void minstrel(ServerPlayerEntity user) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(2, 0));
+        for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
+            BttState.applyDrunk(p.getUuid(), GameConstants.getInTicks(1, 0));
+        }
+        user.sendMessage(Text.literal("你唱起了一支歌……").formatted(Formatting.LIGHT_PURPLE), true);
+    }
+
+    // ===== 走私犯：<灌酒> 身边者醉酒 1 分钟，CD 30 秒（标记机制 GAP，简化为直接灌酒） =====
+
+    private static void smuggler(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
+        user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
+    }
+
+    // ===== 毒师：<下药> 身边者醉酒+中毒 1 分钟，CD 30 秒（标记机制 GAP，简化为直接下药） =====
+
+    private static void drugMaker(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
+        PlayerPoisonComponent.KEY.get(target).setPoisonTicks(GameConstants.getInTicks(1, 0), user.getUuid());
+        user.sendMessage(Text.literal("下药成功。").formatted(Formatting.DARK_GREEN), true);
     }
 
     // ===== 侦探：<调查> 身边者（选人），CD 60s =====

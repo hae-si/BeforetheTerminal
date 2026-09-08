@@ -74,6 +74,11 @@ public final class BttRoleDefs {
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
             initialAbilityCd(p, GameConstants.getInTicks(2, 0));
         });
+        // ===== 醉酒投放者（BT-SYS-DRUNK，C-060） =====
+        def(BttRoles.BARTENDER); // 酒保：无初始道具（<灌酒> G 键选人）
+        def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
+        def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（标记 GAP，<灌酒> 简化为直接灌身边者）
+        def(BttRoles.DRUG_MAKER).kit(knife()); // 毒师：初始[刀]（标记 GAP，<下药> 简化为直接下药）
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能

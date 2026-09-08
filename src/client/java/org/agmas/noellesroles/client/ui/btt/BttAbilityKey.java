@@ -50,6 +50,12 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
+        // 吟游诗人：<歌唱> 无需目标——G 键直发（target=自己占位）
+        if (def.role == BttRoles.MINSTREL) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
+            return;
+        }
         if (!isUiRole(def.role)) return;
         if (client.currentScreen != null) return;
         client.setScreen(new LimitedInventoryScreen(client.player));
@@ -71,12 +77,15 @@ public final class BttAbilityKey {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST
                 || role == BttRoles.HUNTER || role == BttRoles.DETECTIVE
                 || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
-                || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER;
+                || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
+                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER
+                || role == BttRoles.DRUG_MAKER;
     }
 
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
         // 仅无需输入猜测的身份（点头像即发动）；蛇魅/救世主需文本框输入，非 instant
         return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER
-                || role == BttRoles.PHARMACIST;
+                || role == BttRoles.PHARMACIST
+                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER || role == BttRoles.DRUG_MAKER;
     }
 }
