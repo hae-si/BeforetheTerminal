@@ -13,6 +13,7 @@ public final class BttState {
     private BttState() {}
 
     private static final Map<UUID, Map<String, Integer>> INTS = new HashMap<>();
+    private static final Map<UUID, Map<String, String>> STRINGS = new HashMap<>();
     /** 全局（回合级）计数键：窃贼搜刮数等。 */
     private static final UUID GLOBAL = new UUID(0L, 0x6C0BA17L);
     /** 活跃尾声（BT-SYS-EPILOGUE 最小实现）："MAJO"/"CULT"；空=无 */
@@ -58,8 +59,20 @@ public final class BttState {
         if (v > 0) setInt(player, "drunkTicks", v - 1);
     }
 
+    // ===== 字符串槽（关系搭档/类型等） =====
+
+    public static String getString(java.util.UUID player, String key) {
+        Map<String, String> m = STRINGS.get(player);
+        return m == null ? null : m.get(key);
+    }
+
+    public static void setString(java.util.UUID player, String key, String value) {
+        STRINGS.computeIfAbsent(player, k -> new HashMap<>()).put(key, value);
+    }
+
     public static void resetRound() {
         INTS.clear();
+        STRINGS.clear();
         epilogueType = "";
     }
 }

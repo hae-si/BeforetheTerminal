@@ -57,6 +57,16 @@ public final class BttEvents {
     // ===== 精神病人护盾（doc：拿出球棒获得护盾，直到杀死一个人——球棒冷却期间无盾） =====
 
     private static void registerPsychopathShield() {
+        // 宿敌护盾（C-061）：凶手方宿敌 archenemyShields>0 → 否决死亡并消耗一层
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (org.agmas.noellesroles.btt.BttRelationships.archenemyShields(victim.getUuid()) > 0
+                    && org.agmas.noellesroles.btt.BttRelationships.consumeArchenemyShield(victim.getUuid())) {
+                victim.sendMessage(net.minecraft.text.Text.literal("宿敌的护盾抵挡了致命一击。")
+                        .formatted(net.minecraft.util.Formatting.GOLD), true);
+                return false;
+            }
+            return true;
+        });
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
             if (!BttIdentity.isBttMode(victim.getWorld())) return true;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());

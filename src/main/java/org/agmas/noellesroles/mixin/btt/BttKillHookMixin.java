@@ -66,6 +66,22 @@ public abstract class BttKillHookMixin {
             }
         }
 
+        // === ① 全局：恋人殉情（C-061；doc 死因"殉情"） ===
+        java.util.UUID lover = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim.getUuid());
+        if (lover != null && org.agmas.noellesroles.btt.BttRelationships.isLover(victim.getUuid())) {
+            ServerPlayerEntity partner = (ServerPlayerEntity) world.getPlayerByUuid(lover);
+            if (partner != null && GameFunctions.isPlayerAliveAndSurvival(partner)) {
+                GameFunctions.killPlayer(partner, true, victim, BttDeathReasons.LOVER_SUICIDE);
+            }
+        }
+
+        // === ① 全局：宿敌护盾授予（C-061）：平民宿敌被击毙 → 凶手宿敌 +2 护盾 ===
+        if ("ARCHENEMY".equals(org.agmas.noellesroles.btt.BttRelationships.typeOf(victim.getUuid()))
+                && org.agmas.noellesroles.btt.BttRoles.factionOf(gwc.getRole(victim)) == org.agmas.noellesroles.btt.BttRoles.Faction.CIVILIAN) {
+            java.util.UUID archenemy = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim.getUuid());
+            if (archenemy != null) org.agmas.noellesroles.btt.BttRelationships.grantArchenemyShields(archenemy, 2);
+        }
+
         // === ② 声明式 per-role 击杀钩子 ===
         BttRoleDef d = BttRoleDefs.get(gwc.getRole(shooter));
         if (d != null) {

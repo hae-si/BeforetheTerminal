@@ -66,6 +66,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
             GameFunctions.stopGame(world);
             return;
         }
+        // 关系系统（C-061）：双子在 addRole 前统一身份
+        BttRelationships.assign(world, seats, (uuid, text) -> {
+            ServerPlayerEntity p = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
+            if (p != null) p.sendMessage(text, true);
+        });
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
             gameWorld.addRole(player, role);
@@ -276,6 +281,17 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     ? BttEndings.Ending.HERETIC_KILLER
                     : BttEndings.Ending.HERETIC_PASSENGER;
         }
+        // 恋人（C-061）：双方存活到最后且阵营不同 → 并入胜者组（"各自原本胜利条件亦生效，但不是恋人胜利"——标题保持原结局）
+        java.util.List<UUID> loverWinners = new java.util.ArrayList<>();
+        for (ServerPlayerEntity p : players) {
+            if (!BttRelationships.isLover(p.getUuid()) || !GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+            UUID partner = BttRelationships.partnerOf(p.getUuid());
+            ServerPlayerEntity partnerPlayer = partner == null ? null : (ServerPlayerEntity) world.getPlayerByUuid(partner);
+            if (partnerPlayer == null || !GameFunctions.isPlayerAliveAndSurvival(partnerPlayer)) continue;
+            var f1 = BttRoles.factionOf(gameWorld.getRole(p));
+            var f2 = BttRoles.factionOf(gameWorld.getRole(partnerPlayer));
+            if (f1 != f2) loverWinners.add(p.getUuid());
+        }
         java.util.function.Predicate<ServerPlayerEntity> flipWinner = ws == GameFunctions.WinStatus.KILLERS
                 ? (java.util.function.Predicate<ServerPlayerEntity>) isWinnerByKiller(gameWorld)
                 : isWinnerByInnocent(gameWorld);
@@ -283,6 +299,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 ? winners
                 : players.stream().filter(flipWinner)
                         .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
+        // 恋人并胜（C-061）：追加进胜者组
+        if (!loverWinners.isEmpty()) {
+            finalWinners = finalWinners.isEmpty() ? loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","))
+                    : finalWinners + "," + loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","));
+        }
         if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
             LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",
                     ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals,
