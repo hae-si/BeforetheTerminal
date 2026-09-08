@@ -50,8 +50,8 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
-        // 吟游诗人：<歌唱> 无需目标——G 键直发（target=自己占位）
-        if (def.role == BttRoles.MINSTREL) {
+        // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标——G 键直发（target=自己占位）
+        if (def.role == BttRoles.MINSTREL || def.role == BttRoles.GARDENER) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;

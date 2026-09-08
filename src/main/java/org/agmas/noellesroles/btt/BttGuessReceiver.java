@@ -56,9 +56,13 @@ public final class BttGuessReceiver {
             if (!gwc.isRunning()) return;
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttState.isDrunk(user.getUuid())) return;
-            // 吟游诗人：<歌唱> 无需目标（G 键直发），全场醉酒
+            // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
             if (gwc.isRole(user, BttRoles.MINSTREL)) {
                 minstrel(user);
+                return;
+            }
+            if (gwc.isRole(user, BttRoles.GARDENER)) {
+                gardener(user);
                 return;
             }
             if (!(user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity target)) return;
@@ -203,6 +207,18 @@ public final class BttGuessReceiver {
         BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
         PlayerPoisonComponent.KEY.get(target).setPoisonTicks(GameConstants.getInTicks(1, 0), user.getUuid());
         user.sendMessage(Text.literal("下药成功。").formatted(Formatting.DARK_GREEN), true);
+    }
+
+    // ===== 花匠：<栽培> 于脚下种小花（相邻≥20m、非露天），CD 30 秒 =====
+
+    private static void gardener(ServerPlayerEntity user) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        String err = BttFlowers.plant(user);
+        user.sendMessage(err == null
+                ? Text.literal("你种下了一粒种子。").formatted(Formatting.GREEN)
+                : Text.literal(err).formatted(Formatting.RED), true);
     }
 
     // ===== 侦探：<调查> 身边者（选人），CD 60s =====

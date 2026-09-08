@@ -304,6 +304,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
             finalWinners = finalWinners.isEmpty() ? loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","))
                     : finalWinners + "," + loverWinners.stream().map(UUID::toString).collect(java.util.stream.Collectors.joining(","));
         }
+        // 花匠小花推进（阶段/攻击；{花匠尾声}期间仅花匠 20m 内成花攻击）
+        ServerPlayerEntity gardener = null;
+        for (ServerPlayerEntity p : players) {
+            if (gameWorld.getRole(p) == BttRoles.GARDENER && GameFunctions.isPlayerAliveAndSurvival(p)) {
+                gardener = p;
+                break;
+            }
+        }
+        BttFlowers.tick(world, gardener, "GARDENER".equals(BttState.epilogueType));
+
         if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
             LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",
                     ending, alivePassengers, alivePrincipals, aliveAccomplices, aliveOutsiderNeutrals,
@@ -320,6 +330,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
     @Override
     public void finalizeGame(ServerWorld world, GameWorldComponent gameWorld) {
+        BttFlowers.clear(); // 小花清场（C-062）
+
         // wathe GameFunctions.finalizeGame 已完成：清角色/重置玩家/清尸体/INACTIVE。
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
         btt.active = false;
