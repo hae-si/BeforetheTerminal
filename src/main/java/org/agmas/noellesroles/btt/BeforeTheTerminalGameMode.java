@@ -60,6 +60,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 防御：开局强制清空背包（发 kit 前；修复"偶尔残留上一局物品"）
         for (ServerPlayerEntity p : players) {
             p.getInventory().clear();
+            p.getInventory().selectedSlot = 5; // 防露出枪/刀（C-064）
         }
         Map<UUID, Role> seats = BttIdentity.assignSeats(players.stream().map(ServerPlayerEntity::getUuid).toList());
         if (seats == null) {

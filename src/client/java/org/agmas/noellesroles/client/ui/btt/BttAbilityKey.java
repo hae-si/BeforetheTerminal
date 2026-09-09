@@ -2,15 +2,11 @@ package org.agmas.noellesroles.client.ui.btt;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedInventoryScreen;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttRoles;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * BT-P2-UI G 键技能（用户指令：技能一律 G 键 + 背包选人，不做道具）。
@@ -21,16 +17,9 @@ import org.lwjgl.glfw.GLFW;
 public final class BttAbilityKey {
     private BttAbilityKey() {}
 
-    private static KeyBinding abilityKey;
-
-    public static void register() {
-        abilityKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.noellesroles.select", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.noellesroles"));
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (abilityKey.wasPressed()) {
-                openSelection(client);
-            }
-        });
+    /** 由 NoellesrolesClient 的 abilityBind.wasPressed() 调用（BTT 模式优先分流） */
+    public static void handlePress(MinecraftClient client) {
+        openSelection(client);
     }
 
     private static void openSelection(MinecraftClient client) {

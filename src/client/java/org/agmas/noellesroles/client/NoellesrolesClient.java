@@ -66,7 +66,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
-        org.agmas.noellesroles.client.ui.btt.BttAbilityKey.register(); // C-027
+        // C-064：BttAbilityKey.register() 移除（不再注册独立 KeyBinding，G 键走 NR abilityBind 分流）
 
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -83,6 +83,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                 }
             }
             if (abilityBind.wasPressed()) {
+                if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(client.world)) {
+                    org.agmas.noellesroles.client.ui.btt.BttAbilityKey.handlePress(client);
+                } else {
                 PacketByteBuf data = PacketByteBufs.create();
                 client.execute(() -> {
                     if (MinecraftClient.getInstance().player == null) return;
@@ -104,6 +107,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
                     ClientPlayNetworking.send(new AbilityC2SPacket());
                 });
+                }
             }
         });
         EntityRendererRegistry.register(NoellesRolesEntities.ROLE_MINE_ENTITY_ENTITY_TYPE, RoleMineEntityRenderer::new);

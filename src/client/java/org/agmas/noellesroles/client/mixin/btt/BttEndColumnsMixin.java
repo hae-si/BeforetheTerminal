@@ -181,7 +181,7 @@ public abstract class BttEndColumnsMixin {
         if (dead) {
             context.getMatrices().push();
             context.getMatrices().scale(2f, 1f, 1f);
-            context.getMatrices().translate(x / 2f + 7, y + 8f, 0);
+            context.getMatrices().translate(x / 2f + 6, y + 8f, 0);
             context.drawText(renderer, "x", -renderer.getWidth("x") / 2, 0, 0xE10000, false);
             context.drawText(renderer, "x", -renderer.getWidth("x") / 2, 1, 0x550000, false);
             context.getMatrices().pop();
