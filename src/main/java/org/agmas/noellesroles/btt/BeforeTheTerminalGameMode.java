@@ -75,10 +75,20 @@ public class BeforeTheTerminalGameMode extends GameMode {
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
             gameWorld.addRole(player, role);
-            // 复用 NR“发初始道具”链路（列车长钥匙等），BTT 自身道具由 BttEvents 发放
+            // 复用 NR"发初始道具"链路（列车长钥匙等），BTT 自身道具由 BttEvents 发放
             org.agmas.harpymodloader.events.ModdedRoleAssigned.EVENT.invoker().assignModdedRole(player, role);
         }
         gameWorld.sync();
+
+        // 房间钥匙（docx：几乎人人都有，能开房间门；C-064）
+        for (ServerPlayerEntity player : players) {
+            var key = new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.KEY);
+            key.apply(net.minecraft.component.DataComponentTypes.LORE,
+                    net.minecraft.component.type.LoreComponent.DEFAULT,
+                    c -> new net.minecraft.component.type.LoreComponent(java.util.List.of(
+                            Text.literal("房间钥匙").formatted(Formatting.GOLD))));
+            player.giveItemStack(key);
+        }
 
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
         btt.active = true;
