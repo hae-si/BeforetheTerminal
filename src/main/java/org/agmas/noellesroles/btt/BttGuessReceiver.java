@@ -65,6 +65,11 @@ public final class BttGuessReceiver {
                 gardener(user);
                 return;
             }
+            // 特工：<查看> 本局身份列表（G 键直发）
+            if (gwc.isRole(user, BttRoles.AGENT)) {
+                agent(user, gwc);
+                return;
+            }
             if (!(user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity target)) return;
             if (target == user) return;
             Role guessed = gwc.getRole(target);
@@ -81,8 +86,6 @@ public final class BttGuessReceiver {
                 bartender(user, target);
             } else if (gwc.isRole(user, BttRoles.SMUGGLER)) {
                 smuggler(user, target);
-            } else if (gwc.isRole(user, BttRoles.DRUG_MAKER)) {
-                drugMaker(user, target);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
             }
@@ -154,6 +157,24 @@ public final class BttGuessReceiver {
         }
     }
 
+    // ===== 特工：<查看> 本局身份列表（G 键直发，无冷却） =====
+
+    private static void agent(ServerPlayerEntity user, GameWorldComponent gwc) {
+        var seen = new java.util.LinkedHashMap<String, java.util.UUID>();
+        for (var p : user.getServerWorld().getPlayers()) {
+            Role r = gwc.getRole(p);
+            if (r == null || seen.containsValue(p.getUuid())) continue;
+            seen.putIfAbsent(BttIdentity.displayName(r).getString(), p.getUuid());
+        }
+        var unique = new java.util.LinkedHashSet<String>();
+        for (var p : user.getServerWorld().getPlayers()) {
+            Role r = gwc.getRole(p);
+            if (r != null) unique.add(BttIdentity.displayName(r).getString());
+        }
+        user.sendMessage(Text.literal("── 本局身份列表 ──").formatted(Formatting.GOLD), true);
+        user.sendMessage(Text.literal(String.join("、", unique)).formatted(Formatting.YELLOW), true);
+    }
+
     // ===== 酒保：<灌酒> 身边者醉酒 1 分钟，CD 1 分钟（docx 2026-09-07） =====
 
     private static void bartender(ServerPlayerEntity user, ServerPlayerEntity target) {
@@ -194,20 +215,7 @@ public final class BttGuessReceiver {
         user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
     }
 
-    // ===== 毒师：<下药> 身边者醉酒+中毒 1 分钟，CD 30 秒（标记机制 GAP，简化为直接下药） =====
-
-    private static void drugMaker(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
-            return;
-        }
-        setCd(ability, GameConstants.getInTicks(0, 30));
-        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
-        PlayerPoisonComponent.KEY.get(target).setPoisonTicks(GameConstants.getInTicks(1, 0), user.getUuid());
-        user.sendMessage(Text.literal("下药成功。").formatted(Formatting.DARK_GREEN), true);
-    }
+    // ===== 舞蛇人 =====
 
     // ===== 花匠：<栽培> 于脚下种小花（相邻≥20m、非露天），CD 30 秒 =====
 
@@ -288,7 +296,7 @@ public final class BttGuessReceiver {
             gwc.addRole(target.getUuid(), mine);
             gwc.sync();
             // 新舞蛇人（原主犯）中毒（doc）
-            PlayerPoisonComponent.KEY.get(target).setPoisonTicks(1000, user.getUuid());
+            PlayerPoisonComponent.KEY.get(target).setPoisonTicks(100000, user.getUuid()); // 永久中毒（docx 2026-09-09）
             broadcast(user, Text.literal("舞蛇人识破了主犯！两人身份互换——"
                     + target.getName().getString() + " 成为了新的舞蛇人（且已中毒）。").formatted(Formatting.DARK_PURPLE));
         } else {

@@ -17,4 +17,6 @@ public final class BttDeathReasons {
     public static final Identifier LOVER_SUICIDE = Identifier.of("noellesroles", "lover_suicide");
     /** 殉教：救世主死亡 → 信徒集体殉教 */
     public static final Identifier MARTYRDOM = Identifier.of("noellesroles", "martyrdom");
+    /** 自裁：游侠误杀/魔像非误杀/暴乱期乘客误杀 */
+    public static final Identifier SELF_EXECUTION = Identifier.of("noellesroles", "self_execution");
 }

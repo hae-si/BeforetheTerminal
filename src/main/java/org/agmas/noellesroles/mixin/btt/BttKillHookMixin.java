@@ -91,15 +91,35 @@ public abstract class BttKillHookMixin {
         // === ③ 全局：处决（乘客用枪杀人）===
         if (!gwc.isInnocent(shooter)) return;
         if (identifier != GameConstants.DeathReasons.GUN) return;
+        if (shooter == victim) return; // 自裁结不再嵌套
 
         // 理智 −40
         var mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(shooter);
         mood.setMood(Math.max(0f, mood.getMood() - 0.4f));
 
-        // 掉落枪 → 由 BttGunDropMixin 在 GunShootPayload.Receiver 层处理（更可靠）
+        // 暴乱存活判定（C-063）
+        boolean riotAlive = false;
+        for (ServerPlayerEntity p : world.getPlayers()) {
+            if (gwc.isRole(p, org.agmas.noellesroles.btt.BttRoles.RIOT) && GameFunctions.isPlayerAliveAndSurvival(p)) {
+                riotAlive = true;
+                break;
+            }
+        }
 
-        // 误杀（处决杀死乘客）→ 所有凶手 +100 狂气
-        if (gwc.isInnocent(victim)) {
+        boolean misfire = gwc.isInnocent(victim);
+        if (misfire) {
+            // 误杀：暴乱存活 → 射手自裁 + 凶手不获狂气；否则 → 所有凶手 +100
+            if (riotAlive) {
+                GameFunctions.killPlayer(shooter, true, shooter, BttDeathReasons.SELF_EXECUTION);
+            } else {
+                for (ServerPlayerEntity p : world.getPlayers()) {
+                    if (gwc.canUseKillerFeatures(p)) {
+                        dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);
+                    }
+                }
+            }
+        } else if (riotAlive) {
+            // 非误杀处决（杀了凶手）+ 暴乱存活 → 所有凶手 +100
             for (ServerPlayerEntity p : world.getPlayers()) {
                 if (gwc.canUseKillerFeatures(p)) {
                     dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);

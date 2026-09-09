@@ -46,11 +46,21 @@ public abstract class BttShoujoInstinctMixin {
         }
         if (!WatheClient.isInstinctEnabled()) return;
         if (!gwc.canUseKillerFeatures(viewer)) return;
+        // ④ 罂粟农（C-063）：存活时凶手本能看所有人都是绿——覆盖下方全部配色
+        for (var op : viewer.getWorld().getPlayers()) {
+            if (op == viewer || !op.isAlive()) continue;
+            if (gwc.getRole(op) == BttRoles.POPPY_GROWER) {
+                cir.setReturnValue(INSTINCT_GREEN);
+                return;
+            }
+        }
         Role role = gwc.getRole(p);
         if (role == BttRoles.SHOUJO) {
             cir.setReturnValue(-1);
         } else if (BttRoles.factionOf(role) == BttRoles.Faction.LONE) {
             cir.setReturnValue(INSTINCT_GREEN);
+        } else if (role == BttRoles.TRAITOR) {
+            cir.setReturnValue(INSTINCT_GREEN); // 叛徒：本能中绿色（docx 2026-09-09）
         }
     }
 }

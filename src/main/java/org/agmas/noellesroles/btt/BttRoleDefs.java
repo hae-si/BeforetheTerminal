@@ -77,8 +77,29 @@ public final class BttRoleDefs {
         // ===== 醉酒投放者（BT-SYS-DRUNK，C-060） =====
         def(BttRoles.BARTENDER); // 酒保：无初始道具（<灌酒> G 键选人）
         def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
-        def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（标记 GAP，<灌酒> 简化为直接灌身边者）
-        def(BttRoles.DRUG_MAKER).kit(knife()); // 毒师：初始[刀]（标记 GAP，<下药> 简化为直接下药）
+        def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（<灌酒> 简化为直接灌）
+        // ===== docx 2026-09-09 新增（C-063） =====
+        def(BttRoles.POPPY_GROWER); // 罂粟农：被动天赋（本能全绿），无 kit
+        def(BttRoles.AGENT).kit(knife()); // 特工：初始[刀]（<查看> G 键直发）
+        def(BttRoles.RIOT).kit(knife()); // 暴乱：初始[刀]
+        def(BttRoles.VORTOX).kit(knife()); // 涡流：初始[刀]
+        // 涡流：存活时所有乘客持续醉酒（每 tick 施加 2t 维持量）
+        def(BttRoles.VORTOX).onTick((player, world, gwc) -> {
+            if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
+            for (var p : world.getPlayers()) {
+                if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+                var f = BttRoles.factionOf(gwc.getRole(p));
+                if (f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD) {
+                    if (p != player) BttState.applyDrunk(p.getUuid(), 2);
+                }
+            }
+        });
+        // ===== 叛徒系（C-063：狂人席位+凶手阵营） =====
+        def(BttRoles.TRAITOR).kit(knife()); // 叛徒：[刀]+商店
+        def(BttRoles.EX_TRAITOR).kit(knife()); // 前任叛徒：继承（D16）后 [刀]
+        // ===== 游侠/魔像（docx 2026-09-09：弓删改枪） =====
+        def(BttRoles.RANGER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
+        def(BttRoles.GOLEM).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能

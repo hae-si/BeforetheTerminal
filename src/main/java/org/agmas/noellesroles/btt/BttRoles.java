@@ -137,6 +137,8 @@ public final class BttRoles {
     public static final Role STAR = register("star", 0xFFC0CB, Faction.CIVILIAN);
         /** 吟游诗人（2026-09-06 替换水手——策划案修订；<歌唱>=群体醉酒 1min，依赖 BT-SYS-DRUNK） */
     public static final Role MINSTREL = register("minstrel", 0xF400A1, Faction.CIVILIAN);
+    /** 罂粟农（docx 2026-09-09 新增）：凶手本能透视全员绿（醉/死后恢复） */
+    public static final Role POPPY_GROWER = register("poppy_grower", 0x228B22, Faction.CIVILIAN);
 
     // ===== 平民乘客·辅助类 =====
 
@@ -166,7 +168,12 @@ public final class BttRoles {
     /** 魔术师：接管 NR swapper（换位 UI/能力原生；2026-09-06 用户指令，magician 键删） */
     public static final Role MAGICIAN = takeover(Noellesroles.SWAPPER, Faction.PRINCIPAL);
     public static final Role SMUGGLER = register("smuggler", 0x556B2F, Faction.PRINCIPAL);
-    public static final Role DRUG_MAKER = register("drug_maker", 0x556B2F, Faction.PRINCIPAL);
+    /** 特工（docx 2026-09-09 新增）：<查看> 本局身份列表 */
+    public static final Role AGENT = register("agent", 0x8B008B, Faction.PRINCIPAL);
+    /** 暴乱（docx 2026-09-09 新增）：存活时乘客误杀自裁/非误杀全凶 +100 */
+    public static final Role RIOT = register("riot", 0xB8860B, Faction.PRINCIPAL);
+    /** 涡流（docx 2026-09-09 新增）：存活时所有乘客持续醉酒 */
+    public static final Role VORTOX = register("vortox", 0xB8860B, Faction.PRINCIPAL);
 
     // ===== 从犯凶手（槽位 = N//6 − 1） =====
 
@@ -179,8 +186,12 @@ public final class BttRoles {
     public static final Role BANDIT = register("bandit", 0x8B4513, Faction.ACCOMPLICE);
     public static final Role ABUSER = register("abuser", 0xE34234, Faction.ACCOMPLICE);
     public static final Role PARTYHOST = register("partyhost", 0xE34234, Faction.ACCOMPLICE);
-    public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.ACCOMPLICE);
-    public static final Role EX_TRAITOR = register("ex_traitor", 0x2F4F4F, Faction.ACCOMPLICE);
+    /** 叛徒（docx 2026-09-09：狂人中立席位+凶手阵营，本能绿色，刀+商店） */
+    public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.MAD,
+            false, true, Role.MoodType.FAKE, -1, true);
+    /** 前任叛徒（docx 2026-09-09：狂人中立席位+凶手阵营，继承不在场平民） */
+    public static final Role EX_TRAITOR = register("ex_traitor", 0x2F4F4F, Faction.MAD,
+            false, true, Role.MoodType.FAKE, -1, true);
 
     // ===== 中立 · 独行（C-037 三分类；合计中立槽位 = N//6） =====
 
@@ -190,8 +201,7 @@ public final class BttRoles {
     public static final Role ARSONIST = register("arsonist", 0xFF4500, Faction.LONE);
     public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
     public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
-    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.MAD);
-    public static final Role CULT_LEADER = register("cult_leader", 0x228B22, Faction.MAD);
+    public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.CIVILIAN);
     /** 酒鬼：狂人中立（乘客旗标、永久醉酒设计） */
     public static final Role DRUNK = register("drunk", 0xDB7093, Faction.MAD);
     /** 疯子：狂人中立（同上） */
@@ -218,7 +228,7 @@ public final class BttRoles {
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
             PHARMACIST, RIGGER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
-            BARTENDER, MINSTREL, SMUGGLER, DRUG_MAKER);
+            BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -237,22 +247,21 @@ public final class BttRoles {
                 {VIGILANTE, HUNTER}, {RAILWAY_POLICE, NIGHT_WATCHMAN}, {RANGER, GOLEM}, {WITCH, VETERAN},
                 // 信息 1-8
                 {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
-                // 生死 1-6
-                {PROFESSOR, PHARMACIST}, {VIRGIN, STAR}, {BARTENDER, MINSTREL},
+                // 生死 1-8
+                {PROFESSOR, PHARMACIST}, {VIRGIN, STAR}, {BARTENDER, MINSTREL}, {SNAKE_CHARMER, POPPY_GROWER},
                 // 辅助 1-12
                 {CONDUCTOR, ATTENDANT}, {ARCHITECT, RIGGER}, {SHOUJO, DRIVER}, {MAID, POSTMAN},
                 {CANNIBAL, PHILOSOPHER}, {UNDERCOVER, EX_UNDERCOVER},
-                // 主犯 1-8
-                {ASSASSIN, IMPOSTOR}, {ACTOR, STOWAWAY}, {MAGICIAN, GODFATHER}, {SMUGGLER, DRUG_MAKER},
-                // 从犯 1-10
+                // 主犯 1-10
+                {ASSASSIN, IMPOSTOR}, {ACTOR, STOWAWAY}, {MAGICIAN, SMUGGLER}, {AGENT, GODFATHER}, {RIOT, VORTOX},
+                // 从犯 1-8
                 {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, PARTYHOST},
-                {TRAITOR, EX_TRAITOR},
                 // 独行 1-4
                 {NOVELIST, JESTER}, {THIEF, ARSONIST},
                 // 外人 1-4
                 {MAJO, MESSIAH}, {KIDNAPPER, GARDENER},
                 // 狂人 1-8
-                {BLACKDEATH, HERETIC}, {AMNESIAC, GOON}, {SNAKE_CHARMER, CULT_LEADER}, {DRUNK, LUNATIC},
+                {BLACKDEATH, HERETIC}, {AMNESIAC, GOON}, {DRUNK, LUNATIC}, {TRAITOR, EX_TRAITOR},
         };
         for (Role[] pair : pairs) {
             SAME_COLOR_PARTNER.put(pair[0], pair[1]);

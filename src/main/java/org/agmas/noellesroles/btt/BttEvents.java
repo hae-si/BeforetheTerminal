@@ -67,6 +67,18 @@ public final class BttEvents {
             }
             return true;
         });
+        // 花匠护盾（C-062）：花匠存活且场上有花 → 否决死亡并移除一株花
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!(victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw)) return true;
+            if (!BttIdentity.isBttMode(sw)) return true;
+            GameWorldComponent gwc0 = GameWorldComponent.KEY.get(sw);
+            if (!gwc0.isRole(victim, org.agmas.noellesroles.btt.BttRoles.GARDENER)) return true;
+            if (BttFlowers.count(sw) <= 0) return true;
+            BttFlowers.removeOne(sw);
+            victim.sendMessage(net.minecraft.text.Text.literal("一株小花替你枯萎了……")
+                    .formatted(net.minecraft.util.Formatting.GREEN), true);
+            return false;
+        });
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
             if (!BttIdentity.isBttMode(victim.getWorld())) return true;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());

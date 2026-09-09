@@ -49,6 +49,17 @@ public final class BttFlowers {
         return n;
     }
 
+    /** 移除一株花（花匠护盾消耗） */
+    public static void removeOne(ServerWorld world) {
+        for (Flower f : FLOWERS) {
+            if (f.world == world) {
+                discard(f);
+                FLOWERS.remove(f);
+                return;
+            }
+        }
+    }
+
     public static void clear() {
         for (Flower f : FLOWERS) discard(f);
         FLOWERS.clear();
