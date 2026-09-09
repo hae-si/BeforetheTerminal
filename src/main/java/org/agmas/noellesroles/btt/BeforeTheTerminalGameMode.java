@@ -266,6 +266,15 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     || BttState.getInt(p.getUuid(), "cult") == 1;
             case KIDNAPPER_WIN -> p -> gameWorld.getRole(p) == BttRoles.KIDNAPPER;
             case GARDENER_WIN -> p -> gameWorld.getRole(p) == BttRoles.GARDENER;
+            case LOVERS_WIN -> p -> {
+                if (!BttRelationships.isLover(p.getUuid())) return false;
+                UUID partner = BttRelationships.partnerOf(p.getUuid());
+                if (partner == null) return false;
+                ServerPlayerEntity pp = (ServerPlayerEntity) world.getPlayerByUuid(partner);
+                return pp != null && GameFunctions.isPlayerAliveAndSurvival(pp)
+                        && BttRoles.factionOf(gameWorld.getRole(p)) != BttRoles.factionOf(gameWorld.getRole(pp));
+            };
+            case ARCHENEMY_WIN -> p -> false; // kill hook 已直接设 winners
             default -> p -> false;
         };
         String winners = players.stream().filter(isWinner)
@@ -282,7 +291,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     ? BttEndings.Ending.HERETIC_KILLER
                     : BttEndings.Ending.HERETIC_PASSENGER;
         }
-        // 恋人（C-061）：双方存活到最后且阵营不同 → 并入胜者组（"各自原本胜利条件亦生效，但不是恋人胜利"——标题保持原结局）
+        // 恋人（C-064 v3）：异阵营双存活到结局 → LOVERS_WIN 独立标题（宣告恋人胜利）
         java.util.List<UUID> loverWinners = new java.util.ArrayList<>();
         for (ServerPlayerEntity p : players) {
             if (!BttRelationships.isLover(p.getUuid()) || !GameFunctions.isPlayerAliveAndSurvival(p)) continue;
@@ -292,6 +301,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
             var f1 = BttRoles.factionOf(gameWorld.getRole(p));
             var f2 = BttRoles.factionOf(gameWorld.getRole(partnerPlayer));
             if (f1 != f2) loverWinners.add(p.getUuid());
+        }
+        if (!loverWinners.isEmpty()) {
+            ending = BttEndings.Ending.LOVERS_WIN;
         }
         java.util.function.Predicate<ServerPlayerEntity> flipWinner = ws == GameFunctions.WinStatus.KILLERS
                 ? (java.util.function.Predicate<ServerPlayerEntity>) isWinnerByKiller(gameWorld)

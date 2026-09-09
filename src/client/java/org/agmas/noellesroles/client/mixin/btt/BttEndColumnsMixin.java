@@ -205,6 +205,8 @@ public abstract class BttEndColumnsMixin {
             case "CULT_WIN" -> "cult";
             case "KIDNAPPER_WIN" -> "kidnapper";
             case "GARDENER_WIN" -> "gardener";
+            case "LOVERS_WIN" -> "lovers";
+            case "ARCHENEMY_WIN" -> "archenemy";
             default -> null;
         };
     }

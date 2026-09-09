@@ -50,6 +50,10 @@
   "noellesroles.epilogue.cult.line": "Lamenting \u201csuch a world\u201d - can it become a reason for someone to live?",
   "noellesroles.ending.majo": "Majo Wins",
   "noellesroles.ending.quote.majo": "No matter how many times, no matter whose life it is, let me exist as myself.",
+  "noellesroles.ending.lovers": "恋人胜利",
+  "noellesroles.ending.quote.lovers": "若要由我来谈论爱的话 在那双眼中映出的又是何等景象",
+  "noellesroles.ending.archenemy": "宿敌凶手胜利",
+  "noellesroles.ending.quote.archenemy": "呼唤了春天的暴风雨 我哭了起来 心已经受了伤",
   "noellesroles.epilogue.majo.title": "Witch's Epilogue",
   "noellesroles.epilogue.survival.title": "Survival Epilogue",
   "noellesroles.epilogue.survival.line": "A bullet flies - emptiness at last, borne to bone and ash.",
@@ -348,5 +352,7 @@
   "tip.noellesroles.cooldown": "Ability usable in %ss",
   "death_reason.noellesroles.snipe_magic": "Snipe Magic",
   "death_reason.noellesroles.prophecy_interrupted": "Prophecy Interrupted",
-  "death_reason.noellesroles.martyrdom": "Martyrdom"
+  "death_reason.noellesroles.martyrdom": "Martyrdom",
+  "death_reason.noellesroles.lover_suicide": "Lover's Suicide",
+  "death_reason.noellesroles.self_execution": "Self-execution"
 }

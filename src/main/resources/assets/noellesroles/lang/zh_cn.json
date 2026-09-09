@@ -20,6 +20,10 @@
   "noellesroles.epilogue.cult.line": "悲叹着“这样的世界” 就能成为谁活下去的理由吗",
   "noellesroles.ending.majo": "魔女胜利",
   "noellesroles.ending.quote.majo": "无论第几次 无论第几次 为了让我作为我存在",
+  "noellesroles.ending.lovers": "恋人胜利",
+  "noellesroles.ending.quote.lovers": "若要由我来谈论爱的话 在那双眼中映出的又是何等景象",
+  "noellesroles.ending.archenemy": "宿敌凶手胜利",
+  "noellesroles.ending.quote.archenemy": "呼唤了春天的暴风雨 我哭了起来 心已经受了伤",
   "noellesroles.epilogue.majo.title": "魔女尾声",
   "noellesroles.epilogue.survival.title": "生还尾声",
   "noellesroles.epilogue.survival.line": "飞来的一颗子弹，那即是空虚，最终化为尸骸。",
@@ -337,5 +341,7 @@
   "tip.noellesroles.cooldown": "能力在 %s 秒后可用",
   "death_reason.noellesroles.snipe_magic": "狙击魔法",
   "death_reason.noellesroles.prophecy_interrupted": "预言中断",
-  "death_reason.noellesroles.martyrdom": "殉教"
+  "death_reason.noellesroles.martyrdom": "殉教",
+  "death_reason.noellesroles.lover_suicide": "殉情",
+  "death_reason.noellesroles.self_execution": "自裁"
 }

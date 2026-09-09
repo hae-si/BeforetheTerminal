@@ -8,6 +8,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.btt.BttDeathReasons;
 import org.agmas.noellesroles.btt.BttIdentity;
+import java.util.ArrayList;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttState;
@@ -75,12 +76,26 @@ public abstract class BttKillHookMixin {
             }
         }
 
-        // === ① 全局：宿敌护盾授予（C-061）：平民宿敌被击毙 → 凶手宿敌 +2 护盾 ===
+        // === ① 全局：宿敌（C-064）：宿敌乘客被处决 → 宿敌凶手单独胜利（docx 2026-09-09） ===
         if ("ARCHENEMY".equals(org.agmas.noellesroles.btt.BttRelationships.typeOf(victim.getUuid()))
-                && org.agmas.noellesroles.btt.BttRoles.factionOf(gwc.getRole(victim)) == org.agmas.noellesroles.btt.BttRoles.Faction.CIVILIAN) {
+                && org.agmas.noellesroles.btt.BttRoles.factionOf(gwc.getRole(victim)) == org.agmas.noellesroles.btt.BttRoles.Faction.CIVILIAN
+                && identifier == GameConstants.DeathReasons.GUN
+                && gwc.isInnocent(shooter)) {
             java.util.UUID archenemy = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim.getUuid());
-            if (archenemy != null) org.agmas.noellesroles.btt.BttRelationships.grantArchenemyShields(archenemy, 2);
+            ServerPlayerEntity archenemyPlayer = archenemy == null ? null : (ServerPlayerEntity) world.getPlayerByUuid(archenemy);
+            if (archenemyPlayer != null) {
+                var btt = org.agmas.noellesroles.btt.BttGameWorldComponent.KEY.get(world);
+                btt.lastEnding = org.agmas.noellesroles.btt.BttEndings.Ending.ARCHENEMY_WIN.name();
+                btt.winners = archenemyPlayer.getUuid().toString();
+                btt.sync();
+                dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(world).setRoundEndData(
+                        new ArrayList<>(world.getPlayers()), GameFunctions.WinStatus.NONE);
+                GameFunctions.stopGame(world);
+                return;
+            }
         }
+
+        // === ① 全局：宿敌护盾（v2 已删除，改为单独胜利） ===
 
         // === ② 声明式 per-role 击杀钩子 ===
         BttRoleDef d = BttRoleDefs.get(gwc.getRole(shooter));
