@@ -46,7 +46,7 @@ public final class BttEvents {
         registerKitDispatch();
         registerJesterPsycho();
         registerStarImmunity();
-        registerCandySeller();
+        registerPharmacistPoison();
         BttGuessReceiver.register();
         BttShopGate.init();
         registerMaidGive();
@@ -57,16 +57,6 @@ public final class BttEvents {
     // ===== 精神病人护盾（doc：拿出球棒获得护盾，直到杀死一个人——球棒冷却期间无盾） =====
 
     private static void registerPsychopathShield() {
-        // 宿敌护盾（C-061）：凶手方宿敌 archenemyShields>0 → 否决死亡并消耗一层
-        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
-            if (org.agmas.noellesroles.btt.BttRelationships.archenemyShields(victim.getUuid()) > 0
-                    && org.agmas.noellesroles.btt.BttRelationships.consumeArchenemyShield(victim.getUuid())) {
-                victim.sendMessage(net.minecraft.text.Text.literal("宿敌的护盾抵挡了致命一击。")
-                        .formatted(net.minecraft.util.Formatting.GOLD), true);
-                return false;
-            }
-            return true;
-        });
         // 花匠护盾（C-062）：花匠存活且场上有花 → 否决死亡并移除一株花
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
             if (!(victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw)) return true;
@@ -176,9 +166,9 @@ public final class BttEvents {
         });
     }
 
-    // ===== 卖糖人：识别下毒餐盘（wathe CanSeePoison 原生事件） =====
+    // ===== 药剂师：识别下毒餐盘（wathe CanSeePoison 原生事件） =====
 
-    private static void registerCandySeller() {
+    private static void registerPharmacistPoison() {
         CanSeePoison.EVENT.register(player -> {
             if (!BttIdentity.isBttMode(player.getWorld())) return false;
             return GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.PHARMACIST);
@@ -199,7 +189,7 @@ public final class BttEvents {
                 if (!gwc.isRunning()) continue;
 
                 for (var player : world.getPlayers()) {
-                    BttState.decrementDrunk(player.getUuid()); // 醉酒计时（BT-SYS-DRUNK）
+                    BttPlayerComponent.KEY.get(player).decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }

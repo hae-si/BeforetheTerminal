@@ -9,9 +9,9 @@ import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.btt.BttDeathReasons;
 import org.agmas.noellesroles.btt.BttIdentity;
 import java.util.ArrayList;
+import org.agmas.noellesroles.btt.BttPlayerComponent;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
-import org.agmas.noellesroles.btt.BttState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -39,7 +39,7 @@ public abstract class BttKillHookMixin {
                 for (ServerPlayerEntity p : sw0.getPlayers()) {
                     if (p == victim) continue;
                     if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-                    if (BttState.getInt(p.getUuid(), "cult") == 1) {
+                    if (BttPlayerComponent.KEY.get(p).isCult()) {
                         GameFunctions.killPlayer(p, true, victim, BttDeathReasons.MARTYRDOM);
                     }
                 }
@@ -50,7 +50,7 @@ public abstract class BttKillHookMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
 
         // === ① 全局：杀人历史（任何击杀均记录） ===
-        BttState.setInt(shooter.getUuid(), "hasKilled", 1);
+        BttPlayerComponent.KEY.get(shooter).hasKilled = 1;
 
         // === ① 全局：独行中立被杀加钱（2026-09-06 策划修订：+100 狂气，同乘客口径） ===
         if (gwc.getRole(victim) != null
@@ -68,8 +68,8 @@ public abstract class BttKillHookMixin {
         }
 
         // === ① 全局：恋人殉情（C-061；doc 死因"殉情"） ===
-        java.util.UUID lover = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim.getUuid());
-        if (lover != null && org.agmas.noellesroles.btt.BttRelationships.isLover(victim.getUuid())) {
+        java.util.UUID lover = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim);
+        if (lover != null && org.agmas.noellesroles.btt.BttRelationships.isLover(victim)) {
             ServerPlayerEntity partner = (ServerPlayerEntity) world.getPlayerByUuid(lover);
             if (partner != null && GameFunctions.isPlayerAliveAndSurvival(partner)) {
                 GameFunctions.killPlayer(partner, true, victim, BttDeathReasons.LOVER_SUICIDE);
@@ -77,11 +77,11 @@ public abstract class BttKillHookMixin {
         }
 
         // === ① 全局：宿敌（C-064）：宿敌乘客被处决 → 宿敌凶手单独胜利（docx 2026-09-09） ===
-        if ("ARCHENEMY".equals(org.agmas.noellesroles.btt.BttRelationships.typeOf(victim.getUuid()))
+        if ("ARCHENEMY".equals(org.agmas.noellesroles.btt.BttRelationships.typeOf(victim))
                 && org.agmas.noellesroles.btt.BttRoles.factionOf(gwc.getRole(victim)) == org.agmas.noellesroles.btt.BttRoles.Faction.CIVILIAN
                 && identifier == GameConstants.DeathReasons.GUN
                 && gwc.isInnocent(shooter)) {
-            java.util.UUID archenemy = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim.getUuid());
+            java.util.UUID archenemy = org.agmas.noellesroles.btt.BttRelationships.partnerOf(victim);
             ServerPlayerEntity archenemyPlayer = archenemy == null ? null : (ServerPlayerEntity) world.getPlayerByUuid(archenemy);
             if (archenemyPlayer != null) {
                 var btt = org.agmas.noellesroles.btt.BttGameWorldComponent.KEY.get(world);
@@ -122,22 +122,29 @@ public abstract class BttKillHookMixin {
         }
 
         boolean misfire = gwc.isInnocent(victim);
+        boolean knight = gwc.isRole(shooter, org.agmas.noellesroles.btt.BttRoles.CABALLERO);
+        boolean ranger = gwc.isRole(shooter, org.agmas.noellesroles.btt.BttRoles.RANGER);
         if (misfire) {
-            // 误杀：暴乱存活 → 射手自裁 + 凶手不获狂气；否则 → 所有凶手 +100
-            if (riotAlive) {
+            // 误杀：暴乱/骑士 → 射手自裁；暴乱不给凶手狂气，骑士误杀仍按误杀规则给
+            if (riotAlive || knight) {
                 GameFunctions.killPlayer(shooter, true, shooter, BttDeathReasons.SELF_EXECUTION);
-            } else {
+            }
+            if (!riotAlive) {
                 for (ServerPlayerEntity p : world.getPlayers()) {
                     if (gwc.canUseKillerFeatures(p)) {
                         dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);
                     }
                 }
             }
-        } else if (riotAlive) {
-            // 非误杀处决（杀了凶手）+ 暴乱存活 → 所有凶手 +100
-            for (ServerPlayerEntity p : world.getPlayers()) {
-                if (gwc.canUseKillerFeatures(p)) {
-                    dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);
+        } else {
+            // 非误杀处决：游侠自裁；暴乱存活 → 所有凶手 +100
+            if (ranger) {
+                GameFunctions.killPlayer(shooter, true, shooter, BttDeathReasons.SELF_EXECUTION);
+            } else if (riotAlive) {
+                for (ServerPlayerEntity p : world.getPlayers()) {
+                    if (gwc.canUseKillerFeatures(p)) {
+                        dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);
+                    }
                 }
             }
         }

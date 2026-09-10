@@ -8,7 +8,6 @@
     "GiveCoinsOnMoodCompletionMixin",
     "btt.BttKillHookMixin",
     "btt.BttExecutionMixin",
-    "btt.BttExecutionMixin",
     "btt.BttRoundEndRoleMixin",
     "btt.BttHornStartMixin",
     "bartender.BartenderPlayerShopComponentMixin",
@@ -43,8 +42,7 @@
     "btt.BttShopBuyMixin",
     "btt.BttCleanerSilentKnifeMixin",
     "btt.BttMaidPlatterMixin",
-    "btt.BttWatheVultureThiefMixin",
-    "btt.BttHmlForceRoleMixin"
+    "btt.BttWatheVultureThiefMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -3,19 +3,25 @@ package org.agmas.noellesroles.client.ui.btt;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedInventoryScreen;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttRoles;
 
 /**
- * BT-P2-UI G 键技能（用户指令：技能一律 G 键 + 背包选人，不做道具）。
- * BTT 自建键位（默认 G，与 NR abilityBind 同键但独立实例——wasPressed 消费互斥，不能共用）。
- * 按下 → BTT 局内且身份属选人类 → 打开背包屏（BttGuessScreenMixin 自动铺选人件）。
+ * BTT 技能键（默认 G，走 NR abilityBind 分流；由 NoellesrolesClient 调 handlePress）。
+ * 触发模型（GAME_DESIGN §4.5）：
+ * - **身边者技能** → G 键直接选中最近玩家（≤6 格），不发屏：绳艺师/药剂师/酒保/走私犯；
+ * - **任意人技能** → 打开背包选人屏（BttGuessScreenMixin 铺选人件）：预言家/小说家/猎人/侦探/救世主/舞蛇人；
+ * - **无目标技能** → G 键直发：吟游诗人/花匠/特工；失忆患者 → G 键注视尸体。
  * （静态判断方法放本普通类：mixin 类禁止非 private static 成员，曾致 LimitedInventoryScreen 转换崩溃。）
  */
 public final class BttAbilityKey {
     private BttAbilityKey() {}
+
+    /** 身边者技能作用半径（与 BttGuessReceiver 服务端校验一致） */
+    private static final double NEARBY_RANGE = 6.0;
 
     /** 由 NoellesrolesClient 的 abilityBind.wasPressed() 调用（BTT 模式优先分流） */
     public static void handlePress(MinecraftClient client) {
@@ -51,9 +57,49 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;
         }
-        if (!isUiRole(def.role)) return;
+        // 身边者技能：G 键直接选中最近的人（不发选人屏）
+        if (isNearbyRole(def.role)) {
+            sendNearest(client);
+            return;
+        }
+        // 任意人技能：打开背包选人屏
+        if (!isAnyRole(def.role)) return;
         if (client.currentScreen != null) return;
         client.setScreen(new LimitedInventoryScreen(client.player));
+    }
+
+    /** 身边者技能（G 键直接选中最近玩家）：绳艺师/药剂师/酒保/走私犯 */
+    public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
+        return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
+                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER;
+    }
+
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人 */
+    public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
+        return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
+                || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER;
+    }
+
+    /** G 键身边者技能：取最近存活玩家（≤6 格）直接发包 */
+    private static void sendNearest(MinecraftClient client) {
+        var player = client.player;
+        if (player == null || client.world == null) return;
+        net.minecraft.entity.player.PlayerEntity best = null;
+        double bestSq = NEARBY_RANGE * NEARBY_RANGE;
+        for (var p : client.world.getPlayers()) {
+            if (p == player || !p.isAlive()) continue;
+            double d = player.squaredDistanceTo(p);
+            if (d <= bestSq) {
+                bestSq = d;
+                best = p;
+            }
+        }
+        if (best == null) {
+            client.inGameHud.setOverlayMessage(Text.literal("身边没有人。").formatted(Formatting.RED), false);
+            return;
+        }
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                new org.agmas.noellesroles.btt.BttGuessC2SPacket(best.getUuid(), ""));
     }
 
     /** 当前客户端身份是否应显示选人 UI */
@@ -67,19 +113,13 @@ public final class BttAbilityKey {
         return def != null && isUiRole(def.role);
     }
 
+    /** 兼容旧名：选人屏仅服务任意人技能（刺客/魔术师走 NR 原生 UI，不在列） */
     public static boolean isUiRole(dev.doctor4t.wathe.api.Role role) {
-        // 刺客=NR Guesser 原生 UI（Modifier 门控），不进本列表
-        return role == BttRoles.PROPHET || role == BttRoles.NOVELIST
-                || role == BttRoles.HUNTER || role == BttRoles.DETECTIVE
-                || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
-                || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
-                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER;
+        return isAnyRole(role);
     }
 
+    /** 任意人技能中点击即发动（无需输入角色文本）：猎人/侦探 */
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
-        // 仅无需输入猜测的身份（点头像即发动）；蛇魅/救世主需文本框输入，非 instant
-        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER
-                || role == BttRoles.PHARMACIST
-                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER;
+        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE;
     }
 }

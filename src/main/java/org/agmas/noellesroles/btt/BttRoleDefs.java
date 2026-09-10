@@ -1,24 +1,17 @@
 package org.agmas.noellesroles.btt;
 
-import dev.doctor4t.wathe.cca.GameWorldComponent;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.cca.PlayerPsychoComponent;
-import dev.doctor4t.wathe.entity.PlayerBodyEntity;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheItems;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.ItemCooldownManager;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
@@ -30,7 +23,7 @@ import java.util.Map;
 /**
  * BT-ARCH-001：BTT 身份声明式定义表（唯一事实源）。
  * 新增身份 = 在此追加一个 {@code def(...)} 条目；禁止回到 if-chain（CLEAN-005）。
- * 冷却载体约定（CLEAN-004）：优先 {@link ItemCooldownManager}（UI 可见），回合级计数走 {@link BttState}。
+ * 冷却载体约定（CLEAN-004）：优先 {@link ItemCooldownManager}（UI 可见），回合级计数走 {@link BttPlayerComponent}。
  */
 public final class BttRoleDefs {
     private BttRoleDefs() {}
@@ -45,16 +38,17 @@ public final class BttRoleDefs {
         def(BttRoles.ACTOR).kit(knife());
         def(BttRoles.WITCH).kit(p -> {
             knife().give(p);
-            BttState.setInt(p.getUuid(), "witchUses", 1); // 刀限一次
+            BttPlayerComponent.KEY.get(p).witchUses = 1; // 刀限一次
         });
         def(BttRoles.CLEANER).kit(knife());
         def(BttRoles.SWORDSMAN).kit(knife()); // 剑客（docx 改名）：[剑] 飞剑 GAP，暂以刀代
         def(BttRoles.VETERAN).kit(p -> {
             knife().give(p);
-            BttState.setInt(p.getUuid(), "veteranUses", VETERAN_KNIFE_USES);
+            BttPlayerComponent.KEY.get(p).veteranUses = VETERAN_KNIFE_USES;
         });
         revolverKit(BttRoles.VIGILANTE);
         revolverKit(BttRoles.RAILWAY_POLICE);
+        revolverKit(BttRoles.LAWYER);
         revolverKit(BttRoles.HUNTER);
         // 猎人 UI 初始 CD=0（覆盖 NR generalCooldownTicks，否则开局选人件被灰）
         BttRoleDef hunter = def(BttRoles.HUNTER);
@@ -63,7 +57,6 @@ public final class BttRoleDefs {
             initialAbilityCd(p, 0);
         });
         revolverKit(BttRoles.BANDIT);
-        revolverKit(BttRoles.NIGHT_WATCHMAN);
         // 魔女：初始[枪]+[撬棍]（docx；外人枪不扔枪/1 分钟 CD 走 BttExecutionMixin 外人分支）
         def(BttRoles.MAJO).kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
@@ -90,16 +83,16 @@ public final class BttRoleDefs {
                 if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
                 var f = BttRoles.factionOf(gwc.getRole(p));
                 if (f == BttRoles.Faction.ENFORCER || f == BttRoles.Faction.CIVILIAN || f == BttRoles.Faction.MAD) {
-                    if (p != player) BttState.applyDrunk(p.getUuid(), 2);
+                    if (p != player) BttPlayerComponent.KEY.get(p).applyDrunk(2);
                 }
             }
         });
         // ===== 叛徒系（C-063：狂人席位+凶手阵营） =====
         def(BttRoles.TRAITOR).kit(knife()); // 叛徒：[刀]+商店
         def(BttRoles.EX_TRAITOR).kit(knife()); // 前任叛徒：继承（D16）后 [刀]
-        // ===== 游侠/魔像（docx 2026-09-09：弓删改枪） =====
+        // ===== 骑士/游侠（docx 2026-09-09：弓删改枪） =====
+        def(BttRoles.CABALLERO).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.RANGER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
-        def(BttRoles.GOLEM).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
@@ -123,22 +116,22 @@ public final class BttRoleDefs {
 
         // ===== P2A-002 补全 =====
         // 女仆：赠予手持的食物/饮料（双倍取餐在 BttMaidPlatterMixin）
-                // 邮差：搁置四星（用户裁定 2026-09-05——手持物右键消费整次交互，破坏枪/刀对玩家使用）
+        // 邮差：仅注册（无行为；与其余仅注册身份同）
 
         // ===== 击杀钩子（BttKillHookMixin 派发；全局杀人历史/祭品协议在 mixin 内先行） =====
 
         // 老兵：刀 3 次（递减+移除）
         def(BttRoles.VETERAN).onKill((shooter, victim, reason, gwc) -> {
             if (reason != GameConstants.DeathReasons.KNIFE) return;
-            int uses = BttState.getInt(shooter.getUuid(), "veteranUses") - 1;
-            BttState.setInt(shooter.getUuid(), "veteranUses", uses);
-            if (uses <= 0) removeOne(shooter, WatheItems.KNIFE);
+            BttPlayerComponent comp = BttPlayerComponent.KEY.get(shooter);
+            comp.veteranUses--;
+            if (comp.veteranUses <= 0) removeOne(shooter, WatheItems.KNIFE);
         });
 
         // 巫觋：刀限一次（击杀后移除）
         def(BttRoles.WITCH).onKill((shooter, victim, reason, gwc) -> {
             if (reason != GameConstants.DeathReasons.KNIFE) return;
-            BttState.setInt(shooter.getUuid(), "witchUses", 0);
+            BttPlayerComponent.KEY.get(shooter).witchUses = 0;
             removeOne(shooter, WatheItems.KNIFE);
         });
 

@@ -37,9 +37,9 @@ public abstract class BttShoujoInstinctMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
         // ① 教团互相透视（被动，无需按键、无凶手门控——救世主/信徒均非 canUseKiller）：观察者与目标均为教团
         boolean viewerCult = gwc.getRole(viewer) == BttRoles.MESSIAH
-                || org.agmas.noellesroles.btt.BttState.getInt(viewer.getUuid(), "cult") == 1;
+                || org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(viewer).isCult();
         boolean targetCult = gwc.getRole(p) == BttRoles.MESSIAH
-                || org.agmas.noellesroles.btt.BttState.getInt(p.getUuid(), "cult") == 1;
+                || org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(p).isCult();
         if (viewerCult && targetCult) {
             cir.setReturnValue(0xFFFF00FF);
             return;

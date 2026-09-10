@@ -39,7 +39,9 @@
       "noellesroles:vulture",
       "noellesroles:chameleon",
       "noellesroles:infected",
-      "noellesroles:game_state"
+      "noellesroles:game_state",
+      "noellesroles:btt_player",
+      "noellesroles:btt_body"
     ]
   },
   "mixins": [

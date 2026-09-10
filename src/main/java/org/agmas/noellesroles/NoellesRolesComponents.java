@@ -4,7 +4,9 @@ package org.agmas.noellesroles;
 import dev.doctor4t.wathe.entity.PlayerBodyEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
+import org.agmas.noellesroles.btt.BttBodyComponent;
 import org.agmas.noellesroles.btt.BttGameWorldComponent;
+import org.agmas.noellesroles.btt.BttPlayerComponent;
 import org.agmas.noellesroles.chameleon.ChameleonPlayerComponent;
 import org.agmas.noellesroles.coroner.BodyDeathReasonComponent;
 import org.agmas.noellesroles.executioner.ExecutionerPlayerComponent;
@@ -35,6 +37,8 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, VulturePlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(VulturePlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, ChameleonPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(ChameleonPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, InfectedPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(InfectedPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, BttPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(BttPlayerComponent::new);
+        registry.beginRegistration(PlayerBodyEntity.class, BttBodyComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(BttBodyComponent::new);
     }
 
     @Override

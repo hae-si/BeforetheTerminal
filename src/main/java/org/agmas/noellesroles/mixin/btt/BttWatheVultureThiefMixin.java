@@ -14,7 +14,6 @@ import net.minecraft.sound.SoundEvents;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.btt.BttGameWorldComponent;
 import org.agmas.noellesroles.btt.BttIdentity;
-import org.agmas.noellesroles.btt.BttState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -61,7 +60,11 @@ public abstract class BttWatheVultureThiefMixin {
             btt.lastEnding = "THIEF_WIN";
             btt.winners = user.getUuid().toString();
             btt.sync();
-            dev.doctor4t.wathe.game.GameFunctions.stopGame((net.minecraft.server.world.ServerWorld) user.getWorld());
+            // 与小说家/GameMode 终局同构：per-role 结局数据 + stopGame（独胜 WinStatus=NONE）
+            dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(user.getServerWorld())
+                    .setRoundEndData(new java.util.ArrayList<>(user.getServerWorld().getPlayers()),
+                            dev.doctor4t.wathe.game.GameFunctions.WinStatus.NONE);
+            dev.doctor4t.wathe.game.GameFunctions.stopGame(user.getServerWorld());
         } else {
             user.sendMessage(net.minecraft.text.Text.literal("已搜刮 " + vulture.bodiesEaten + " / " + vulture.bodiesRequired + " 具。")
                     .formatted(net.minecraft.util.Formatting.AQUA), true);

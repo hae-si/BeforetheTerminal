@@ -20,7 +20,7 @@ import java.util.UUID;
  * 种子期 20s：虚拟（无实体，隐形）；幼苗期 40s：POPPY 掉落物（走近=拔除清除，20m 范围玩家收到提示）；
  * 成花期：WITHER_ROSE 掉落物（非花匠走近=死亡，花随后死亡）。
  * 花匠自己捡不了（pickupDelay=MAX + 距离判定豁免）；实体每 100t 重建防 5 分钟消失。
- * 相邻小花 ≥20m；不能露天（isSkyVisibleAdjacent）。{花匠尾声}期间仅花匠 20m 内的成花攻击。
+ * 相邻小花 ≥20m；不能露天（isSkyVisibleAdjacent）。每株小花=花匠 1 层护盾（挡一次致命伤后花谢，见 BttEvents）。
  */
 public final class BttFlowers {
     private BttFlowers() {}
@@ -29,7 +29,6 @@ public final class BttFlowers {
     public static final int SPROUT_TICKS = 800;  // 40s
     public static final double PICK_RADIUS = 1.2;
     public static final double HINT_RADIUS = 20.0;
-    public static final double EPILOGUE_RADIUS = 20.0;
     private static final int ENTITY_REFRESH = 100;
 
     public static final class Flower {
@@ -86,8 +85,8 @@ public final class BttFlowers {
         return null;
     }
 
-    /** 每 tick（GameMode 循环调用；epilogueGardener={花匠尾声}进行中 → 仅花匠 20m 内成花攻击） */
-    public static void tick(ServerWorld world, ServerPlayerEntity gardener, boolean gardenerEpilogue) {
+    /** 每 tick（GameMode 循环调用） */
+    public static void tick(ServerWorld world, ServerPlayerEntity gardener) {
         List<Flower> mine = new ArrayList<>();
         for (Flower f : FLOWERS) if (f.world == world) mine.add(f);
         for (Flower f : mine) {
@@ -103,26 +102,27 @@ public final class BttFlowers {
                 spawnEntity(f, new ItemStack(Items.WITHER_ROSE));
             }
             if (f.entity != null && f.entity.isRemoved()) f.entity = null;
-            if (f.entity != null && f.stageTicks % ENTITY_REFRESH == 0) {
+            if (f.entity != null && f.stageTicks > 0 && f.stageTicks % ENTITY_REFRESH == 0) {
                 ItemStack stack = f.entity.getStack();
                 f.entity.discard();
                 spawnEntity(f, stack); // 重建防 5 分钟消失（age 归零）
             }
 
-            boolean attacks = f.stage == 2 && (!gardenerEpilogue
-                    || (gardener != null && gardener.getBlockPos().getSquaredDistance(f.pos) <= EPILOGUE_RADIUS * EPILOGUE_RADIUS));
-            if (!attacks) continue;
-
-            ServerPlayerEntity touched = nearestPlayer(f, gardener);
-            if (touched == null) continue;
+            // 幼苗期：非花匠玩家走近 → 拔除
             if (f.stage == 1) {
-                discard(f); // 拔除
-                FLOWERS.remove(f);
-            } else {
+                if (nearestPlayer(f, gardener) != null) {
+                    discard(f);
+                    FLOWERS.remove(f);
+                }
+                continue;
+            }
+            // 成花期：杀死第一个靠近者后花谢
+            if (f.stage == 2) {
+                ServerPlayerEntity touched = nearestPlayer(f, gardener);
+                if (touched == null) continue;
                 ServerPlayerEntity owner = world.getPlayerByUuid(f.gardener) instanceof ServerPlayerEntity o ? o : null;
-                GameFunctions.killPlayer(touched, true,
-                        owner instanceof ServerPlayerEntity o ? o : null, GameConstants.DeathReasons.GENERIC);
-                discard(f); // 成花杀人后死亡
+                GameFunctions.killPlayer(touched, true, owner, GameConstants.DeathReasons.GENERIC);
+                discard(f);
                 FLOWERS.remove(f);
             }
         }

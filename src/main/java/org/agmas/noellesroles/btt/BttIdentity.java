@@ -30,17 +30,6 @@ public final class BttIdentity {
     public static final int MIN_PLAYERS = 6;
     public static final int MAX_PLAYERS = 18;
 
-    /** 下一局强制身份（/forceRole 写入；assignSeats 优先消费并清空——测试用，wathe forceRole 只服务原版记分板选人） */
-    private static final Map<UUID, Role> FORCED = new HashMap<>();
-
-    public static void force(UUID uuid, Role role) {
-        FORCED.put(uuid, role);
-    }
-
-    public static void clearForced() {
-        FORCED.clear();
-    }
-
     /**
      * 纯函数：doc 席位公式分配（2026-09-06 策划大改/C-037 适配）：
      * 主犯 1；从犯 N//6−1；执法 N//6；中立 N//6（独行/外人/狂人三分类合并池）；平民=余量。
@@ -52,8 +41,11 @@ public final class BttIdentity {
         int n = players.size();
         if (n < MIN_PLAYERS || n > MAX_PLAYERS) return null;
 
-        Map<UUID, Role> forced = new HashMap<>(FORCED);
-        FORCED.clear();
+        // R2：复用 HML 强制角色表（/forceRole 写入），消费后清空
+        // （BTT 自研 GameMode 不经过 HML ModdedMurderGameMode 的清理，故在此清理）
+        Map<UUID, Role> forced = new HashMap<>(Harpymodloader.FORCED_MODDED_ROLE_FLIP);
+        Harpymodloader.FORCED_MODDED_ROLE.clear();
+        Harpymodloader.FORCED_MODDED_ROLE_FLIP.clear();
 
         int principal = 1;
         int accomplice = Math.max(0, n / 6 - 1);

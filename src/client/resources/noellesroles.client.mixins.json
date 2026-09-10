@@ -7,7 +7,6 @@
     "InstinctMixin",
     "btt.BttEndColumnsMixin",
     "btt.BttGuessScreenMixin",
-    "btt.BttScreenDoNotClose",
     "btt.BttGodfatherHudMixin",
     "btt.BttMoodGateMixin",
     "btt.BttMoodFlagMixin",
@@ -20,7 +19,6 @@
     "conductor.MasterKeyInvisibilityMixin",
     "coroner.CoronerHudMixin",
     "framing.FramingShopMixin",
-    "guesser.GuesserScreenDoNotClose",
     "guesser.GuesserScreenMixin",
     "guesser.GuesserSuggestorMixin",
     "infected.InfectedHudMixin",
@@ -40,7 +38,8 @@
     "vulture.VultureEatenBodyMixin",
     "vulture.VultureHudMixin",
     "btt.BttShopClientMixin",
-    "btt.BttShoujoInstinctMixin"
+    "btt.BttShoujoInstinctMixin",
+    "select.SelectScreenDoNotClose"
   ],
   "injectors": {
     "defaultRequire": 1

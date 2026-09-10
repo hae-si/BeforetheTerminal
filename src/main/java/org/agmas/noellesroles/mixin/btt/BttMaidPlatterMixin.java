@@ -15,8 +15,8 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.btt.BttIdentity;
+import org.agmas.noellesroles.btt.BttPlayerComponent;
 import org.agmas.noellesroles.btt.BttRoles;
-import org.agmas.noellesroles.btt.BttState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -48,7 +48,7 @@ public abstract class BttMaidPlatterMixin {
             cir.setReturnValue(ActionResult.SUCCESS);
             return;
         }
-        if (BttState.getInt(player.getUuid(), "maidPickups") >= 2) {
+        if (BttPlayerComponent.KEY.get(player).maidPickups >= 2) {
             cir.setReturnValue(ActionResult.SUCCESS);
             return;
         }
@@ -71,7 +71,7 @@ public abstract class BttMaidPlatterMixin {
         }
         player.playSoundToPlayer(SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
         player.setStackInHand(Hand.MAIN_HAND, randomItem);
-        BttState.increment(player.getUuid(), "maidPickups");
+        BttPlayerComponent.KEY.get(player).maidPickups++;
         cir.setReturnValue(ActionResult.SUCCESS);
     }
 

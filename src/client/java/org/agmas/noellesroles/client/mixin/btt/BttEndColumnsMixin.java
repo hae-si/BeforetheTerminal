@@ -63,7 +63,8 @@ public abstract class BttEndColumnsMixin {
         GameFunctions.WinStatus status = roundEnd.getWinStatus();
         String lastEnding = BttGameWorldComponent.KEY.get(player.getWorld()).lastEnding;
         boolean soloWin = "THIEF_WIN".equals(lastEnding) || "NOVELIST_WIN".equals(lastEnding) || "MAJO_WIN".equals(lastEnding)
-                || "CULT_WIN".equals(lastEnding) || "KIDNAPPER_WIN".equals(lastEnding) || "GARDENER_WIN".equals(lastEnding);
+                || "CULT_WIN".equals(lastEnding) || "KIDNAPPER_WIN".equals(lastEnding) || "GARDENER_WIN".equals(lastEnding)
+                || "LOVERS_WIN".equals(lastEnding) || "ARCHENEMY_WIN".equals(lastEnding);
         if (status == GameFunctions.WinStatus.NONE && !soloWin) return; // 无人结局
 
         List<GameRoundEndComponent.RoundEndData> entries = roundEnd.getPlayers();

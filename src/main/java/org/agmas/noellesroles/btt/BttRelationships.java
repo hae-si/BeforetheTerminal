@@ -1,6 +1,7 @@
 package org.agmas.noellesroles.btt;
 
 import dev.doctor4t.wathe.api.Role;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 关系系统（C-061，改造 HML 修饰词/Modifier 机制——每玩家 Modifier 旗标 + BttState 搭档存储）：
+ * 关系系统（C-061，改造 HML 修饰词/Modifier 机制——每玩家 Modifier 旗标 + BttPlayerComponent 搭档存储）：
  * 恋人（任意两人，知晓名字；殉情；异阵营共同存活→并入胜者组）、
  * 宿敌（1 平民+1 从犯，互知身份；平民被击毙→凶手方 +2 护盾）、
  * 双子（2 平民，互不知晓；身份随机统一为其中一人，发 kit 前生效）。
@@ -79,10 +80,16 @@ public final class BttRelationships {
             };
             modifiers.addModifier(a, mod);
             modifiers.addModifier(b, mod);
-            BttState.setString(a, "partner", b.toString());
-            BttState.setString(b, "partner", a.toString());
-            BttState.setString(a, "relType", chosen);
-            BttState.setString(b, "relType", chosen);
+            ServerPlayerEntity ca = (ServerPlayerEntity) world.getPlayerByUuid(a);
+            ServerPlayerEntity cb = (ServerPlayerEntity) world.getPlayerByUuid(b);
+            if (ca != null) {
+                BttPlayerComponent.KEY.get(ca).partner = b.toString();
+                BttPlayerComponent.KEY.get(ca).relType = chosen;
+            }
+            if (cb != null) {
+                BttPlayerComponent.KEY.get(cb).partner = a.toString();
+                BttPlayerComponent.KEY.get(cb).relType = chosen;
+            }
 
             if (notify != null) {
                 ServerPlayerEntity pa = (ServerPlayerEntity) world.getPlayerByUuid(a);
@@ -117,8 +124,8 @@ public final class BttRelationships {
 
     // ===== 查询 =====
 
-    public static UUID partnerOf(UUID player) {
-        String s = BttState.getString(player, "partner");
+    public static UUID partnerOf(PlayerEntity player) {
+        String s = player == null ? null : BttPlayerComponent.KEY.get(player).partner;
         try {
             return s == null || s.isEmpty() ? null : UUID.fromString(s);
         } catch (IllegalArgumentException e) {
@@ -126,28 +133,11 @@ public final class BttRelationships {
         }
     }
 
-    public static boolean isLover(UUID player) {
+    public static boolean isLover(PlayerEntity player) {
         return "LOVER".equals(typeOf(player));
     }
 
-    public static String typeOf(UUID player) {
-        return BttState.getString(player, "relType");
-    }
-
-    /** 宿敌护盾余量（凶手方） */
-    public static int archenemyShields(UUID player) {
-        return BttState.getInt(player, "archenemyShields");
-    }
-
-    public static void grantArchenemyShields(UUID player, int layers) {
-        BttState.setInt(player, "archenemyShields", archenemyShields(player) + layers);
-    }
-
-    /** 消耗一层护盾；无余量返回 false */
-    public static boolean consumeArchenemyShield(UUID player) {
-        int v = archenemyShields(player);
-        if (v <= 0) return false;
-        BttState.setInt(player, "archenemyShields", v - 1);
-        return true;
+    public static String typeOf(PlayerEntity player) {
+        return player == null ? null : BttPlayerComponent.KEY.get(player).relType;
     }
 }

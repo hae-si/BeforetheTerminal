@@ -16,6 +16,8 @@ import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttRoles;
 import org.agmas.noellesroles.client.ui.btt.BttPlayerWidget;
 import org.agmas.noellesroles.client.ui.btt.BttRoleWidget;
+import org.agmas.noellesroles.client.ui.select.SelectPlayerWidget;
+import org.agmas.noellesroles.client.ui.select.SelectRoleWidget;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,8 +31,9 @@ import java.util.UUID;
 
 /**
  * BT-P2-UI 选人界面注入：BTT 局内、拥有选人类身份时在 wathe 背包屏铺选人件。
- * instant 组（点头像即发）：魔术师/猎人/侦探/绳艺师/卖糖人；
- * 猜测组（选人→输角色→回车）：预言家/刺客/小说家/舞蛇人。
+ * 仅服务**任意人技能**（身边者技能走 BttAbilityKey G 键直接选中最近者，不在此）。
+ * instant 组（点头像即发）：猎人/侦探；猜测组（选人→输角色→回车）：预言家/小说家/救世主/舞蛇人。
+ * 刺客/魔术师走 NR 原生 UI，不在列。
  * G 键（BttAbilityKey）= 本界面的快捷入口。
  */
 @Mixin(LimitedInventoryScreen.class)
@@ -39,11 +42,6 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
 
     public BttGuessScreenMixin(PlayerScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
-    }
-
-    private static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.MAGICIAN || role == BttRoles.HUNTER
-                || role == BttRoles.DETECTIVE || role == BttRoles.RIGGER || role == BttRoles.PHARMACIST;
     }
 
     @Inject(method = "init", at = @At("HEAD"))
@@ -56,9 +54,9 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
         if (def == null || !org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isUiRole(def.role)) return;
         boolean instant = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isInstant(def.role);
 
-        BttPlayerWidget.selectedPlayer = null;
-        BttPlayerWidget.instantMode = instant;
-        BttRoleWidget.stopClosing = false;
+        SelectPlayerWidget.selectedPlayer = null;
+        SelectPlayerWidget.instantMode = instant;
+        SelectRoleWidget.stopClosing = false;
 
         List<UUID> entries = new ArrayList<>(player.networkHandler.getPlayerUuids());
         entries.remove(player.getUuid());
@@ -86,14 +84,14 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
         for (Element child : children()) {
             if (child instanceof BttPlayerWidget) {
                 ours = true;
-                ((BttPlayerWidget) child).visible = BttPlayerWidget.selectedPlayer == null;
+                ((BttPlayerWidget) child).visible = SelectPlayerWidget.selectedPlayer == null;
             }
             if (child instanceof BttRoleWidget grw) {
-                BttRoleWidget.stopClosing = BttPlayerWidget.selectedPlayer != null;
-                grw.visible = BttPlayerWidget.selectedPlayer != null;
+                SelectRoleWidget.stopClosing = SelectPlayerWidget.selectedPlayer != null;
+                grw.visible = SelectPlayerWidget.selectedPlayer != null;
             }
         }
-        if (ours && BttPlayerWidget.instantMode) {
+        if (ours && SelectPlayerWidget.instantMode) {
             for (Element child : children()) {
                 if (child instanceof BttPlayerWidget gpw) gpw.visible = true;
             }

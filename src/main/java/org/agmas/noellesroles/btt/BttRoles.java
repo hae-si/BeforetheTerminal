@@ -113,9 +113,12 @@ public final class BttRoles {
     public static final Role HUNTER = register("hunter", 0xCCCCFF, Faction.ENFORCER);
     public static final Role RAILWAY_POLICE = register("railway_police", 0x0000FF, Faction.ENFORCER,
             true, false, Role.MoodType.REAL, -1, false);
-    public static final Role NIGHT_WATCHMAN = register("night_watchman", 0xCCCCFF, Faction.ENFORCER);
+    /** 律师（docx 2026-09-09，取代守夜人）：[枪] <起诉> 场上所有凶手（不含叛徒/黑死病），正确则全部死亡；CD 60s */
+    public static final Role LAWYER = register("lawyer", 0xCCCCFF, Faction.ENFORCER);
+    /** 骑士（2026-09-10 B1：原 `ranger` 键改名）：[枪] 造成误杀时自裁 */
+    public static final Role CABALLERO = register("caballero", 0x8000FF, Faction.ENFORCER);
+    /** 游侠（2026-09-10 B1：原 `golem` 键改名）：[枪] 不造成误杀时自裁 */
     public static final Role RANGER = register("ranger", 0x8000FF, Faction.ENFORCER);
-    public static final Role GOLEM = register("golem", 0x8000FF, Faction.ENFORCER);
     /** 巫觋：接管 NR voodoo 键（死亡带走=doc 诅咒核心；显示名 lang→巫觋） */
     public static final Role WITCH = takeover(Noellesroles.VOODOO, Faction.ENFORCER);
     public static final Role VETERAN = register("veteran", 0x800080, Faction.ENFORCER);
@@ -226,7 +229,7 @@ public final class BttRoles {
             GODFATHER, VIGILANTE, DOCTOR, VIRGIN, JESTER, CONDUCTOR,
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
             BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
-            PHARMACIST, RIGGER, AMNESIAC, THIEF, NIGHT_WATCHMAN, MAID, SWORDSMAN, STOWAWAY,
+            PHARMACIST, RIGGER, AMNESIAC, THIEF, MAID, SWORDSMAN, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
             BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
@@ -237,14 +240,14 @@ public final class BttRoles {
 
     /**
      * 同色身份对（docx 2026-09-07 勘误：同色 = **各阵营内相邻的奇偶编号对**，非 RGB 相等——
-     * 如 arsonist 0xCD7F32 与 folklorist/meyuubyou 同 RGB 但分属不同对，不构成互斥）。
+     * 如 arsonist 0xFF4500 与 folklorist/meyuubyou 色近但分属不同对，不构成互斥）。
      * 键=身份，值=其同色搭档；互斥语义：一对中至多一人入场（assignSeats 消费）。
      */
     private static final Map<Role, Role> SAME_COLOR_PARTNER = new HashMap<>();
     static {
         Role[][] pairs = {
                 // 执法 1-8
-                {VIGILANTE, HUNTER}, {RAILWAY_POLICE, NIGHT_WATCHMAN}, {RANGER, GOLEM}, {WITCH, VETERAN},
+                {VIGILANTE, HUNTER}, {RAILWAY_POLICE, LAWYER}, {CABALLERO, RANGER}, {WITCH, VETERAN},
                 // 信息 1-8
                 {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
                 // 生死 1-8
@@ -291,6 +294,25 @@ public final class BttRoles {
     /** 身份阵营分类（未登记的原版/NR 角色返回 null） */
     public static Faction factionOf(Role role) {
         return FACTIONS.get(role);
+    }
+
+    /**
+     * 阵营=凶手（与席位可不同，2026-09-10 B2 裁定）：主犯/从犯 + 叛徒系 + 黑死病
+     * （叛徒系/黑死病占 MAD 席位但归属凶手；叛徒仅在凶手本能透视中显示为乘客）。
+     */
+    public static boolean isKillerCamp(Role role) {
+        Faction f = factionOf(role);
+        return f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE
+                || role == TRAITOR || role == EX_TRAITOR || role == BLACKDEATH;
+    }
+
+    /** 阵营=乘客侧（执法/平民/狂人；叛徒系/黑死病/凶手除外） */
+    public static boolean isPassengerCamp(Role role) {
+        if (role == null) return false;
+        Faction f = factionOf(role);
+        if (f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE) return false;
+        if (role == TRAITOR || role == EX_TRAITOR || role == BLACKDEATH) return false;
+        return f == Faction.ENFORCER || f == Faction.CIVILIAN || f == Faction.MAD;
     }
 
     /** 全部已注册身份（btt:forceRole 子命令枚举用） */

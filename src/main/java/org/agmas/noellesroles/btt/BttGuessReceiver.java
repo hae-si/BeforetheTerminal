@@ -17,7 +17,7 @@ import org.agmas.noellesroles.AbilityPlayerComponent;
 import java.util.ArrayList;
 
 /**
- * BT-P2-UI 服务端分派：预言家/刺客/小说家/魔术师/舞蛇人 共用选人 UI 的语义。
+ * BT-P2-UI 服务端分派：预言家/刺客/小说家/魔术师/舞蛇人/猎人/救世主/酒保/走私犯/侦探/绳艺师/药剂师 共用选人 UI 的语义。
  * 冷却载体（CLEAN-004 约定的例外）：本批身份用 NR {@link AbilityPlayerComponent}（自动同步，客户端 UI 显示倒计时）。
  * 全部走 BTT 门控 + running 门控；猜测比较 = role path（NR Guesser 同口径）。
  */
@@ -36,13 +36,13 @@ public final class BttGuessReceiver {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
             // 醉酒：技能失效（不自知）
-            if (BttState.isDrunk(user.getUuid())) return;
+            if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
             if (!gwc.isRole(user, BttRoles.AMNESIAC)) return;
             if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
-            if (BttState.getInt(body.getUuid(), "corpseUsed") == 1) return;
+            if (BttBodyComponent.KEY.get(body).isAmnesiacUsed()) return;
             Role dead = gwc.getRole(body.getPlayerUuid());
             if (dead == null) return;
-            BttState.setInt(body.getUuid(), "corpseUsed", 1);
+            BttBodyComponent.KEY.get(body).markAmnesiacUsed();
             BttRoleDef d = BttRoleDefs.get(dead);
             if (d != null) d.dispatchKit(user);
             user.sendMessage(Text.literal("你取回了 "
@@ -55,7 +55,7 @@ public final class BttGuessReceiver {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
-            if (BttState.isDrunk(user.getUuid())) return;
+            if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
             // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
             if (gwc.isRole(user, BttRoles.MINSTREL)) {
                 minstrel(user);
@@ -88,6 +88,12 @@ public final class BttGuessReceiver {
                 smuggler(user, target);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
+            } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
+                detective(user, target, gwc);
+            } else if (gwc.isRole(user, BttRoles.RIGGER)) {
+                rigger(user, target);
+            } else if (gwc.isRole(user, BttRoles.PHARMACIST)) {
+                pharmacist(user, target);
             }
         });
     }
@@ -115,8 +121,8 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            int hits = BttState.getInt(user.getUuid(), "novelistHits") + 1;
-            BttState.setInt(user.getUuid(), "novelistHits", hits);
+            BttPlayerComponent userComp = BttPlayerComponent.KEY.get(user);
+            int hits = ++userComp.novelistHits;
             // doc 口径文案（用户指定 2026-09-05）；猜错不播报
             broadcast(user, Text.literal("小说家进行了正确的猜测！").formatted(Formatting.LIGHT_PURPLE));
             // 独胜判定前移到 receiver（2026-09-07 用户指令，与窃贼 BttWatheVultureThiefMixin 同模式）：
@@ -146,7 +152,7 @@ public final class BttGuessReceiver {
         setCd(ability, GameConstants.getInTicks(2, 0));
         Role guessed = gwc.getRole(target);
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            BttState.setInt(target.getUuid(), "cult", 1);
+            BttPlayerComponent.KEY.get(target).setCult(true);
             broadcast(user, Text.literal(target.getName().getString() + " 已成为教团信徒！")
                     .formatted(Formatting.DARK_PURPLE));
             target.sendMessage(Text.literal("你成为了教团信徒（教团可互相透视）。")
@@ -185,7 +191,7 @@ public final class BttGuessReceiver {
             return;
         }
         setCd(ability, GameConstants.getInTicks(1, 0));
-        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
+        BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
         user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
     }
 
@@ -196,7 +202,7 @@ public final class BttGuessReceiver {
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(2, 0));
         for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
-            BttState.applyDrunk(p.getUuid(), GameConstants.getInTicks(1, 0));
+            BttPlayerComponent.KEY.get(p).applyDrunk(GameConstants.getInTicks(1, 0));
         }
         user.sendMessage(Text.literal("你唱起了一支歌……").formatted(Formatting.LIGHT_PURPLE), true);
     }
@@ -211,7 +217,7 @@ public final class BttGuessReceiver {
             return;
         }
         setCd(ability, GameConstants.getInTicks(0, 30));
-        BttState.applyDrunk(target.getUuid(), GameConstants.getInTicks(1, 0));
+        BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
         user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
     }
 
@@ -235,7 +241,7 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(1, 0));
-        boolean killed = BttState.getInt(target.getUuid(), "hasKilled") > 0;
+        boolean killed = BttPlayerComponent.KEY.get(target).hasKilled > 0;
         user.sendMessage(Text.literal(target.getName().getString()
                 + (killed ? " 曾经杀过人" : " 没有杀过人")).formatted(killed ? Formatting.RED : Formatting.GREEN), true);
     }
@@ -245,6 +251,10 @@ public final class BttGuessReceiver {
     private static void rigger(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
         setCd(ability, GameConstants.getInTicks(1, 0));
         target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
                 net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 15), 250, false, true));
@@ -252,9 +262,13 @@ public final class BttGuessReceiver {
 
     // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====
 
-    private static void candy(ServerPlayerEntity user, ServerPlayerEntity target) {
+    private static void pharmacist(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
         setCd(ability, GameConstants.getInTicks(1, 0));
         PlayerPoisonComponent poison = PlayerPoisonComponent.KEY.get(target);
         if (poison.poisonTicks > 0) poison.reset();
@@ -264,11 +278,11 @@ public final class BttGuessReceiver {
     // ===== 猎人：仅限一次 <狙击>——目标为主犯则死亡，否则无效（揭示与否=作者确认 TODO）；UI instant 复用 =====
 
     private static void hunter(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc) {
-        if (BttState.getInt(user.getUuid(), "hunterShot") == 1) {
+        if (BttPlayerComponent.KEY.get(user).hunterShot == 1) {
             user.sendMessage(Text.literal("你已经用过狙击了。").formatted(Formatting.RED), true);
             return;
         }
-        BttState.setInt(user.getUuid(), "hunterShot", 1);
+        BttPlayerComponent.KEY.get(user).hunterShot = 1;
         // 一次性：此后选人件长期灰显（AbilityPlayerComponent 大 CD）
         AbilityPlayerComponent huntAbility = AbilityPlayerComponent.KEY.get(user);
         huntAbility.setCooldown(20 * 60 * 60);

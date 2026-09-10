@@ -17,6 +17,8 @@ import org.agmas.harpymodloader.component.WorldModifierComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.ui.guesser.GuesserPlayerWidget;
 import org.agmas.noellesroles.client.ui.guesser.GuesserRoleWidget;
+import org.agmas.noellesroles.client.ui.select.SelectPlayerWidget;
+import org.agmas.noellesroles.client.ui.select.SelectRoleWidget;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -42,9 +44,9 @@ public abstract class GuesserScreenMixin extends LimitedHandledScreen<PlayerScre
     void renderGuesserHeads(CallbackInfo ci) {
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         WorldModifierComponent worldModifierComponent = WorldModifierComponent.KEY.get(player.getWorld());
-        GuesserPlayerWidget.selectedPlayer = null;
+        SelectPlayerWidget.selectedPlayer = null;
         if (worldModifierComponent.isRole(player,Noellesroles.GUESSER)) {
-            GuesserRoleWidget.stopClosing = false;
+            SelectRoleWidget.stopClosing = false;
             List<UUID> entries = new ArrayList<>(MinecraftClient.getInstance().player.networkHandler.getPlayerUuids());
             if (!gameWorldComponent.isInnocent(player)) {
                 entries.clear();
@@ -73,12 +75,12 @@ public abstract class GuesserScreenMixin extends LimitedHandledScreen<PlayerScre
     @Inject(method = "render", at = @At("TAIL"))
     void swapGuesserModes(CallbackInfo ci) {
         for (Element child : children()) {
-            GuesserRoleWidget.stopClosing = GuesserPlayerWidget.selectedPlayer != null;
+            SelectRoleWidget.stopClosing = SelectPlayerWidget.selectedPlayer != null;
             if (child instanceof GuesserPlayerWidget gpw) {
-                gpw.visible = GuesserPlayerWidget.selectedPlayer == null;
+                gpw.visible = SelectPlayerWidget.selectedPlayer == null;
             }
             if (child instanceof GuesserRoleWidget grw) {
-                grw.visible = GuesserPlayerWidget.selectedPlayer != null;
+                grw.visible = SelectPlayerWidget.selectedPlayer != null;
             }
         }
     }

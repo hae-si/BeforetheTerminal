@@ -23,7 +23,7 @@
 
 1. **代码与实跑结果是最高事实源**。文档与代码冲突时以代码为准，并回改文档；不确定就标记 TODO/UNKNOWN，不得编造。
 2. **最小改动**：复用 > 修改 > 扩展 > 新建。凡改基线（`build.gradle`/`gradle.properties`/`src/**`/资源/`fabric.mod.json`/mixin json），先在 `docs/SYSTEM_SPEC.md` 的"基线改动登记"加一行。
-3. `references/**` 只读；wathe 源码 LICENSE = All Rights Reserved，禁复制其代码/资产；禁按 references 里的 fork 项目（spark/SRE/NRS）猜测官方 wathe 1.3.2 行为。
+3. `references/**` 只读；wathe 源码 LICENSE = All Rights Reserved，禁复制其代码/资产；禁按 references 里的 fork 项目（spark/KinsWathe/StupidExpress/NRS）猜测官方 wathe 1.3.2 行为。`references/StarRailExpress` 已删除。
 4. **API 先验证**再写代码：读 `references/Wathe` 源码 / javap / runServer 探针（探针用完即删）。
 5. **垂直切片**：每次交付必须"能完整开并结束一局"；策划特性缺席必须登记 `docs/ROADMAP.md` TODO（`BT-*`），禁止实现"看起来一样"的简化版。
 6. **新增身份只加 `BttRoleDefs` def 条目，禁止 if-chain**；实装后同步 `BttRoles.IMPLEMENTED`。

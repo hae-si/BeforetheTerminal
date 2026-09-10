@@ -1,13 +1,20 @@
-# 终点站抵达之前 (Before the Terminal / BTT)
+# 终点站抵达之前 (Before the Terminal)
 
-在一列驶向终点站的列车上进行的社交推理玩法。
+在一列驶向终点站的列车上进行的社交推理玩法（类《狼人杀》《鹅鸭杀》）。玩家只知道自己的身份，通过近距离语音、观察尸体与使用身份能力，完成各自阵营的目标。
 
-- 本体：`agmass/NoellesRoles` 的替换式演进 fork（命名空间仍为 `noellesroles`）
-- 引擎：[wathe](https://modrinth.com/mod/XoU7Lf7D) 1.3.2 + [HarpyModLoader](https://modrinth.com/mod/JRhdijgD) 1.2.4
+- 本体：[agmass/NoellesRoles](https://github.com/agmass/NoellesRoles) 的替换式演进分支（命名空间仍为 `noellesroles`）
+- 引擎：[Wathe](https://modrinth.com/mod/XoU7Lf7D) 1.3.2 + [HarpyModLoader](https://modrinth.com/mod/JRhdijgD) 1.2.4
 - 平台：Minecraft 1.21.1 / Fabric / Java 21
-- 当前版本：`0.2.0-alpha-h1.3`（版本规则见 `docs/RELEASE.md`）
+- 当前版本：`0.2.0-alpha-h1.3`
 
-## 如何运行
+## 玩法概览
+
+- **阵营**：乘客、凶手、中立（独行 / 外人 / 狂人）。乘客与凶手互相残杀，独行中立按各自条件独胜，外人中立自成阵营并拥有"尾声"。
+- **人数**：6–18 人一局；席位按人数公式分配（执法 = 凶手 = 人数//6，中立 = 人数//6）。
+- **系统**：理智/需求、狂气（凶手货币）与随身商店、处决与误杀、醉酒、尾声、关系（恋人/宿敌/双子）等。
+- **通讯**：局内不可发文字，仅附近语音；注视玩家可见名字。
+
+## 构建
 
 ```powershell
 .\gradlew.bat build        # 编译 + 打 jar（产物 build/libs/noellesroles-<版本>.jar）
@@ -15,38 +22,18 @@
 .\gradlew.bat runClient    # 客户端
 ```
 
-- 依赖 jar（`libs/`，不入库）：`wathe-1.3.2-1.21.1.jar`、`harpymodloader-1.2.4-h1.3.jar`；ratatouille 必须 1.4.3（见 `gradle.properties`）。
+- 依赖 jar 放在 `libs/`（不入库）：`wathe-1.3.2-1.21.1.jar`、`harpymodloader-1.2.4-h1.3.jar`。
+- ratatouille 必须 1.4.3（见 `gradle.properties`）。
+
+## 运行一局
+
 - 开局：拉汽笛，或 `/wathe:start noellesroles:before_the_terminal wathe:harpy_express_night`（6–18 人）。
-- `release/` 为完整部署包（本 mod + wathe + HML + ratatouille + Simple Voice Chat + 配置垫片说明）。
-- 详细测试方法与环境陷阱见 `docs/TESTING.md`。
+- 强制身份：`/forceRole <玩家> <身份>`（下一局生效）。
+- 技能键 `G`；凶手商店 = 随身背包屏（E）。
+- `release/` 为完整部署包（本 mod + Wathe + HML + ratatouille + Simple Voice Chat + 配置垫片）。
 
-## 当前状态（快照）
+## 致谢与许可
 
-- 核心闭环可玩：开局 → 席位分配 → 迎新 → 对局（击杀/处决/商店/理智）→ 三主结局判定 → 结局覆盖层 → 清理再开。
-- 68 身份键注册（56 新键 + 12 接管；杀手已改名剑客；恶魔/连环杀手已删除；纵火犯改新键 arsonist）；**31 身份有真实行为**；醉酒/尾声等系统未做。
-- 2026-09-06/07 策划案口径（三分类、新席位公式、同色互斥、外人体力、结局外人条件）**已适配**（C-049）。
-- 精确进度见 `docs/IMPLEMENTATION_STATUS.md`；下一步见 `docs/ROADMAP.md`。
-
-## 文档地图
-
-| 文档                              | 职责                           |
-| ------------------------------- | ---------------------------- |
-| `docs/GAME_DESIGN.md`           | 游戏规则（"应该是什么"的设计事实源）          |
-| `docs/ROLE_DESIGN.md`           | 全部 70 身份的设计规格与身份目录           |
-| `docs/ROLE_INTERACTIONS.md`     | 身份/系统间交互、冲突矩阵                |
-| `docs/SYSTEM_SPEC.md`           | 技术规范、wathe/HML API 结论、基线改动登记 |
-| `docs/ARCHITECTURE.md`          | 当前实际架构（类/时序/同步/门控）           |
-| `docs/IMPLEMENTATION_STATUS.md` | 现在做到哪（唯一来源）                  |
-| `docs/ROADMAP.md`               | 接下来做什么（唯一来源）                 |
-| `docs/TESTING.md`               | 测试方法、环境、陷阱、已验证清单             |
-| `docs/RELEASE.md`               | 构建产物、版本规则、发布检查               |
-| `docs/ARCHAEOLOGY.md`           | 谱系考古、参考项目、历史决策（唯一历史区）        |
-| `docs/终点站抵达之前.docx`             | 策划案原件（只读）                    |
-
-AI 协作者请先读 `AGENTS.md`。
-
-## 致谢
-
-- 玩法策划：《终点站抵达之前》策划案（见 docs/）
-- 上游：[agmass/NoellesRoles](https://github.com/agmass/NoellesRoles)（原 README 的 NR 角色清单与致谢随上游保留在 git 历史；本 fork 当前状态以本文档为准）
-- 引擎：doctor4t 的 Wathe（All Rights Reserved，源码仅作只读参考）
+- 玩法策划：《终点站抵达之前》策划案。
+- 上游：[agmass/NoellesRoles](https://github.com/agmass/NoellesRoles)（原版 README 的角色清单与致谢随上游保留在 git 历史）。
+- 引擎：doctor4t 的 Wathe（**All Rights Reserved**，源码仅作只读参考，禁止再分发）。
