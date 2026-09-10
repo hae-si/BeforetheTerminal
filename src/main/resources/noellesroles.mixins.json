@@ -42,7 +42,8 @@
     "btt.BttShopBuyMixin",
     "btt.BttCleanerSilentKnifeMixin",
     "btt.BttMaidPlatterMixin",
-    "btt.BttWatheVultureThiefMixin"
+    "btt.BttWatheVultureThiefMixin",
+    "btt.BttDoorStateMixin"
   ],
   "injectors": {
     "defaultRequire": 1

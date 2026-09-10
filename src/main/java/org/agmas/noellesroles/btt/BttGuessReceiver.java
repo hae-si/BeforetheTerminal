@@ -32,6 +32,7 @@ public final class BttGuessReceiver {
     public static void register() {
         PayloadTypeRegistry.playC2S().register(BttGuessC2SPacket.ID, BttGuessC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(BttCorpseActionC2SPacket.ID, BttCorpseActionC2SPacket.CODEC);
+        BttArchitect.register();
         ServerPlayNetworking.registerGlobalReceiver(BttCorpseActionC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity user = context.player();
             if (!BttIdentity.isBttMode(user.getWorld())) return;
@@ -77,6 +78,16 @@ public final class BttGuessReceiver {
             // 特工：<查看> 本局身份列表（G 键直发）
             if (gwc.isRole(user, BttRoles.AGENT)) {
                 agent(user, gwc);
+                return;
+            }
+            // 工程师：<扫描> 透视全车 10 秒（G 键直发）
+            if (gwc.isRole(user, BttRoles.ENGINEER)) {
+                engineer(user);
+                return;
+            }
+            // 建筑师：<修复> 准星所指被撬/被卡的门（G 键直发；docx 冷却 2 分钟）
+            if (gwc.isRole(user, BttRoles.ARCHITECT)) {
+                architect(user);
                 return;
             }
             if (!(user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity target)) return;
@@ -238,6 +249,25 @@ public final class BttGuessReceiver {
     }
 
     // ===== 记者：<跟踪> 任意玩家持续透视（标记；未标记时透视最远者）；CD 30 秒 =====
+
+    // ===== 工程师：<扫描> 透视全车 10 秒，CD 1 分钟（docx 2026-09-07） =====
+
+    private static void engineer(ServerPlayerEntity user) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(1, 0));
+        BttPlayerComponent.KEY.get(user).engineerScanTicks = GameConstants.getInTicks(0, 10);
+        user.sendMessage(Text.literal("扫描中……全车人员已标记 10 秒。").formatted(Formatting.AQUA), true);
+    }
+
+    // ===== 建筑师：<修复> 准星所指被撬/被卡的门；CD 2 分钟（docx） =====
+
+    private static void architect(ServerPlayerEntity user) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        if (!BttArchitect.repair(user)) return; // 未命中/无需修复 → 不消耗冷却
+        setCd(ability, GameConstants.getInTicks(2, 0));
+    }
 
     private static void journalist(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);

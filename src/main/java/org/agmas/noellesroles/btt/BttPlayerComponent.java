@@ -72,6 +72,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int bombLastSec = -1;
     /** 放置炸弹的恐怖分子 UUID 字符串 */
     public String bombSource = "";
+    /** 工程师：<扫描> 透视剩余 tick（>0 时 BttEvents 令全车存活者发光） */
+    public int engineerScanTicks = 0;
 
     public BttPlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -141,6 +143,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         bombTransferCd = 0;
         bombLastSec = -1;
         bombSource = "";
+        engineerScanTicks = 0;
         this.sync();
     }
 
@@ -167,6 +170,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("bombTransferCd", bombTransferCd);
         tag.putInt("bombLastSec", bombLastSec);
         tag.putString("bombSource", bombSource);
+        tag.putInt("engineerScanTicks", engineerScanTicks);
     }
 
     @Override
@@ -192,5 +196,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.bombTransferCd = tag.getInt("bombTransferCd");
         this.bombLastSec = tag.getInt("bombLastSec");
         this.bombSource = tag.contains("bombSource") ? tag.getString("bombSource") : "";
+        this.engineerScanTicks = tag.getInt("engineerScanTicks");
     }
 }

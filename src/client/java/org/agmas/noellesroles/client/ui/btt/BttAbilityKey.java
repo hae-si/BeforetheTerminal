@@ -14,7 +14,7 @@ import org.agmas.noellesroles.btt.BttRoles;
  * 触发模型（GAME_DESIGN §4.5）：
  * - **身边者技能** → G 键直接选中最近玩家（≤6 格），不发屏：绳艺师/药剂师/酒保/走私犯；
  * - **任意人技能** → 打开背包选人屏（BttGuessScreenMixin 铺选人件）：预言家/小说家/猎人/侦探/救世主/舞蛇人；
- * - **无目标技能** → G 键直发：吟游诗人/花匠/特工；失忆患者 → G 键注视尸体。
+ * - **无目标技能** → G 键直发：吟游诗人/花匠/特工/工程师/建筑师；失忆患者 → G 键注视尸体。
  * （静态判断方法放本普通类：mixin 类禁止非 private static 成员，曾致 LimitedInventoryScreen 转换崩溃。）
  */
 public final class BttAbilityKey {
@@ -59,8 +59,9 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
-        // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标——G 键直发（target=自己占位）
-        if (def.role == BttRoles.MINSTREL || def.role == BttRoles.GARDENER) {
+        // 吟游诗人/花匠/工程师/建筑师：<歌唱>/<栽培>/<扫描>/<修复> 无需目标——G 键直发（target=自己占位；门由服务端射线判定）
+        if (def.role == BttRoles.MINSTREL || def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER
+                || def.role == BttRoles.ARCHITECT) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;

@@ -112,6 +112,13 @@ public class NoellesrolesClient implements ClientModInitializer {
         });
         EntityRendererRegistry.register(NoellesRolesEntities.ROLE_MINE_ENTITY_ENTITY_TYPE, RoleMineEntityRenderer::new);
 
+        // C-083 建筑师：门被撬/被卡 → 5 秒透视描边（服务端 S2C 回执）
+        org.agmas.noellesroles.client.renderer.BttDoorHighlightRenderer.register();
+        ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.btt.BttDoorHighlightS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        org.agmas.noellesroles.client.renderer.BttDoorHighlightRenderer
+                                .onHighlight(payload.pos(), payload.blasted())));
+
         ItemTooltipCallback.EVENT.register(((itemStack, tooltipContext, tooltipType, list) -> {
             tooltipHelper(ModItems.DEFENSE_VIAL, itemStack, list);
             tooltipHelper(ModItems.ROLE_MINE, itemStack, list);

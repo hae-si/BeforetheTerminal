@@ -376,6 +376,7 @@
   "noellesroles.btt.tip.amnesiac": "Press %s while aiming at a corpse to take its relic",
   "noellesroles.btt.tip.partyhost": "Press %s to voice-change the aimed player (2nd use = helium self-destruct)",
   "noellesroles.btt.tip.terrorist": "Press %s to plant the bomb box on the aimed player; during the countdown, aim at others and press again to pass it",
+  "noellesroles.btt.tip.architect": "Press %s to repair the blasted/jammed door you are aiming at",
   "noellesroles.btt.hud.prophet": "Pick a player and type their identity; a wrong guess kills you",
   "noellesroles.btt.hud.novelist": "Pick a player and type their identity; half correct wins solo",
   "noellesroles.btt.hud.hunter": "Pick a player to snipe; once only, killing the principal",

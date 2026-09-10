@@ -98,6 +98,8 @@ public final class BttRoleDefs {
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
         def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
         def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
+        def(BttRoles.ENGINEER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <扫描> G 键直发
+        def(BttRoles.ARCHITECT).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(2, 0))); // <修复> G 键直发；初始 CD 2 分钟（docx）
         def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
 
         // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====

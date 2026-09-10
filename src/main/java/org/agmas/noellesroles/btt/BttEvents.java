@@ -282,6 +282,19 @@ public final class BttEvents {
                     }
                     if (marked != null) glow.add(marked);
                 }
+                // 工程师：<扫描> 透视全车 10 秒（200t 逐 tick 递减；沿用记者同款 setGlowing 通道）
+                for (var p : world.getPlayers()) {
+                    BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
+                    if (c.engineerScanTicks <= 0) continue;
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p)) {
+                        c.engineerScanTicks = 0;
+                        continue;
+                    }
+                    for (var o : world.getPlayers()) {
+                        if (o != p && GameFunctions.isPlayerAliveAndSurvival(o)) glow.add(o.getUuid());
+                    }
+                    c.engineerScanTicks--;
+                }
                 for (var p : world.getPlayers()) {
                     boolean should = glow.contains(p.getUuid()) && GameFunctions.isPlayerAliveAndSurvival(p);
                     if (p.isGlowing() != should) p.setGlowing(should);
