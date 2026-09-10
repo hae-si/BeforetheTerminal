@@ -47,6 +47,8 @@ public final class BttEntityHighlightRenderer {
     private static final float[] JOURNALIST_RGB = {1.0F, 0.85F, 0.27F};
     /** 工程师描边色（青） */
     private static final float[] ENGINEER_RGB = {0.29F, 0.82F, 0.94F};
+    /** 窃贼 <搜刮> 后全员透视色 = 窃贼职业色（与 C-092 尸体透视同口径） */
+    private static final float[] THIEF_RGB = rgb(BttRoles.THIEF.color());
 
     public static void register() {
         WorldRenderEvents.AFTER_TRANSLUCENT.register(BttEntityHighlightRenderer::render);
@@ -84,6 +86,16 @@ public final class BttEntityHighlightRenderer {
             }
             if (added > 0) rgb = ENGINEER_RGB;
         }
+        // 窃贼：<搜刮> 成功后 10 秒内全车存活者（除自己）——C-095（照 NRS vulture highlightTicks 口径：always + 角色色）
+        if (own.thiefRevealTicks > 0) {
+            int added = 0;
+            for (AbstractClientPlayerEntity o : client.world.getPlayers()) {
+                if (o == client.player || !GameFunctions.isPlayerAliveAndSurvival(o)) continue;
+                if (!targets.contains(o)) targets.add(o);
+                added++;
+            }
+            if (added > 0) rgb = THIEF_RGB;
+        }
         if (targets.isEmpty() || rgb == null) return;
 
         Vec3d camera = context.camera().getPos();
@@ -104,6 +116,11 @@ public final class BttEntityHighlightRenderer {
         RenderSystem.lineWidth(1.0F);
         RenderSystem.disableBlend();
         RenderSystem.enableDepthTest();
+    }
+
+    /** ARGB → 归一化 rgb */
+    private static float[] rgb(int argb) {
+        return new float[]{((argb >> 16) & 0xFF) / 255.0F, ((argb >> 8) & 0xFF) / 255.0F, (argb & 0xFF) / 255.0F};
     }
 
     /** 记者 &lt;跟踪&gt; 的目标 = 自己标记且仍存活的玩家；无有效标记返回 null */

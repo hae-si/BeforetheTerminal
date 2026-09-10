@@ -75,6 +75,11 @@ public final class BttGuessReceiver {
                 gardener(user);
                 return;
             }
+            // 纵火犯：<浇汽油> 最近的未浇湿者（G 键直发；C-092 抄 NRS 病原体，3 格 + 视线）
+            if (gwc.isRole(user, BttRoles.ARSONIST)) {
+                BttArsonist.douse(user, gwc);
+                return;
+            }
             // 特工：<查看> 本局身份列表（G 键直发）
             if (gwc.isRole(user, BttRoles.AGENT)) {
                 agent(user, gwc);
@@ -302,24 +307,18 @@ public final class BttGuessReceiver {
         }
     }
 
-    // ===== 派对主：<变声> 身边者；一次=醉酒，两次=氦气自爆；CD 30s =====
+    // ===== 派对主：<变声> 身边者——按键标记，30 秒后自动生效（一次=醉酒，两次=氦气自爆）；CD 30s（C-093） =====
 
     private static void partyhost(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
+        if (!BttDelayed.schedule(user, BttDelayed.PARTYHOST, target)) return; // 已有待生效标记 → 不扣 CD
         setCd(ability, GameConstants.getInTicks(0, 30));
-        BttPlayerComponent uc = BttPlayerComponent.KEY.get(user);
-        uc.partyUses++;
-        if (uc.partyUses >= 2) {
-            user.sendMessage(Text.literal("氦气……").formatted(Formatting.RED), true);
-            GameFunctions.killPlayer(user, true, user, BttDeathReasons.HELIUM_SELF_DESTRUCT);
-            return;
-        }
-        BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
-        target.sendMessage(Text.literal("你的声音变高了……").formatted(Formatting.LIGHT_PURPLE), true);
+        user.sendMessage(Text.literal("你标记了 " + target.getName().getString() + "：30 秒后变声生效。")
+                .formatted(Formatting.LIGHT_PURPLE), true);
     }
 
-    // ===== 虐待狂：<缄默> 身边者——醉酒 30 秒 + 聋哑 30 秒，CD 30 秒（docx 2026-09-07） =====
+    // ===== 虐待狂：<缄默> 身边者——按键标记，30 秒后自动生效（醉酒 + 聋哑 30 秒）；CD 30 秒（C-093） =====
 
     private static void abuser(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
@@ -328,12 +327,9 @@ public final class BttGuessReceiver {
             user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
             return;
         }
+        if (!BttDelayed.schedule(user, BttDelayed.ABUSER, target)) return; // 已有待生效标记 → 不扣 CD
         setCd(ability, GameConstants.getInTicks(0, 30));
-        BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
-        victim.applyDrunk(GameConstants.getInTicks(0, 30)); // 醉酒（BT-SYS-DRUNK）
-        victim.applyMute(GameConstants.getInTicks(0, 30));  // 聋哑（语音禁言 + 听不到，C-086）
-        user.sendMessage(Text.literal("缄默成功。").formatted(Formatting.DARK_PURPLE), true);
-        target.sendMessage(Text.literal("你被缄默了：30 秒内醉意上涌，听不见也说不出。")
+        user.sendMessage(Text.literal("你标记了 " + target.getName().getString() + "：30 秒后缄默生效。")
                 .formatted(Formatting.DARK_PURPLE), true);
     }
 

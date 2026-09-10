@@ -22,6 +22,8 @@ public final class BttEndings {
         THIEF_WIN,
         /** 小说家独胜：猜对过半（同上 BT-NOVELIST-SOLO） */
         NOVELIST_WIN,
+        /** 纵火犯独胜：浇湿除自己外全部存活者（C-092，抄 NRS 病原体；BT-ARSONIST-SOLO） */
+        ARSONIST_WIN,
         /** 魔女独胜：杀死所有乘客、凶手和外人（独行可不杀；魔女存活时判定，BT-SYS-EPILOGUE） */
         MAJO_WIN,
         /** 教团胜利：只剩教团阵营（救世主+信徒；BT-SYS-EPILOGUE） */

@@ -24,6 +24,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *    vulture/infected 正中前者；本回调先执行并 cancel，压过 NR 映射，用原版无辜高理智绿）。
  * ④ 花匠自我透视（C-091）：花匠**被动**透视自己全部小花（红树胎生苗/铃兰掉落物，金描边、免按键；
  *    与①教团同款"先于 isInstinctEnabled 门控"的 cancel），且**只**看花——其余实体一律 -1，避免顺带泄漏玩家配色。
+ * ⑤ 纵火犯（C-092）：按本能键 → 透视全部**已被浇汽油者**（职业色）；
+ * ⑥ 窃贼（C-092）：按本能键 → 透视全部**尸体**（职业色）。
+ *    ⑤⑥ 都直读原始键位——官方 1.3.2 的 `isInstinctEnabled()` 要求凶手阵营/旁观，中立身份过不了该门。
  * 其余配色一律沿用原版（2026-09-06 裁定：勿自造配色）。魔女尾声"活人雷达"为过时设定，已移除（2026-09-07）。
  */
 @Mixin(WatheClient.class)
@@ -36,8 +39,9 @@ public abstract class BttShoujoInstinctMixin {
 
     @Inject(method = "getInstinctHighlight", at = @At("HEAD"), cancellable = true)
     private static void btt$instinctOverrides(Entity target, CallbackInfoReturnable<Integer> cir) {
-        // 花=掉落物实体，必须在"非玩家即早退"之前判断
+        // 尸体（窃贼）/花（花匠）都是非玩家目标，必须在"非玩家即早退"之前判断
         if (!(target instanceof PlayerEntity p) || p.isSpectator()) {
+            if (btt$thiefCorpses(target, cir)) return;
             btt$gardenerFlowers(target, cir);
             return;
         }
@@ -52,6 +56,15 @@ public abstract class BttShoujoInstinctMixin {
                 || org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(p).isCult();
         if (viewerCult && targetCult) {
             cir.setReturnValue(0xFFFF00FF);
+            cir.cancel();
+            return;
+        }
+        // ⑤ 纵火犯（C-092）：本能键 → 透视全部**已被浇汽油者**（职业色）；其余配色不变
+        if (gwc.getRole(viewer) == BttRoles.ARSONIST
+                && GameFunctions.isPlayerAliveAndSurvival(viewer)
+                && btt$instinctKeyPressed()
+                && org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(p).isDoused()) {
+            cir.setReturnValue(BttRoles.ARSONIST.color());
             cir.cancel();
             return;
         }
@@ -85,6 +98,26 @@ public abstract class BttShoujoInstinctMixin {
                 cir.cancel();
             }
         }
+    }
+
+    /** C-092：窃贼按本能键透视尸体（职业色）；非尸体一律不接管 */
+    private static boolean btt$thiefCorpses(Entity target, CallbackInfoReturnable<Integer> cir) {
+        if (!(target instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity)) return false;
+        var viewer = MinecraftClient.getInstance().player;
+        if (viewer == null) return false;
+        if (!BttIdentity.isBttMode(viewer.getWorld())) return false;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
+        if (gwc.getRole(viewer) != BttRoles.THIEF) return false;
+        if (!GameFunctions.isPlayerAliveAndSurvival(viewer)) return false;
+        if (!btt$instinctKeyPressed()) return false;
+        cir.setReturnValue(BttRoles.THIEF.color());
+        cir.cancel();
+        return true;
+    }
+
+    /** 本能键原始按下状态（1.3.2 的 isInstinctEnabled() 含凶手阵营门控，中立身份只能直读键位） */
+    private static boolean btt$instinctKeyPressed() {
+        return WatheClient.instinctKeybind != null && WatheClient.instinctKeybind.isPressed();
     }
 
     /** C-091：花匠被动透视全部小花（金描边）；非花实体一律 skip，返回 true = 已接管本次判定 */

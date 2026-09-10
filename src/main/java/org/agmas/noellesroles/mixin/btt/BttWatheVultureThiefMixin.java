@@ -14,6 +14,7 @@ import net.minecraft.sound.SoundEvents;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.btt.BttGameWorldComponent;
 import org.agmas.noellesroles.btt.BttIdentity;
+import org.agmas.noellesroles.btt.BttPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,6 +53,8 @@ public abstract class BttWatheVultureThiefMixin {
         user.getWorld().playSound(null, user.getBlockPos(), SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.MASTER, 1.0F, 0.5F);
         user.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 40, 2));
         death.vultured = true;
+        // C-095：搜刮成功后短暂透视全员 10 秒（NRS vulture setHighlightTicks 同值；BTT 走本机描边，不吃 fork 的 GetInstinctHighlight）
+        BttPlayerComponent.KEY.get(user).setThiefReveal(GameConstants.getInTicks(0, 10));
 
         // 过半 → 窃贼独胜
         long players = user.getWorld().getPlayers().size();

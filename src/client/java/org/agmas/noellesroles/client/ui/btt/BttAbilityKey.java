@@ -59,9 +59,10 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
-        // 吟游诗人/花匠/工程师/建筑师：<歌唱>/<栽培>/<扫描>/<修复> 无需目标——G 键直发（target=自己占位；门由服务端射线判定）
+        // 吟游诗人/花匠/工程师/建筑师/纵火犯：<歌唱>/<栽培>/<扫描>/<修复>/<浇汽油> 无需目标——
+        // G 键直发（target=自己占位；门由服务端射线/最近者判定）
         if (def.role == BttRoles.MINSTREL || def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER
-                || def.role == BttRoles.ARCHITECT) {
+                || def.role == BttRoles.ARCHITECT || def.role == BttRoles.ARSONIST) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;
@@ -100,7 +101,8 @@ public final class BttAbilityKey {
     public static boolean hasTip(dev.doctor4t.wathe.api.Role role) {
         return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.MINSTREL || role == BttRoles.GARDENER || role == BttRoles.AGENT
-                || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER;
+                || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER
+                || role == BttRoles.ARSONIST;
     }
 
     /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 */

@@ -321,6 +321,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     || BttPlayerComponent.KEY.get(p).isCult();
             case KIDNAPPER_WIN -> p -> gameWorld.getRole(p) == BttRoles.KIDNAPPER;
             case GARDENER_WIN -> p -> gameWorld.getRole(p) == BttRoles.GARDENER;
+            case ARSONIST_WIN -> p -> gameWorld.getRole(p) == BttRoles.ARSONIST;
             case LOVERS_WIN -> p -> {
                 if (!BttRelationships.isLover(p)) return false;
                 UUID partner = BttRelationships.partnerOf(p);

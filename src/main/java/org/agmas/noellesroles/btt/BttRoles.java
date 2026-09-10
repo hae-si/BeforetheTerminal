@@ -148,7 +148,9 @@ public final class BttRoles {
     public static final Role ATTENDANT = register("attendant", 0x66FF00, Faction.CIVILIAN);
     public static final Role ARCHITECT = register("architect", 0x50C878, Faction.CIVILIAN);
     public static final Role RIGGER = register("rigger", 0x50C878, Faction.CIVILIAN);
-    public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN);
+    /** 小女孩：可见到站倒计时（docx：小女孩/司机按身份能力可见；BT-SHOUJO-TIME——wathe `TimeRenderer` 仅以 `Role.canSeeTime()` 门控） */
+    public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN,
+            true, false, Role.MoodType.REAL, 200, true);
     public static final Role DRIVER = register("driver", 0x00FF80, Faction.CIVILIAN,
             true, false, Role.MoodType.REAL, 200, true);
     public static final Role MAID = register("maid", 0x9ACD32, Faction.CIVILIAN);
@@ -234,7 +236,7 @@ public final class BttRoles {
             BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX,
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMPOSTOR, TERRORIST, PARTYHOST, GARDENER, EX_UNDERCOVER, BLACKDEATH,
-            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU);
+            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 

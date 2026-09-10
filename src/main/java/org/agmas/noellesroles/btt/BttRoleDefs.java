@@ -115,6 +115,11 @@ public final class BttRoleDefs {
                 .kit(p -> initialAbilityCd(p, 0))
                 .onTick((player, world, gwc) -> BttSpirit.tick(player, gwc));
         def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
+        // 纵火犯：初始[万能钥匙] + <浇汽油> G 键直发（C-092 抄 NRS 病原体；初始 CD 10s，动态冷却见 BttArsonist）
+        def(BttRoles.ARSONIST).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.KEY));
+            initialAbilityCd(p, BttArsonist.INITIAL_CD_TICKS);
+        });
 
         // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====
         // 预言家：无道具；初始 CD 60s

@@ -30,6 +30,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     // ===== 客户端可见（变更即 sync）=====
     /** 教团信徒（救世主 &lt;预知&gt; 命中） */
     public boolean cult = false;
+    /** 纵火犯：是否已被浇汽油（客户端可见——纵火犯按本能键透视浇湿者，C-092） */
+    public boolean doused = false;
 
     // ===== 服务端回合状态（不主动 sync）=====
     /** 老兵刀剩余次数 */
@@ -44,8 +46,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int maidPickups = 0;
     /** 猎人是否已用狙击 */
     public int hunterShot = 0;
-    /** 宿敌护盾余量（B3 后未使用，保留字段兼容） */
-    public int archenemyShields = 0;
     /** 醉酒剩余 tick */
     public int drunkTicks = 0;
     /** 关系搭档 UUID 字符串 */
@@ -58,6 +58,12 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int muteTicks = 0;
     /** 派对主已变声次数（2 次 → 氦气自爆） */
     public int partyUses = 0;
+    /** C-093 延时技能：待生效标记的类型（abuser/partyhost，空 = 无） */
+    public String delayedKind = "";
+    /** C-093 延时技能：待生效标记的目标 UUID 字符串 */
+    public String delayedTarget = "";
+    /** C-093 延时技能：生效倒计时 tick（>0 时 BttDelayed 每 tick 递减） */
+    public int delayedTicks = 0;
     /** 记者：<跟踪> 标记的目标 UUID 字符串（空=未标记） */
     public String markedTarget = "";
     /** 恐怖分子炸弹：是否放置在本玩家身上 */
@@ -74,10 +80,14 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int bombLastSec = -1;
     /** 放置炸弹的恐怖分子 UUID 字符串 */
     public String bombSource = "";
-    /** 工程师：<扫描> 透视剩余 tick（>0 时 BttEvents 令全车存活者发光） */
+    /** 工程师：<扫描> 透视剩余 tick（>0 时 BttEvents 逐 tick 递减并 sync，客户端本机自绘全车描边，C-089） */
     public int engineerScanTicks = 0;
+    /** 窃贼：<搜刮> 后全员透视剩余 tick（>0 时客户端本机自绘全车描边，C-095；同 engineerScanTicks 口径） */
+    public int thiefRevealTicks = 0;
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
+    /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092） */
+    public int gasolineHintTicks = 0;
     /** 出窍时留下的躯体坐标（客户端画本体 + 30 格半径限制的参考点） */
     public double bodyX = 0;
     public double bodyY = 0;
@@ -146,6 +156,31 @@ public class BttPlayerComponent implements AutoSyncedComponent {
 
     // ===== 梦游病 <入梦>（C-087；参照 NRS SpiritPlayerComponent，去掉 fork 依赖）=====
 
+    // ===== 纵火犯（C-092）=====
+
+    public boolean isDoused() {
+        return this.doused;
+    }
+
+    /** 浇汽油：置位并同步（客户端本能键透视用） */
+    public void setDoused() {
+        this.doused = true;
+        this.sync();
+    }
+
+    /** 排定延迟提示（本人十几秒后闻到汽油味；不同步，纯服务端计时） */
+    public void scheduleGasolineHint(int ticks) {
+        this.gasolineHintTicks = ticks;
+    }
+
+    // ===== 窃贼 <搜刮> 后全员透视（C-095）=====
+
+    /** 搜刮成功：置全员透视读秒并同步（BttEvents 逐 tick 递减） */
+    public void setThiefReveal(int ticks) {
+        this.thiefRevealTicks = ticks;
+        this.sync();
+    }
+
     public boolean isProjecting() {
         return this.projecting;
     }
@@ -168,19 +203,22 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     /** 开局清空全部回合状态 */
     public void reset() {
         cult = false;
+        doused = false;
         veteranUses = 0;
         witchUses = 0;
         hasKilled = 0;
         novelistHits = 0;
         maidPickups = 0;
         hunterShot = 0;
-        archenemyShields = 0;
         drunkTicks = 0;
         muteTicks = 0;
         partner = "";
         relType = "";
         drunkSource = "";
         partyUses = 0;
+        delayedKind = "";
+        delayedTarget = "";
+        delayedTicks = 0;
         markedTarget = "";
         bombPlaced = false;
         bombBeeping = false;
@@ -190,7 +228,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         bombLastSec = -1;
         bombSource = "";
         engineerScanTicks = 0;
+        thiefRevealTicks = 0;
         projecting = false;
+        gasolineHintTicks = 0;
         bodyX = 0;
         bodyY = 0;
         bodyZ = 0;
@@ -200,19 +240,22 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putBoolean("cult", cult);
+        tag.putBoolean("doused", doused);
         tag.putInt("veteranUses", veteranUses);
         tag.putInt("witchUses", witchUses);
         tag.putInt("hasKilled", hasKilled);
         tag.putInt("novelistHits", novelistHits);
         tag.putInt("maidPickups", maidPickups);
         tag.putInt("hunterShot", hunterShot);
-        tag.putInt("archenemyShields", archenemyShields);
         tag.putInt("drunkTicks", drunkTicks);
         tag.putInt("muteTicks", muteTicks);
         tag.putString("partner", partner);
         tag.putString("relType", relType);
         tag.putString("drunkSource", drunkSource);
         tag.putInt("partyUses", partyUses);
+        tag.putString("delayedKind", delayedKind);
+        tag.putString("delayedTarget", delayedTarget);
+        tag.putInt("delayedTicks", delayedTicks);
         tag.putString("markedTarget", markedTarget);
         tag.putBoolean("bombPlaced", bombPlaced);
         tag.putBoolean("bombBeeping", bombBeeping);
@@ -222,7 +265,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("bombLastSec", bombLastSec);
         tag.putString("bombSource", bombSource);
         tag.putInt("engineerScanTicks", engineerScanTicks);
+        tag.putInt("thiefRevealTicks", thiefRevealTicks);
         tag.putBoolean("projecting", projecting);
+        tag.putInt("gasolineHintTicks", gasolineHintTicks);
         tag.putDouble("bodyX", bodyX);
         tag.putDouble("bodyY", bodyY);
         tag.putDouble("bodyZ", bodyZ);
@@ -231,19 +276,22 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.cult = tag.contains("cult") && tag.getBoolean("cult");
+        this.doused = tag.contains("doused") && tag.getBoolean("doused");
         this.veteranUses = tag.getInt("veteranUses");
         this.witchUses = tag.getInt("witchUses");
         this.hasKilled = tag.getInt("hasKilled");
         this.novelistHits = tag.getInt("novelistHits");
         this.maidPickups = tag.getInt("maidPickups");
         this.hunterShot = tag.getInt("hunterShot");
-        this.archenemyShields = tag.getInt("archenemyShields");
         this.drunkTicks = tag.getInt("drunkTicks");
         this.muteTicks = tag.getInt("muteTicks");
         this.partner = tag.contains("partner") ? tag.getString("partner") : "";
         this.relType = tag.contains("relType") ? tag.getString("relType") : "";
         this.drunkSource = tag.contains("drunkSource") ? tag.getString("drunkSource") : "";
         this.partyUses = tag.getInt("partyUses");
+        this.delayedKind = tag.contains("delayedKind") ? tag.getString("delayedKind") : "";
+        this.delayedTarget = tag.contains("delayedTarget") ? tag.getString("delayedTarget") : "";
+        this.delayedTicks = tag.getInt("delayedTicks");
         this.markedTarget = tag.contains("markedTarget") ? tag.getString("markedTarget") : "";
         this.bombPlaced = tag.contains("bombPlaced") && tag.getBoolean("bombPlaced");
         this.bombBeeping = tag.contains("bombBeeping") && tag.getBoolean("bombBeeping");
@@ -253,7 +301,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.bombLastSec = tag.getInt("bombLastSec");
         this.bombSource = tag.contains("bombSource") ? tag.getString("bombSource") : "";
         this.engineerScanTicks = tag.getInt("engineerScanTicks");
+        this.thiefRevealTicks = tag.getInt("thiefRevealTicks");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
+        this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
         this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;
         this.bodyY = tag.contains("bodyY") ? tag.getDouble("bodyY") : 0;
         this.bodyZ = tag.contains("bodyZ") ? tag.getDouble("bodyZ") : 0;

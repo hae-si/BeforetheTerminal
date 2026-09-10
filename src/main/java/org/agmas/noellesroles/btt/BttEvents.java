@@ -38,8 +38,6 @@ import java.util.Random;
 public final class BttEvents {
     private BttEvents() {}
 
-    /** 祭品得分队（深绿名+辉光轮廓） */
-    private static final String SACRIFICE_TEAM = "sacrifice"; // 保留：祭品系统 dormant（恶魔/连环杀手已移除）
     private static final Random RANDOM = new Random();
 
     public static void init() {
@@ -213,6 +211,8 @@ public final class BttEvents {
                     BttPlayerComponent pc = BttPlayerComponent.KEY.get(player);
                     pc.decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     pc.decrementMute(); // 缄默（聋哑）计时（C-086）
+                    BttArsonist.tickGasoline(player, pc); // 纵火犯：被浇者延迟"闻到汽油味"提示（C-092）
+                    BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 30 秒后生效（C-093）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }
@@ -280,6 +280,19 @@ public final class BttEvents {
                         continue;
                     }
                     c.engineerScanTicks--;
+                    c.sync();
+                }
+
+                // 窃贼 <搜刮> 后全员透视（C-095）：与工程师同口径，逐 tick 递减并同步本人客户端
+                for (var p : world.getPlayers()) {
+                    BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
+                    if (c.thiefRevealTicks <= 0) continue;
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p)) {
+                        c.thiefRevealTicks = 0;
+                        c.sync();
+                        continue;
+                    }
+                    c.thiefRevealTicks--;
                     c.sync();
                 }
             }
