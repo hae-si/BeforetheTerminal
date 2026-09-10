@@ -50,6 +50,10 @@
     "btt.BttSpiritMinecraftMixin",
     "btt.BttSpiritRenderDispatcherMixin",
     "btt.BttSpiritWorldRendererMixin",
+    "btt.BttSpiritSkinMixin",
+    "btt.BttSpiritNameMixin",
+    "btt.BttSpiritCorpseSkinMixin",
+    "btt.BttSpiritVisionMixin",
     "select.SelectScreenDoNotClose"
   ],
   "injectors": {

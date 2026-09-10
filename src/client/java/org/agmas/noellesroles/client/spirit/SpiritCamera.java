@@ -183,6 +183,10 @@ public class SpiritCamera extends ClientPlayerEntity {
 
     @Override
     public void tickMovement() {
+        // PlayerEntity.tick() 每 tick 开头都会把 noClip 复位成 isSpectator()(=false)，水平移动走
+        // Entity.move 因而照旧撞墙（垂直位移是本类手动 setPosition，所以看起来"上下能穿墙"）——
+        // 必须在移动前重新置位。
+        this.noClip = true;
         getAbilities().flying = true;
         getAbilities().setFlySpeed(FLY_SPEED);
 
