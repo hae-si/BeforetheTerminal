@@ -220,6 +220,7 @@ public final class BttEvents {
                     if (!GameFunctions.isPlayerAliveAndSurvival(p)) { // 持有者非炸弹死亡 → 炸弹消失
                         bc.bombPlaced = false;
                         bc.bombBeeping = false;
+                        BttBomb.clear(p); // 收回 [炸弹箱]（尸体不掉炸弹）
                         bc.sync();
                         continue;
                     }
@@ -228,6 +229,7 @@ public final class BttEvents {
                         else {
                             bc.bombBeeping = true;
                             bc.beepTimer = BttBomb.COUNTDOWN_TICKS;
+                            BttBomb.reveal(p); // doc「5 秒后可见」：倒计时开始发 [炸弹箱] 到持有者身上
                             bc.sync(); // 客户端 G 键只在倒计时阶段可传出（BttAbilityKey）
                         }
                     } else if (bc.beepTimer > 0) {
@@ -245,6 +247,7 @@ public final class BttEvents {
                     } else {
                         bc.bombPlaced = false;
                         bc.bombBeeping = false;
+                        BttBomb.clear(p);
                         bc.sync();
                         world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_GENERIC_EXPLODE.value(),
                                 net.minecraft.sound.SoundCategory.PLAYERS, 3.0F, 1.0F);

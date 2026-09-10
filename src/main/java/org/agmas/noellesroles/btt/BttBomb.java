@@ -1,11 +1,14 @@
 package org.agmas.noellesroles.btt;
 
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.agmas.noellesroles.ModItems;
 
 /**
  * 恐怖分子炸弹状态机（C-084）：**安放**改由物品 [炸弹箱] 右键目标触发（不再是 G 键技能），
@@ -58,6 +61,10 @@ public final class BttBomb {
         tc.bombTransferCd = TRANSFER_CD_TICKS;
         hc.bombPlaced = false;
         hc.bombBeeping = false;
+        removeBombItem(holder);
+        giveBombItem(target);
+        // 恐怖分子的 [炸弹箱] 是常驻 kit（安放走物品 CD、不消耗）→ 脱手后补回，否则其失去再安放能力
+        if (GameWorldComponent.KEY.get(holder.getWorld()).isRole(holder, BttRoles.TERRORIST)) giveBombItem(holder);
         hc.sync();
         tc.sync();
         holder.getWorld().playSound(null, target.getBlockPos(), SoundEvents.ENTITY_ITEM_PICKUP,
@@ -66,5 +73,41 @@ public final class BttBomb {
         target.sendMessage(Text.literal("有人把炸弹塞给了你！快传出去！")
                 .formatted(Formatting.DARK_RED, Formatting.BOLD), true);
         return true;
+    }
+
+    // ===== [炸弹箱] 物品（省纹理：安放用的炸弹箱 = 携带在身上的炸弹，同一物品）=====
+
+    /** doc「5 秒后可见」：倒计时开始时把 [炸弹箱] 发到持有者身上 */
+    public static void reveal(ServerPlayerEntity carrier) {
+        giveBombItem(carrier);
+    }
+
+    /** 炸弹离开该玩家（爆炸/持有者死亡）→ 收回 [炸弹箱]，避免尸体掉落/他人捡走 */
+    public static void clear(ServerPlayerEntity carrier) {
+        removeBombItem(carrier);
+    }
+
+    /** 玩家身上至多 1 个 [炸弹箱]（恐怖分子自己带来的那个不重复发） */
+    private static void giveBombItem(ServerPlayerEntity player) {
+        if (countBombItem(player) == 0) player.giveItemStack(new ItemStack(ModItems.BOMB));
+    }
+
+    private static void removeBombItem(ServerPlayerEntity player) {
+        var inventory = player.getInventory();
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.getStack(i).isOf(ModItems.BOMB)) {
+                inventory.removeStack(i, 1);
+                break;
+            }
+        }
+    }
+
+    private static int countBombItem(ServerPlayerEntity player) {
+        var inventory = player.getInventory();
+        int count = 0;
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.getStack(i).isOf(ModItems.BOMB)) count++;
+        }
+        return count;
     }
 }
