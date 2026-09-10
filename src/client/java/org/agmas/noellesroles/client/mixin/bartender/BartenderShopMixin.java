@@ -34,6 +34,7 @@ public abstract class BartenderShopMixin extends LimitedHandledScreen<PlayerScre
 
     @Inject(method = "init", at = @At("HEAD"))
     void bartenderShopRenderer(CallbackInfo ci) {
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) return; // BTT：NR 专属商店不显示
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.BARTENDER)) {
             if (ConfigWorldComponent.KEY.get(player.getWorld()).maximumDefenseVials == 0 || BartenderPlayerComponent.KEY.get(player).vialsBought < ConfigWorldComponent.KEY.get(player.getWorld()).maximumDefenseVials) {

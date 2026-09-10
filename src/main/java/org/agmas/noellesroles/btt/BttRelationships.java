@@ -19,11 +19,14 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 关系系统（C-061，改造 HML 修饰词/Modifier 机制——每玩家 Modifier 旗标 + BttPlayerComponent 搭档存储）：
+ * 关系系统（C-061，改造 HML 修饰词/Modifier 机制）：
  * 恋人（任意两人，知晓名字；殉情；异阵营共同存活→并入胜者组）、
- * 宿敌（1 平民+1 从犯，互知身份；平民被击毙→凶手方 +2 护盾）、
- * 双子（2 平民，互不知晓；身份随机统一为其中一人，发 kit 前生效）。
- * 对数 = N//8，每人至多一对；对类型按可行性随机（不可行则降级为恋人）。
+ * 宿敌（1 平民+1 从犯，互知身份；平民被处决→凶手方单独胜利）、
+ * 双子（2 平民，互不知晓；身份统一为其中一人，发 kit 前生效）。
+ * 对数 = N//8，每人至多一对；对类型按可行性随机。
+ * <p>
+ * 两阶段（2026-09-10 修订）：{@link #assign}（身份阶段，决定对子并**统一双子身份**）→
+ * addRole/发 kit → {@link #apply}（身份发放后再落 modifier/搭档/提示）。
  */
 public final class BttRelationships {
     private BttRelationships() {}
@@ -35,12 +38,17 @@ public final class BttRelationships {
     public static final Modifier MOD_TWINS = HMLModifiers.registerModifier(
             new Modifier(Identifier.of(Noellesroles.MOD_ID, "twins"), 0x00CED1, null, null, false, false));
 
-    /** 开局分配关系并应用双子统一（须在 addRole/发 kit 前调用）；notify=开局知晓提示 */
-    public static void assign(ServerWorld world, Map<UUID, Role> seats,
-                              java.util.function.BiConsumer<UUID, Text> notify) {
-        WorldModifierComponent modifiers = WorldModifierComponent.KEY.get(world);
+    /** 关系对（a,b=玩家 UUID；type=LOVER/ARCHENEMY/TWINS） */
+    public record Pair(UUID a, UUID b, String type) {}
+
+    /**
+     * 身份阶段：决定 N//8 对关系，并在 {@code seats} 上**统一双子身份**（须在 addRole/发 kit 前）。
+     * 返回关系对，供 {@link #apply} 在身份发放后落关系。
+     */
+    public static List<Pair> assign(ServerWorld world, Map<UUID, Role> seats) {
         int pairs = seats.size() / 8;
-        if (pairs <= 0) return;
+        List<Pair> result = new ArrayList<>();
+        if (pairs <= 0) return result;
 
         List<UUID> pool = new ArrayList<>(seats.keySet());
         Collections.shuffle(pool);
@@ -55,11 +63,19 @@ public final class BttRelationships {
                     case "ARCHENEMY" -> {
                         var civ = pool.stream().filter(u -> BttRoles.factionOf(seats.get(u)) == BttRoles.Faction.CIVILIAN).findFirst();
                         var acc = pool.stream().filter(u -> BttRoles.factionOf(seats.get(u)) == BttRoles.Faction.ACCOMPLICE).findFirst();
-                        if (civ.isPresent() && acc.isPresent()) { a = civ.get(); b = acc.get(); chosen = "ARCHENEMY"; }
+                        if (civ.isPresent() && acc.isPresent()) {
+                            a = civ.get();
+                            b = acc.get();
+                            chosen = "ARCHENEMY";
+                        }
                     }
                     case "TWINS" -> {
                         var cives = pool.stream().filter(u -> BttRoles.factionOf(seats.get(u)) == BttRoles.Faction.CIVILIAN).toList();
-                        if (cives.size() >= 2) { a = cives.get(0); b = cives.get(1); chosen = "TWINS"; }
+                        if (cives.size() >= 2) {
+                            a = cives.get(0);
+                            b = cives.get(1);
+                            chosen = "TWINS";
+                        }
                     }
                     default -> {
                         a = pool.get(0);
@@ -70,50 +86,59 @@ public final class BttRelationships {
                 if (chosen != null) break;
             }
             if (a == null || b == null) break;
-
             pool.remove(a);
             pool.remove(b);
-            Modifier mod = switch (chosen) {
+
+            if ("TWINS".equals(chosen)) {
+                // 统一身份为其中一人（addRole 前改 seats → 两人 kit/宣告一致）
+                Role unified = world.getRandom().nextBoolean() ? seats.get(a) : seats.get(b);
+                seats.put(a, unified);
+                seats.put(b, unified);
+            }
+            result.add(new Pair(a, b, chosen));
+        }
+        return result;
+    }
+
+    /** 身份发放后：落 Modifier 旗标 + 搭档/类型存储 + 开局提示（双子不提示） */
+    public static void apply(ServerWorld world, Map<UUID, Role> seats, List<Pair> pairs,
+                             java.util.function.BiConsumer<UUID, Text> notify) {
+        WorldModifierComponent modifiers = WorldModifierComponent.KEY.get(world);
+        for (Pair pair : pairs) {
+            Modifier mod = switch (pair.type()) {
                 case "ARCHENEMY" -> MOD_ARCHENEMY;
                 case "TWINS" -> MOD_TWINS;
                 default -> MOD_LOVERS;
             };
-            modifiers.addModifier(a, mod);
-            modifiers.addModifier(b, mod);
-            ServerPlayerEntity ca = (ServerPlayerEntity) world.getPlayerByUuid(a);
-            ServerPlayerEntity cb = (ServerPlayerEntity) world.getPlayerByUuid(b);
-            if (ca != null) {
-                BttPlayerComponent.KEY.get(ca).partner = b.toString();
-                BttPlayerComponent.KEY.get(ca).relType = chosen;
+            modifiers.addModifier(pair.a(), mod);
+            modifiers.addModifier(pair.b(), mod);
+
+            ServerPlayerEntity pa = (ServerPlayerEntity) world.getPlayerByUuid(pair.a());
+            ServerPlayerEntity pb = (ServerPlayerEntity) world.getPlayerByUuid(pair.b());
+            if (pa != null) {
+                BttPlayerComponent c = BttPlayerComponent.KEY.get(pa);
+                c.partner = pair.b().toString();
+                c.relType = pair.type();
             }
-            if (cb != null) {
-                BttPlayerComponent.KEY.get(cb).partner = a.toString();
-                BttPlayerComponent.KEY.get(cb).relType = chosen;
+            if (pb != null) {
+                BttPlayerComponent c = BttPlayerComponent.KEY.get(pb);
+                c.partner = pair.a().toString();
+                c.relType = pair.type();
             }
 
-            if (notify != null) {
-                ServerPlayerEntity pa = (ServerPlayerEntity) world.getPlayerByUuid(a);
-                ServerPlayerEntity pb = (ServerPlayerEntity) world.getPlayerByUuid(b);
-                switch (chosen) {
-                    case "LOVER" -> {
-                        if (pa != null) notify.accept(a, Text.literal("你的恋人是 " + nameOf(pb) + "。").formatted(Formatting.LIGHT_PURPLE));
-                        if (pb != null) notify.accept(b, Text.literal("你的恋人是 " + nameOf(pa) + "。").formatted(Formatting.LIGHT_PURPLE));
-                    }
-                    case "ARCHENEMY" -> {
-                        if (pa != null) notify.accept(a, Text.literal("你的宿敌是 " + nameOf(pb)
-                                + "（" + BttIdentity.displayName(seats.get(b)).getString() + "）。").formatted(Formatting.RED));
-                        if (pb != null) notify.accept(b, Text.literal("你的宿敌是 " + nameOf(pa)
-                                + "（" + BttIdentity.displayName(seats.get(a)).getString() + "）。").formatted(Formatting.RED));
-                    }
-                    // 双子：互不知晓 ✓
+            if (notify == null) continue;
+            switch (pair.type()) {
+                case "LOVER" -> {
+                    if (pa != null) notify.accept(pair.a(), Text.literal("你的恋人是 " + nameOf(pb) + "。").formatted(Formatting.LIGHT_PURPLE));
+                    if (pb != null) notify.accept(pair.b(), Text.literal("你的恋人是 " + nameOf(pa) + "。").formatted(Formatting.LIGHT_PURPLE));
                 }
-            }
-
-            // 双子：身份随机统一为其中一人（发 kit 前 → 物品/技能/宣告一致）
-            if (chosen.equals("TWINS")) {
-                Role unified = world.getRandom().nextBoolean() ? seats.get(a) : seats.get(b);
-                seats.put(a, unified);
-                seats.put(b, unified);
+                case "ARCHENEMY" -> {
+                    if (pa != null) notify.accept(pair.a(), Text.literal("你的宿敌是 " + nameOf(pb)
+                            + "（" + BttIdentity.displayName(seats.get(pair.b())).getString() + "）。").formatted(Formatting.RED));
+                    if (pb != null) notify.accept(pair.b(), Text.literal("你的宿敌是 " + nameOf(pa)
+                            + "（" + BttIdentity.displayName(seats.get(pair.a())).getString() + "）。").formatted(Formatting.RED));
+                }
+                // 双子：互不知晓 ✓
             }
         }
     }

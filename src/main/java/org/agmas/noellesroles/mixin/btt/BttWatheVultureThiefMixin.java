@@ -62,7 +62,8 @@ public abstract class BttWatheVultureThiefMixin {
             btt.sync();
             // 与小说家/GameMode 终局同构：per-role 结局数据 + stopGame（独胜 WinStatus=NONE）
             dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(user.getServerWorld())
-                    .setRoundEndData(new java.util.ArrayList<>(user.getServerWorld().getPlayers()),
+                    .setRoundEndData(user.getServerWorld().getPlayers().stream()
+                                    .filter(p -> gwc.getRole(p) != null).collect(java.util.stream.Collectors.toList()),
                             dev.doctor4t.wathe.game.GameFunctions.WinStatus.NONE);
             dev.doctor4t.wathe.game.GameFunctions.stopGame(user.getServerWorld());
         } else {

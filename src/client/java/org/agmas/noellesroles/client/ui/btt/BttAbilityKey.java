@@ -33,6 +33,20 @@ public final class BttAbilityKey {
         if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(client.world)) return;
         var gwc = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(client.world);
         if (!gwc.isRunning()) return;
+        // 炸弹持有者：G 键对准他人传递炸弹（优先于身份技能）
+        var pc = org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(client.player);
+        if (pc.bombPlaced) {
+            if (pc.bombBeeping) {
+                var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(client.player,
+                        e -> e instanceof net.minecraft.entity.player.PlayerEntity && e != client.player, (float) NEARBY_RANGE);
+                if (hit instanceof net.minecraft.util.hit.EntityHitResult ehr
+                        && ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity target) {
+                    net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                            new org.agmas.noellesroles.btt.BttGuessC2SPacket(target.getUuid(), ""));
+                }
+            }
+            return;
+        }
         BttRoleDef def = BttRoleDefs.get(gwc.getRole(client.player));
         if (def == null) return;
         // 失忆患者：G 键 + 注视尸体（自带射线 4 格——NR targetBody 在暗处/2 格距离下不可用）
@@ -57,9 +71,9 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;
         }
-        // 身边者技能：G 键直接选中最近的人（不发选人屏）
+        // 身边者技能：G 键对准准星所指玩家施放（不发选人屏）
         if (isNearbyRole(def.role)) {
-            sendNearest(client);
+            sendAimed(client);
             return;
         }
         // 任意人技能：打开背包选人屏
@@ -68,38 +82,32 @@ public final class BttAbilityKey {
         client.setScreen(new LimitedInventoryScreen(client.player));
     }
 
-    /** 身边者技能（G 键直接选中最近玩家）：绳艺师/药剂师/酒保/走私犯 */
+    /** 身边者技能（G 键对准准星所指玩家）：绳艺师/药剂师/酒保/派对主/恐怖分子 */
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
-                || role == BttRoles.BARTENDER || role == BttRoles.SMUGGLER;
+                || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST
+                || role == BttRoles.TERRORIST;
     }
 
-    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人 */
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 */
     public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
-                || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER;
+                || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
+                || role == BttRoles.ASSASSIN || role == BttRoles.SMUGGLER || role == BttRoles.IMPOSTOR
+                || role == BttRoles.JOURNALIST;
     }
 
-    /** G 键身边者技能：取最近存活玩家（≤6 格）直接发包 */
-    private static void sendNearest(MinecraftClient client) {
+    /** G 键身边者技能：取**准星所指玩家**（≤6 格）直接发包；未对准他人则不施放 */
+    private static void sendAimed(MinecraftClient client) {
         var player = client.player;
-        if (player == null || client.world == null) return;
-        net.minecraft.entity.player.PlayerEntity best = null;
-        double bestSq = NEARBY_RANGE * NEARBY_RANGE;
-        for (var p : client.world.getPlayers()) {
-            if (p == player || !p.isAlive()) continue;
-            double d = player.squaredDistanceTo(p);
-            if (d <= bestSq) {
-                bestSq = d;
-                best = p;
-            }
+        if (player == null) return;
+        var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(player,
+                e -> e instanceof net.minecraft.entity.player.PlayerEntity && e != player, (float) NEARBY_RANGE);
+        if (hit instanceof net.minecraft.util.hit.EntityHitResult ehr
+                && ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity target) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new org.agmas.noellesroles.btt.BttGuessC2SPacket(target.getUuid(), ""));
         }
-        if (best == null) {
-            client.inGameHud.setOverlayMessage(Text.literal("身边没有人。").formatted(Formatting.RED), false);
-            return;
-        }
-        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                new org.agmas.noellesroles.btt.BttGuessC2SPacket(best.getUuid(), ""));
     }
 
     /** 当前客户端身份是否应显示选人 UI */

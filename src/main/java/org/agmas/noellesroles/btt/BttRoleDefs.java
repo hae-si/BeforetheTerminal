@@ -69,6 +69,7 @@ public final class BttRoleDefs {
         });
         // ===== 醉酒投放者（BT-SYS-DRUNK，C-060） =====
         def(BttRoles.BARTENDER); // 酒保：无初始道具（<灌酒> G 键选人）
+        def(BttRoles.JOURNALIST); // 记者：无初始道具（<跟踪> E 屏选人 + 持续透视）
         def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
         def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（<灌酒> 简化为直接灌）
         // ===== docx 2026-09-09 新增（C-063） =====
@@ -107,7 +108,7 @@ public final class BttRoleDefs {
             knife().give(p);
             initialAbilityCd(p, GameConstants.getInTicks(1, 0));
         });
-        // 魔术师：初始[刀]；无 CD（每次换位耗 100 狂气）
+        // 魔术师：初始[刀]；无 CD（耗 100 狂气为旧设定，已废弃）
         def(BttRoles.MAGICIAN).kit(knife());
         // 小说家：无道具无初始 CD（猜错才 30s）
         def(BttRoles.NOVELIST).kit(p -> {});
@@ -220,21 +221,6 @@ public final class BttRoleDefs {
 
     private static void revolverKit(dev.doctor4t.wathe.api.Role role) {
         def(role).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
-    }
-
-    // ===== 恶魔凝视（推迟测试：机制保留，2026-09-05 用户裁定往后推） =====
-
-    /** 视野（约 ±60° 锥角）+ 视线（方块遮挡检测） */
-    private static boolean inView(ServerWorld world, LivingEntity viewer, LivingEntity target) {
-        Vec3d eyes = viewer.getEyePos();
-        Vec3d targetEyes = target.getEyePos();
-        Vec3d dir = targetEyes.subtract(eyes);
-        if (dir.lengthSquared() < 1.0E-4) return true;
-        double dot = viewer.getRotationVec(1.0f).normalize().dotProduct(dir.normalize());
-        if (dot < 0.5) return false;
-        BlockHitResult hit = world.raycast(new RaycastContext(eyes, targetEyes,
-                RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, viewer));
-        return hit.getType() == HitResult.Type.MISS;
     }
 
     // ===== 通用 =====

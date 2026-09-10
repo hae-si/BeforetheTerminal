@@ -4,10 +4,12 @@ import dev.doctor4t.wathe.api.Role;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
+import dev.doctor4t.wathe.cca.PlayerShopComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -54,6 +56,13 @@ public final class BttGuessReceiver {
             if (!BttIdentity.isBttMode(user.getWorld())) return;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
+            // 炸弹传递（持有者 G 键对准他人；非技能，不受醉酒影响）
+            if (BttPlayerComponent.KEY.get(user).bombPlaced) {
+                if (user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity bombTarget) {
+                    transferBomb(user, bombTarget);
+                }
+                return;
+            }
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
             // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
@@ -84,10 +93,20 @@ public final class BttGuessReceiver {
                 messiah(user, target, gwc, payload);
             } else if (gwc.isRole(user, BttRoles.BARTENDER)) {
                 bartender(user, target);
-            } else if (gwc.isRole(user, BttRoles.SMUGGLER)) {
-                smuggler(user, target);
             } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
+            } else if (gwc.isRole(user, BttRoles.ASSASSIN)) {
+                assassin(user, target, gwc, payload, guessed);
+            } else if (gwc.isRole(user, BttRoles.SMUGGLER)) {
+                smuggler(user, target);
+            } else if (gwc.isRole(user, BttRoles.IMPOSTOR)) {
+                impostor(user, target, gwc, payload, guessed);
+            } else if (gwc.isRole(user, BttRoles.JOURNALIST)) {
+                journalist(user, target);
+            } else if (gwc.isRole(user, BttRoles.TERRORIST)) {
+                terroristPlace(user, target);
+            } else if (gwc.isRole(user, BttRoles.PARTYHOST)) {
+                partyhost(user, target);
             } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
                 detective(user, target, gwc);
             } else if (gwc.isRole(user, BttRoles.RIGGER)) {
@@ -134,7 +153,8 @@ public final class BttGuessReceiver {
                 btt.sync();
                 // 与 GameMode 终局路径同构：per-role 结局数据 + stopGame（独胜 WinStatus=NONE）
                 dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(user.getServerWorld())
-                        .setRoundEndData(new ArrayList<>(user.getServerWorld().getPlayers()),
+                        .setRoundEndData(user.getServerWorld().getPlayers().stream()
+                                        .filter(p -> gwc.getRole(p) != null).collect(java.util.stream.Collectors.toList()),
                                 GameFunctions.WinStatus.NONE);
                 GameFunctions.stopGame(user.getServerWorld());
             }
@@ -207,18 +227,100 @@ public final class BttGuessReceiver {
         user.sendMessage(Text.literal("你唱起了一支歌……").formatted(Formatting.LIGHT_PURPLE), true);
     }
 
-    // ===== 走私犯：<灌酒> 身边者醉酒 1 分钟，CD 30 秒（标记机制 GAP，简化为直接灌酒） =====
+    // ===== 走私犯：<灌酒> 任何人永久醉酒，CD 30 秒（施加者死亡后解除，D11/D8） =====
 
     private static void smuggler(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
+        user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
+    }
+
+    // ===== 记者：<跟踪> 任意玩家持续透视（标记；未标记时透视最远者）；CD 30 秒 =====
+
+    private static void journalist(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttPlayerComponent.KEY.get(user).markedTarget = target.getUuid().toString();
+        user.sendMessage(Text.literal("跟踪目标：" + target.getName().getString()).formatted(Formatting.GOLD), true);
+    }
+
+    // ===== 恐怖分子：<放置炸弹> 准星所指玩家；5 秒静默 → 15 秒倒计时 → 爆炸；CD 30 秒 =====
+
+    private static void terroristPlace(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttPlayerComponent tc = BttPlayerComponent.KEY.get(target);
+        if (tc.bombPlaced) {
+            user.sendMessage(Text.literal("目标身上已有炸弹。").formatted(Formatting.RED), true);
             return;
         }
+        tc.bombPlaced = true;
+        tc.bombBeeping = false;
+        tc.bombTimer = GameConstants.getInTicks(0, 5);
+        tc.bombSource = user.getUuid().toString();
+        tc.bombLastSec = -1;
+        user.sendMessage(Text.literal("炸弹已放置。").formatted(Formatting.GOLD), true);
+        target.sendMessage(Text.literal("你听到了一声轻响……").formatted(Formatting.DARK_RED), true);
+    }
+
+    /** 炸弹传递（持有者 G 键对准他人；倒计时阶段才可传递，3 秒传递冷却） */
+    private static void transferBomb(ServerPlayerEntity holder, ServerPlayerEntity target) {
+        BttPlayerComponent hc = BttPlayerComponent.KEY.get(holder);
+        if (!hc.bombPlaced || !hc.bombBeeping || hc.bombTransferCd > 0) return;
+        if (target == holder || !GameFunctions.isPlayerAliveAndSurvival(target)) return;
+        BttPlayerComponent tc = BttPlayerComponent.KEY.get(target);
+        if (tc.bombPlaced) return;
+        tc.bombPlaced = true;
+        tc.bombBeeping = true;
+        tc.beepTimer = hc.beepTimer;
+        tc.bombSource = hc.bombSource;
+        tc.bombLastSec = -1;
+        tc.bombTransferCd = GameConstants.getInTicks(0, 3);
+        hc.bombPlaced = false;
+        hc.bombBeeping = false;
+        holder.getWorld().playSound(null, target.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_ITEM_PICKUP,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+        holder.sendMessage(Text.literal("炸弹已脱手。").formatted(Formatting.GOLD), true);
+        target.sendMessage(Text.literal("有人把炸弹塞给了你！快传出去！").formatted(Formatting.DARK_RED, Formatting.BOLD), true);
+    }
+
+    // ===== 冒牌货：猜身份；对=窃取 kit + 目标永久醉酒（直至窃取者死亡）；CD 60s =====
+
+    private static void impostor(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
+                                 BttGuessC2SPacket payload, Role guessed) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(1, 0));
+        if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
+            BttRoleDef d = BttRoleDefs.get(guessed);
+            if (d != null) d.dispatchKit(user); // 窃取（物品层；技能层移植见 ROADMAP BT-IMPOSTOR）
+            BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
+            user.sendMessage(Text.literal("窃取成功：" + BttIdentity.displayName(guessed).getString())
+                    .formatted(Formatting.GOLD), true);
+        } else {
+            user.sendMessage(Text.literal("猜错了。").formatted(Formatting.RED), true);
+        }
+    }
+
+    // ===== 派对主：<变声> 身边者；一次=醉酒，两次=氦气自爆；CD 30s =====
+
+    private static void partyhost(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(0, 30));
+        BttPlayerComponent uc = BttPlayerComponent.KEY.get(user);
+        uc.partyUses++;
+        if (uc.partyUses >= 2) {
+            user.sendMessage(Text.literal("氦气……").formatted(Formatting.RED), true);
+            GameFunctions.killPlayer(user, true, user, BttDeathReasons.HELIUM_SELF_DESTRUCT);
+            return;
+        }
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
-        user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
+        target.sendMessage(Text.literal("你的声音变高了……").formatted(Formatting.LIGHT_PURPLE), true);
     }
 
     // ===== 舞蛇人 =====
@@ -233,6 +335,23 @@ public final class BttGuessReceiver {
         user.sendMessage(err == null
                 ? Text.literal("你种下了一粒种子。").formatted(Formatting.GREEN)
                 : Text.literal(err).formatted(Formatting.RED), true);
+    }
+
+    // ===== 刺客：<识破> 猜身份；对=杀（识破魔法），错=仅被猜者收到通知（D3）；CD 60s =====
+
+    private static void assassin(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
+                                 BttGuessC2SPacket payload, Role guessed) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        setCd(ability, GameConstants.getInTicks(1, 0));
+        if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
+            user.sendMessage(Text.literal("识破成功。").formatted(Formatting.GOLD), true);
+            GameFunctions.killPlayer(target, true, user, BttDeathReasons.IDENTIFY_MAGIC);
+        } else {
+            // 猜错：仅被猜者收到通知（不向全场揭示）
+            target.sendMessage(Text.literal(user.getName().getString() + " 未能揭下你的面具……")
+                    .formatted(Formatting.DARK_PURPLE), true);
+        }
     }
 
     // ===== 侦探：<调查> 身边者（选人），CD 60s =====
@@ -306,6 +425,8 @@ public final class BttGuessReceiver {
         Role targetRole = gwc.getRole(target);
         if (targetRole != null && BttRoles.factionOf(targetRole) == BttRoles.Faction.PRINCIPAL) {
             Role mine = gwc.getRole(user);
+            swapInventories(user, target); // 身份互换 → 物品栏一并互换
+            swapBalances(user, target);    // 狂气一并互换
             gwc.addRole(user.getUuid(), targetRole);
             gwc.addRole(target.getUuid(), mine);
             gwc.sync();
@@ -319,6 +440,31 @@ public final class BttGuessReceiver {
     }
 
     // ===== 通用 =====
+
+    /** 互换两名玩家的整份物品栏（主手/背包/护甲/副手） */
+    private static void swapInventories(ServerPlayerEntity a, ServerPlayerEntity b) {
+        var ia = a.getInventory();
+        var ib = b.getInventory();
+        int size = Math.min(ia.size(), ib.size());
+        for (int i = 0; i < size; i++) {
+            ItemStack sa = ia.getStack(i).copy();
+            ItemStack sb = ib.getStack(i).copy();
+            ia.setStack(i, sb);
+            ib.setStack(i, sa);
+        }
+        ia.markDirty();
+        ib.markDirty();
+    }
+
+    /** 互换两名玩家的狂气余额 */
+    private static void swapBalances(ServerPlayerEntity a, ServerPlayerEntity b) {
+        PlayerShopComponent pa = PlayerShopComponent.KEY.get(a);
+        PlayerShopComponent pb = PlayerShopComponent.KEY.get(b);
+        int ba = pa.balance;
+        int bb = pb.balance;
+        pa.setBalance(bb);
+        pb.setBalance(ba);
+    }
 
     private static void setCd(AbilityPlayerComponent ability, int ticks) {
         ability.setCooldown(ticks);

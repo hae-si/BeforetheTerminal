@@ -25,6 +25,8 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
     public String lastEnding = "NONE";
     /** 当前尾声主持人翁类型（"MAJO"/"CULT"/"KIDNAPPER"/"GARDENER"/"SURVIVAL"/空）；原 BttState.epilogueType 迁入 */
     public String epilogueType = "";
+    /** 本局累计误杀数（小丑护盾 = 2 + 该值） */
+    public int misfireCount = 0;
     /**
      * 独胜结局的赢家 uuid 列表（逗号分隔；THIEF_WIN/NOVELIST_WIN/MAJO_WIN 用；常规三结局留空=客户端按阵营算）。
      * fork（TrainMurderMystery）把 isWinner 在服务端算好下发，wathe 的 RoundEndData 无此槽位 → 用本字段承载。
@@ -49,6 +51,7 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         tag.putString("lastEnding", this.lastEnding);
         tag.putString("winners", this.winners);
         tag.putString("epilogueType", this.epilogueType);
+        tag.putInt("misfireCount", this.misfireCount);
 
     }
 
@@ -57,6 +60,7 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         if (tag.contains("lastEnding")) this.lastEnding = tag.getString("lastEnding");
         if (tag.contains("winners")) this.winners = tag.getString("winners");
         if (tag.contains("epilogueType")) this.epilogueType = tag.getString("epilogueType");
+        if (tag.contains("misfireCount")) this.misfireCount = tag.getInt("misfireCount");
 
     }
 }

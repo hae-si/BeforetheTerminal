@@ -52,6 +52,26 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String partner = "";
     /** 关系类型 LOVER/ARCHENEMY/TWINS */
     public String relType = "";
+    /** 永久醉酒来源（走私犯/冒牌货 UUID；施加者死亡后解除） */
+    public String drunkSource = "";
+    /** 派对主已变声次数（2 次 → 氦气自爆） */
+    public int partyUses = 0;
+    /** 记者：<跟踪> 标记的目标 UUID 字符串（空=未标记） */
+    public String markedTarget = "";
+    /** 恐怖分子炸弹：是否放置在本玩家身上 */
+    public boolean bombPlaced = false;
+    /** 炸弹是否已进入倒计时阶段（5 秒静默后） */
+    public boolean bombBeeping = false;
+    /** 静默期剩余 tick（5 秒） */
+    public int bombTimer = 0;
+    /** 倒计时剩余 tick（15 秒） */
+    public int beepTimer = 0;
+    /** 传递冷却剩余 tick（3 秒） */
+    public int bombTransferCd = 0;
+    /** 上次显示的倒计时秒（避免刷屏） */
+    public int bombLastSec = -1;
+    /** 放置炸弹的恐怖分子 UUID 字符串 */
+    public String bombSource = "";
 
     public BttPlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -86,6 +106,18 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         if (this.drunkTicks > 0) this.drunkTicks--;
     }
 
+    /** 永久醉酒（走私犯/冒牌货）：施加者死亡后由 kill hook 解除 */
+    public void applyPermanentDrunk(java.util.UUID source) {
+        this.drunkTicks = Integer.MAX_VALUE / 4;
+        this.drunkSource = source.toString();
+    }
+
+    /** 解除醉酒（含永久醉） */
+    public void clearDrunk() {
+        this.drunkTicks = 0;
+        this.drunkSource = "";
+    }
+
     /** 开局清空全部回合状态 */
     public void reset() {
         cult = false;
@@ -99,6 +131,16 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         drunkTicks = 0;
         partner = "";
         relType = "";
+        drunkSource = "";
+        partyUses = 0;
+        markedTarget = "";
+        bombPlaced = false;
+        bombBeeping = false;
+        bombTimer = 0;
+        beepTimer = 0;
+        bombTransferCd = 0;
+        bombLastSec = -1;
+        bombSource = "";
         this.sync();
     }
 
@@ -115,6 +157,16 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("drunkTicks", drunkTicks);
         tag.putString("partner", partner);
         tag.putString("relType", relType);
+        tag.putString("drunkSource", drunkSource);
+        tag.putInt("partyUses", partyUses);
+        tag.putString("markedTarget", markedTarget);
+        tag.putBoolean("bombPlaced", bombPlaced);
+        tag.putBoolean("bombBeeping", bombBeeping);
+        tag.putInt("bombTimer", bombTimer);
+        tag.putInt("beepTimer", beepTimer);
+        tag.putInt("bombTransferCd", bombTransferCd);
+        tag.putInt("bombLastSec", bombLastSec);
+        tag.putString("bombSource", bombSource);
     }
 
     @Override
@@ -130,5 +182,15 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.drunkTicks = tag.getInt("drunkTicks");
         this.partner = tag.contains("partner") ? tag.getString("partner") : "";
         this.relType = tag.contains("relType") ? tag.getString("relType") : "";
+        this.drunkSource = tag.contains("drunkSource") ? tag.getString("drunkSource") : "";
+        this.partyUses = tag.getInt("partyUses");
+        this.markedTarget = tag.contains("markedTarget") ? tag.getString("markedTarget") : "";
+        this.bombPlaced = tag.contains("bombPlaced") && tag.getBoolean("bombPlaced");
+        this.bombBeeping = tag.contains("bombBeeping") && tag.getBoolean("bombBeeping");
+        this.bombTimer = tag.getInt("bombTimer");
+        this.beepTimer = tag.getInt("beepTimer");
+        this.bombTransferCd = tag.getInt("bombTransferCd");
+        this.bombLastSec = tag.getInt("bombLastSec");
+        this.bombSource = tag.contains("bombSource") ? tag.getString("bombSource") : "";
     }
 }

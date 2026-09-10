@@ -19,4 +19,10 @@ public final class BttDeathReasons {
     public static final Identifier MARTYRDOM = Identifier.of("noellesroles", "martyrdom");
     /** 自裁：游侠误杀/魔像非误杀/暴乱期乘客误杀 */
     public static final Identifier SELF_EXECUTION = Identifier.of("noellesroles", "self_execution");
+    /** 识破魔法：刺客 <识破> 命中 */
+    public static final Identifier IDENTIFY_MAGIC = Identifier.of("noellesroles", "identify_magic");
+    /** 氦气自爆：派对主变声两次 */
+    public static final Identifier HELIUM_SELF_DESTRUCT = Identifier.of("noellesroles", "helium_self_destruct");
+    /** 炸弹：恐怖分子炸弹箱爆炸 */
+    public static final Identifier BOMB = Identifier.of("noellesroles", "bomb");
 }

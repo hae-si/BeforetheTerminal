@@ -57,9 +57,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
 
         gameWorld.clearRoleMap();
-        // 防御：开局强制清空背包（发 kit 前；修复"偶尔残留上一局物品"）
+        // 背包清理由 wathe baseInitialize 完成；此处**不可再清**（会抹掉 map effect 刚发的房间钥匙/信）。
+        // 仅复位选中槽 + BTT 玩家状态。
         for (ServerPlayerEntity p : players) {
-            p.getInventory().clear();
             p.getInventory().selectedSlot = 5; // 防露出枪/刀（C-064）
             BttPlayerComponent.KEY.get(p).reset(); // 玩家同步状态清空（教团标记等）
         }
@@ -68,11 +68,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
             GameFunctions.stopGame(world);
             return;
         }
-        // 关系系统（C-061）：双子在 addRole 前统一身份
-        BttRelationships.assign(world, seats, (uuid, text) -> {
-            ServerPlayerEntity p = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
-            if (p != null) p.sendMessage(text, true);
-        });
+        // 关系系统（C-061）：先定身份（双子在此步统一 seats），addRole/发 kit 后再落关系
+        java.util.List<BttRelationships.Pair> relPairs = BttRelationships.assign(world, seats);
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
             gameWorld.addRole(player, role);
@@ -80,16 +77,21 @@ public class BeforeTheTerminalGameMode extends GameMode {
             org.agmas.harpymodloader.events.ModdedRoleAssigned.EVENT.invoker().assignModdedRole(player, role);
         }
         gameWorld.sync();
-
-        // 房间钥匙（docx：几乎人人都有，能开房间门；C-064）
-        for (ServerPlayerEntity player : players) {
-            var key = new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.KEY);
-            key.apply(net.minecraft.component.DataComponentTypes.LORE,
-                    net.minecraft.component.type.LoreComponent.DEFAULT,
-                    c -> new net.minecraft.component.type.LoreComponent(java.util.List.of(
-                            Text.literal("房间钥匙").formatted(Formatting.GOLD))));
-            player.giveItemStack(key);
+        // D16：前任系继承一名"不在场"身份的 kit（物品层；技能/商店移植见 ROADMAP BT-INHERIT）
+        java.util.List<Role> assignedRoles = players.stream().map(gameWorld::getRole).toList();
+        for (ServerPlayerEntity p : players) {
+            Role r = gameWorld.getRole(p);
+            if (r == BttRoles.EX_UNDERCOVER) {
+                giveInheritedKit(world, p, assignedRoles, BttRoles.Faction.ACCOMPLICE, "从犯");
+            } else if (r == BttRoles.EX_TRAITOR) {
+                giveInheritedKit(world, p, assignedRoles, BttRoles.Faction.CIVILIAN, "平民乘客");
+            }
         }
+        // 身份发放完成后再落关系（modifier/搭档/提示）
+        BttRelationships.apply(world, seats, relPairs, (uuid, text) -> {
+            ServerPlayerEntity p = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
+            if (p != null) p.sendMessage(text, true);
+        });
 
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
         btt.lastEnding = "NONE"; // 跨局残留清理（参照 SRE finalizeGame“回合状态全清”原则）
@@ -112,20 +114,49 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
     }
 
+    /** D16：前任系继承一名"不在场"同阵营身份的 kit（物品层） */
+    private static void giveInheritedKit(ServerWorld world, ServerPlayerEntity p, java.util.List<Role> assigned,
+                                         BttRoles.Faction faction, String label) {
+        java.util.List<Role> candidates = BttRoles.allRoles().stream()
+                .filter(r -> BttRoles.factionOf(r) == faction)
+                .filter(r -> !assigned.contains(r))
+                .filter(r -> BttRoleDefs.get(r) != null)
+                .toList();
+        if (candidates.isEmpty()) return;
+        Role inherited = candidates.get(world.getRandom().nextInt(candidates.size()));
+        BttRoleDefs.get(inherited).dispatchKit(p);
+        p.sendMessage(Text.literal("你继承了不在场的" + BttIdentity.displayName(inherited).getString()
+                + "（" + label + "）的行头。").formatted(Formatting.LIGHT_PURPLE), true);
+    }
+
     private static void startEpilogueBroadcast(String type, java.util.List<ServerPlayerEntity> players) {
-        String key = switch (type) {
-            case "MAJO" -> "majo";
-            case "CULT" -> "cult";
-            case "KIDNAPPER" -> "kidnapper";
-            case "GARDENER" -> "gardener";
-            default -> "survival";
-        };
+        String key;
+        int color;
+        switch (type) {
+            case "MAJO" -> { key = "majo"; color = BttRoles.MAJO.color(); }
+            case "CULT" -> { key = "cult"; color = BttRoles.MESSIAH.color(); }
+            case "KIDNAPPER" -> { key = "kidnapper"; color = BttRoles.KIDNAPPER.color(); }
+            case "GARDENER" -> { key = "gardener"; color = BttRoles.GARDENER.color(); }
+            default -> { key = "survival"; color = 0xFFFFFF; }
+        }
+        net.minecraft.sound.SoundEvent track = BttSounds.forEpilogue(type);
         for (ServerPlayerEntity p : players) {
+            stopEpilogueSounds(p); // 切换尾声 → 停掉上一首
+            // 标题：加粗 + 身份色；宣言：白色
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
-                    Text.translatable("noellesroles.epilogue." + key + ".title").formatted(Formatting.DARK_PURPLE, Formatting.BOLD)));
+                    Text.translatable("noellesroles.epilogue." + key + ".title").withColor(color).formatted(Formatting.BOLD)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
-                    Text.translatable("noellesroles.epilogue." + key + ".line").formatted(Formatting.LIGHT_PURPLE)));
+                    Text.translatable("noellesroles.epilogue." + key + ".line").formatted(Formatting.WHITE)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
+            p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MUSIC, 1.0f, 1.0f); // 尾声 BGM
+        }
+    }
+
+    /** 停止全部尾声 BGM（切换尾声 / 结束回合时调用） */
+    private static void stopEpilogueSounds(ServerPlayerEntity p) {
+        for (net.minecraft.sound.SoundEvent s : BttSounds.EPILOGUE_ALL) {
+            p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.StopSoundS2CPacket(
+                    s.getId(), net.minecraft.sound.SoundCategory.MUSIC));
         }
     }
 
@@ -169,10 +200,13 @@ public class BeforeTheTerminalGameMode extends GameMode {
         boolean kidnapperAlive = false;
         boolean gardenerAlive = false;
         boolean anySeats = false;
+        boolean blackdeathPresent = false;
+        boolean blackdeathAlive = false;
         for (ServerPlayerEntity player : players) {
             Role role = gameWorld.getRole(player);
             if (role == null) continue;
             anySeats = true;
+            if (role == BttRoles.BLACKDEATH) blackdeathPresent = true;
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
                 // 教团成员（救世主/信徒）：阵营变为教团——从常规结局计数中移除（实现选择，待作者复核）
                 if (role == BttRoles.MESSIAH || BttPlayerComponent.KEY.get(player).isCult()) {
@@ -183,8 +217,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 var faction = org.agmas.noellesroles.btt.BttRoles.factionOf(role);
                 // C-037 三分类 + docx 2026-09-07：黑死病=狂人中立席位但阵营归属**凶手**（额外的凶手，
                 // 胜负与其他凶手一致）——计入凶手侧、不计入乘客侧
-                if (role == BttRoles.BLACKDEATH) alivePrincipals++;
-                else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
+                if (role == BttRoles.BLACKDEATH) {
+                    blackdeathAlive = true;
+                    alivePrincipals++;
+                } else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
                 else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
                 else if (role == BttRoles.TRAITOR || role == BttRoles.EX_TRAITOR) aliveAccomplices++; // B2：叛徒系凶手阵营、非主犯
                 else if (faction == BttRoles.Faction.OUTSIDER) aliveOutsiderNeutrals++;
@@ -217,15 +253,26 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 压表（2026-09-07 澄清）：**凶手 + 外人 > 乘客**（外人=外人中立+教团成员；黑死病计入凶手侧）。
         // time>1200 守卫防尾声进行中回拨。
         int outsidersTotal = aliveOutsiderNeutrals + aliveCult;
-        if (gameTime.getTime() > 1200 && murderers + outsidersTotal > alivePassengers) {
-            gameTime.setTime(1200); // 倒计时减至两分钟
+        // 两分钟 = 2*60*20 = 2400 ticks（此前误用 1200 = 1 分钟）
+        final int epilogueTicks = dev.doctor4t.wathe.game.GameConstants.getInTicks(2, 0);
+        if (gameTime.getTime() > epilogueTicks && murderers + outsidersTotal > alivePassengers) {
+            gameTime.setTime(epilogueTicks); // 倒计时减至两分钟
         }
+        // ===== 黑死病重写（D15，C-080） =====
+        // 在场时：凶手胜利需全灭（仅剩黑死病存活）；黑死病死亡 → 凶手必败（乘客立即胜利）
+        boolean blackdeathForcedPassenger = blackdeathPresent && !blackdeathAlive;
+        boolean onlyBlackdeathLeft = blackdeathAlive && alivePrincipals == 1 && aliveAccomplices == 0
+                && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0 && aliveCult == 0;
+
         BttEndings.Ending ending = BttEndings.Ending.NONE;
-        if (majoWin) {
+        if (blackdeathForcedPassenger) {
+            // 黑死病死亡 → 乘客立即胜利（覆盖一切常规/独胜判定）
+            ending = BttEndings.Ending.TRIAL_COMPLETE;
+        } else if (majoWin) {
             ending = BttEndings.Ending.MAJO_WIN;
         } else if (cultWin) {
             ending = BttEndings.Ending.CULT_WIN;
-        } else if (gameTime.getTime() <= 1200) {
+        } else if (gameTime.getTime() <= epilogueTicks) {
             // 主持人翁动态认领（存活者中按优先级）；当前主持人翁阵营全灭 → desired 自动落到下一位 → 链式切换
             String desired = majoAlive ? "MAJO" : messiahAlive ? "CULT"
                     : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
@@ -240,14 +287,27 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     case "CULT" -> BttEndings.Ending.CULT_WIN;
                     case "KIDNAPPER" -> BttEndings.Ending.KIDNAPPER_WIN;
                     case "GARDENER" -> BttEndings.Ending.GARDENER_WIN;
-                    default -> BttEndings.decide(alivePrincipals, aliveAccomplices,
-                            alivePassengers, aliveOutsiderNeutrals, true);
+                    default -> {
+                        BttEndings.Ending d = BttEndings.decide(alivePrincipals, aliveAccomplices,
+                                alivePassengers, aliveOutsiderNeutrals, true);
+                        // 黑死病在场且存活：凶手胜利需全灭（仅剩黑死病）
+                        if ((d == BttEndings.Ending.BLOOD_EXPRESS || d == BttEndings.Ending.NAKU_KORO) && !onlyBlackdeathLeft) {
+                            d = BttEndings.Ending.NONE;
+                        }
+                        yield d;
+                    }
                 };
             }
         } else {
             bttState.epilogueType = "";
-            ending = BttEndings.decide(alivePrincipals, aliveAccomplices,
+            BttEndings.Ending decided = BttEndings.decide(alivePrincipals, aliveAccomplices,
                     alivePassengers, aliveOutsiderNeutrals, false);
+            // 黑死病在场且存活：凶手胜利需**全灭**（仅剩黑死病），否则游戏继续
+            if ((decided == BttEndings.Ending.BLOOD_EXPRESS || decided == BttEndings.Ending.NAKU_KORO)
+                    && !onlyBlackdeathLeft) {
+                decided = BttEndings.Ending.NONE;
+            }
+            ending = decided;
         }
 
         // fork 口径：isWinner 服务端算好写入 game_state.winners（覆盖全部结局；客户端只分组不再判阵营）
@@ -272,7 +332,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case ARCHENEMY_WIN -> p -> false; // kill hook 已直接设 winners
             default -> p -> false;
         };
-        String winners = players.stream().filter(isWinner)
+        String winners = players.stream()
+                .filter(p -> !p.isSpectator() && !p.isCreative()) // 旁观/创造不计入胜者
+                .filter(isWinner)
                 .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
 
         // 异端分子：对调乘客与凶手的胜负结果（即使已死亡）——翻转为 doc"特殊的乘客/凶手胜利结局，
@@ -307,7 +369,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 : isWinnerByInnocent(gameWorld);
         String finalWinners = ws == GameFunctions.WinStatus.NONE
                 ? winners
-                : players.stream().filter(flipWinner)
+                : players.stream()
+                        .filter(p -> !p.isSpectator() && !p.isCreative()) // 旁观/创造不计入胜者
+                        .filter(flipWinner)
                         .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
         // 恋人并胜（C-061）：追加进胜者组
         if (!loverWinners.isEmpty()) {
@@ -333,7 +397,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
             btt.lastEnding = ending.name();
             btt.winners = finalWinners;
             btt.sync();
-            GameRoundEndComponent.KEY.get(world).setRoundEndData(new ArrayList<>(players), ws);
+            // 只把"有身份（登车）的玩家"写入结局数据；未登车/旁观者不应显示为平民
+            GameRoundEndComponent.KEY.get(world).setRoundEndData(
+                    players.stream().filter(p -> gameWorld.getRole(p) != null)
+                            .collect(java.util.stream.Collectors.toList()), ws);
             GameFunctions.stopGame(world);
         }
     }
@@ -360,6 +427,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
             scoreboard.removeTeam(team);
         }
         for (ServerPlayerEntity p : world.getPlayers()) {
+            p.getInventory().clear(); // 结束清背包（防残留到大厅）
+            stopEpilogueSounds(p);    // 停尾声 BGM
             BttPlayerComponent.KEY.get(p).reset();
         }
         btt.epilogueType = "";

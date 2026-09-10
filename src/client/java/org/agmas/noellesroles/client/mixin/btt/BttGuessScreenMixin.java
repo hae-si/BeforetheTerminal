@@ -4,6 +4,7 @@ import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedHandledScreen;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedInventoryScreen;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -14,6 +15,7 @@ import org.agmas.noellesroles.btt.BttIdentity;
 import org.agmas.noellesroles.btt.BttRoleDef;
 import org.agmas.noellesroles.btt.BttRoleDefs;
 import org.agmas.noellesroles.btt.BttRoles;
+import org.agmas.noellesroles.client.ui.btt.BttAbilityKey;
 import org.agmas.noellesroles.client.ui.btt.BttPlayerWidget;
 import org.agmas.noellesroles.client.ui.btt.BttRoleWidget;
 import org.agmas.noellesroles.client.ui.select.SelectPlayerWidget;
@@ -79,7 +81,7 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
     }
 
     @Inject(method = "render", at = @At("TAIL"))
-    void bttSwapWidgetVisibility(CallbackInfo ci) {
+    void bttSwapWidgetVisibility(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         boolean ours = false;
         for (Element child : children()) {
             if (child instanceof BttPlayerWidget) {
@@ -95,6 +97,13 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
             for (Element child : children()) {
                 if (child instanceof BttPlayerWidget gpw) gpw.visible = true;
             }
+        }
+        // E 键技能说明（参照 NR voodoo 的 renderVoodooText）
+        BttRoleDef def = BttRoleDefs.get(GameWorldComponent.KEY.get(player.getWorld()).getRole(player));
+        if (def != null && BttAbilityKey.isAnyRole(def.role)) {
+            Text desc = Text.translatable("noellesroles.btt.hud." + def.role.identifier().getPath());
+            context.drawTextWithShadow(textRenderer, desc,
+                    width / 2 - textRenderer.getWidth(desc) / 2, (height - 32) / 2 + 40, 0xFFFFFF);
         }
     }
 }

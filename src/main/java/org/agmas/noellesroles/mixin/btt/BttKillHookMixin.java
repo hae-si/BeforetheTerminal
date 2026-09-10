@@ -52,6 +52,15 @@ public abstract class BttKillHookMixin {
         // === ① 全局：杀人历史（任何击杀均记录） ===
         BttPlayerComponent.KEY.get(shooter).hasKilled = 1;
 
+        // === ① 全局：永久醉酒解除（走私犯/冒牌货死亡 → 其目标解除，D8） ===
+        if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.SMUGGLER)
+                || gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.IMPOSTOR)) {
+            for (ServerPlayerEntity p : world.getPlayers()) {
+                BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
+                if (victim.getUuid().toString().equals(c.drunkSource)) c.clearDrunk();
+            }
+        }
+
         // === ① 全局：独行中立被杀加钱（2026-09-06 策划修订：+100 狂气，同乘客口径） ===
         if (gwc.getRole(victim) != null
                 && org.agmas.noellesroles.btt.BttRoles.LONE_NEUTRALS.contains(gwc.getRole(victim))) {
@@ -89,7 +98,8 @@ public abstract class BttKillHookMixin {
                 btt.winners = archenemyPlayer.getUuid().toString();
                 btt.sync();
                 dev.doctor4t.wathe.cca.GameRoundEndComponent.KEY.get(world).setRoundEndData(
-                        new ArrayList<>(world.getPlayers()), GameFunctions.WinStatus.NONE);
+                        world.getPlayers().stream().filter(p -> gwc.getRole(p) != null)
+                                .collect(java.util.stream.Collectors.toList()), GameFunctions.WinStatus.NONE);
                 GameFunctions.stopGame(world);
                 return;
             }
@@ -130,6 +140,8 @@ public abstract class BttKillHookMixin {
                 GameFunctions.killPlayer(shooter, true, shooter, BttDeathReasons.SELF_EXECUTION);
             }
             if (!riotAlive) {
+                // 误杀计数（小丑护盾公式用）
+                org.agmas.noellesroles.btt.BttGameWorldComponent.KEY.get(world).misfireCount++;
                 for (ServerPlayerEntity p : world.getPlayers()) {
                     if (gwc.canUseKillerFeatures(p)) {
                         dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).addToBalance(100);

@@ -21,8 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 教父 &lt;查验&gt;（DEMO-006，用户指令"跟验尸一样随时能查验"）：
- * 复用验尸官的 targetBody 射线（CoronerHudMixin 已在每次 renderHud 时设置）读尸体身份，
- * 加上 crosshairTarget 读活人身份。教父注视即显示，无冷却/无道具/无聊天框。
+ * 复用验尸官的 targetBody 射线（CoronerHudMixin 已在每次 renderHud 时设置）读尸体身份。
+ * 教父注视尸体即显示，无冷却/无道具/无聊天框。（活人身份查验为过时设计，2026-09-10 移除。）
  */
 @Mixin(RoleNameRenderer.class)
 public abstract class BttGodfatherHudMixin {
@@ -54,12 +54,7 @@ public abstract class BttGodfatherHudMixin {
             }
         }
 
-        // 2) 活人（crosshair 目标）
-        if (role == null && MinecraftClient.getInstance().crosshairTarget instanceof net.minecraft.util.hit.EntityHitResult ehr) {
-            if (ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity living && living != player) {
-                role = gwc.getRole(living);
-            }
-        }
+        // 仅验尸（活人身份查验为过时设计，已移除）
 
         if (role == null) return;
 

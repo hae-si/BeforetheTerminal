@@ -10,5 +10,30 @@
     "sounds": [
       "noellesroles:cough"
     ]
+  },
+  "epilogue_majo": {
+    "sounds": [
+      "noellesroles:epilogue/majo"
+    ]
+  },
+  "epilogue_cult": {
+    "sounds": [
+      "noellesroles:epilogue/cult"
+    ]
+  },
+  "epilogue_kidnapper": {
+    "sounds": [
+      "noellesroles:epilogue/kidnapper"
+    ]
+  },
+  "epilogue_gardener": {
+    "sounds": [
+      "noellesroles:epilogue/gardener"
+    ]
+  },
+  "epilogue_survival": {
+    "sounds": [
+      "noellesroles:epilogue/survival"
+    ]
   }
 }

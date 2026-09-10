@@ -78,10 +78,14 @@ public abstract class MorphlingRendererMixin extends LivingEntityRenderer<Abstra
             }
         }
         if ((MorphlingPlayerComponent.KEY.get(abstractClientPlayerEntity)).getMorphTicks() > 0 ) {
-            if (((AbstractClientPlayerEntity) abstractClientPlayerEntity.getEntityWorld().getPlayerByUuid((MorphlingPlayerComponent.KEY.get(abstractClientPlayerEntity)).disguise)).getSkinTextures().model().equals(SkinTextures.Model.SLIM)) {
-                model = MorphUtil.SLIM;
-            } else {
-                model = MorphUtil.CLASSIC;
+            // 伪装目标可能不在客户端世界（已离开/未加载）→ 判空防 NPE（崩溃修复）
+            var disguisePlayer = abstractClientPlayerEntity.getEntityWorld().getPlayerByUuid((MorphlingPlayerComponent.KEY.get(abstractClientPlayerEntity)).disguise);
+            if (disguisePlayer instanceof AbstractClientPlayerEntity abstractDisguise) {
+                if (abstractDisguise.getSkinTextures().model().equals(SkinTextures.Model.SLIM)) {
+                    model = MorphUtil.SLIM;
+                } else {
+                    model = MorphUtil.CLASSIC;
+                }
             }
             if (MorphlingPlayerComponent.KEY.get(abstractClientPlayerEntity).disguise.equals(MinecraftClient.getInstance().player.getUuid())) {
                 if (MinecraftClient.getInstance().player.getSkinTextures().model().equals(SkinTextures.Model.SLIM)) {

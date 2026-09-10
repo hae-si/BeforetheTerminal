@@ -38,6 +38,9 @@
     "vulture.VultureEatenBodyMixin",
     "vulture.VultureHudMixin",
     "btt.BttShopClientMixin",
+    "btt.BttCleanerKnifeMixin",
+    "btt.BttAbilityHudMixin",
+    "btt.BttTraitorCohortMixin",
     "btt.BttShoujoInstinctMixin",
     "select.SelectScreenDoNotClose"
   ],

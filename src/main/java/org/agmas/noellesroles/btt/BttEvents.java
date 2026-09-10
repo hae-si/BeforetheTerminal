@@ -9,6 +9,7 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheItems;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ActionResult;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * BTT 事件接线（BT-ARCH-001 后仅做**派发与全局系统**，身份行为一律在 {@link BttRoleDefs} 声明）：
@@ -77,6 +79,16 @@ public final class BttEvents {
             if (!victim.getMainHandStack().isOf(WatheItems.BAT)) return true;
             if (victim.getItemCooldownManager().isCoolingDown(WatheItems.BAT)) return true;
             return false; // 持棒（未冷却）→ 免死
+        });
+        // 精神病人：球棒冷却期间不可再用球棒击杀（否则 CD 形同虚设）
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (reason != GameConstants.DeathReasons.BAT) return true;
+            if (!(killer instanceof PlayerEntity k)) return true;
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
+            if (!gwc.isRole(k, BttRoles.PSYCHOPATH)) return true;
+            if (k.getItemCooldownManager().isCoolingDown(WatheItems.BAT)) return false; // 冷却中不可杀
+            return true;
         });
     }
 
@@ -143,7 +155,8 @@ public final class BttEvents {
             if (psycho.getPsychoTicks() > 0) return true;
             psycho.startPsycho();
             psycho.setPsychoTicks(GameConstants.getInTicks(2, 0));
-            psycho.setArmour(2);
+            // 护盾公式：2 + 先前被误杀人数（本局累计）
+            psycho.setArmour(2 + org.agmas.noellesroles.btt.BttGameWorldComponent.KEY.get(victim.getWorld()).misfireCount);
             victim.giveItemStack(new ItemStack(WatheItems.BAT));
             for (int i = 0; i < victim.getInventory().size(); i++) {
                 if (victim.getInventory().getStack(i).isOf(WatheItems.BAT)) {
@@ -162,7 +175,12 @@ public final class BttEvents {
             if (!BttIdentity.isBttMode(victim.getWorld())) return true;
             if (reason != GameConstants.DeathReasons.GUN) return true;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
-            return !gwc.isRole(victim, BttRoles.STAR);
+            if (!gwc.isRole(victim, BttRoles.STAR)) return true;
+            // 暴乱存活 → 明星枪免失效（处决明星也应死亡）
+            for (PlayerEntity p : victim.getWorld().getPlayers()) {
+                if (gwc.isRole(p, BttRoles.RIOT) && GameFunctions.isPlayerAliveAndSurvival(p)) return true;
+            }
+            return false; // 明星枪免
         });
     }
 
@@ -192,6 +210,81 @@ public final class BttEvents {
                     BttPlayerComponent.KEY.get(player).decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
+                }
+
+                // 恐怖分子炸弹状态机（任何持有者；参照 NRS Bomber）
+                for (var p : world.getPlayers()) {
+                    BttPlayerComponent bc = BttPlayerComponent.KEY.get(p);
+                    if (bc.bombTransferCd > 0) bc.bombTransferCd--;
+                    if (!bc.bombPlaced) continue;
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p)) { // 持有者非炸弹死亡 → 炸弹消失
+                        bc.bombPlaced = false;
+                        bc.bombBeeping = false;
+                        continue;
+                    }
+                    if (!bc.bombBeeping) {
+                        if (bc.bombTimer > 0) bc.bombTimer--;
+                        else {
+                            bc.bombBeeping = true;
+                            bc.beepTimer = GameConstants.getInTicks(0, 15);
+                        }
+                    } else if (bc.beepTimer > 0) {
+                        if (bc.beepTimer % 6 == 0) {
+                            world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(),
+                                    net.minecraft.sound.SoundCategory.PLAYERS, 2.0F, 1.0F);
+                        }
+                        int sec = (bc.beepTimer + 19) / 20;
+                        if (sec != bc.bombLastSec) {
+                            bc.bombLastSec = sec;
+                            p.sendMessage(net.minecraft.text.Text.literal("炸弹倒计时：" + sec + " 秒")
+                                    .formatted(net.minecraft.util.Formatting.RED, net.minecraft.util.Formatting.BOLD), true);
+                        }
+                        bc.beepTimer--;
+                    } else {
+                        bc.bombPlaced = false;
+                        bc.bombBeeping = false;
+                        world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_GENERIC_EXPLODE.value(),
+                                net.minecraft.sound.SoundCategory.PLAYERS, 3.0F, 1.0F);
+                        world.spawnParticles(net.minecraft.particle.ParticleTypes.EXPLOSION,
+                                p.getX(), p.getY() + 0.5, p.getZ(), 2, 0, 0, 0, 0);
+                        ServerPlayerEntity bomber = null;
+                        if (!bc.bombSource.isEmpty() && world.getPlayerByUuid(java.util.UUID.fromString(bc.bombSource)) instanceof ServerPlayerEntity s) {
+                            bomber = s;
+                        }
+                        GameFunctions.killPlayer(p, true, bomber, BttDeathReasons.BOMB);
+                    }
+                }
+
+                // 记者：<跟踪> 持续透视（标记目标；未标记时透视离自己最远的人）
+                java.util.Set<UUID> glow = new java.util.HashSet<>();
+                for (var p : world.getPlayers()) {
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p) || !gwc.isRole(p, BttRoles.JOURNALIST)) continue;
+                    BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
+                    UUID marked = null;
+                    if (!c.markedTarget.isEmpty()) {
+                        try {
+                            marked = UUID.fromString(c.markedTarget);
+                        } catch (IllegalArgumentException ignored) {
+                        }
+                    }
+                    if (marked == null) {
+                        ServerPlayerEntity far = null;
+                        double best = -1;
+                        for (var o : world.getPlayers()) {
+                            if (o == p || !GameFunctions.isPlayerAliveAndSurvival(o)) continue;
+                            double dist = p.squaredDistanceTo(o);
+                            if (dist > best) {
+                                best = dist;
+                                far = o;
+                            }
+                        }
+                        if (far != null) marked = far.getUuid();
+                    }
+                    if (marked != null) glow.add(marked);
+                }
+                for (var p : world.getPlayers()) {
+                    boolean should = glow.contains(p.getUuid()) && GameFunctions.isPlayerAliveAndSurvival(p);
+                    if (p.isGlowing() != should) p.setGlowing(should);
                 }
             }
         });

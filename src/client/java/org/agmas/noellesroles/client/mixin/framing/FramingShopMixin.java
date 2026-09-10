@@ -32,6 +32,7 @@ public abstract class FramingShopMixin extends LimitedHandledScreen<PlayerScreen
 
     @Inject(method = "init", at = @At("HEAD"))
     void framingShopAddChildren(CallbackInfo ci) {
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) return; // BTT：NR 专属商店不显示
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.EXECUTIONER) || gameWorldComponent.isRole(player,Noellesroles.JESTER) || gameWorldComponent.isRole(player,Noellesroles.MIMIC)) {
             List<ShopEntry> entries = Noellesroles.FRAMING_ROLES_SHOP;

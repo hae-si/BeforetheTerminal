@@ -42,6 +42,7 @@ public abstract class BttShoujoInstinctMixin {
                 || org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(p).isCult();
         if (viewerCult && targetCult) {
             cir.setReturnValue(0xFFFF00FF);
+            cir.cancel();
             return;
         }
         if (!WatheClient.isInstinctEnabled()) return;
@@ -51,16 +52,28 @@ public abstract class BttShoujoInstinctMixin {
             if (op == viewer || !op.isAlive()) continue;
             if (gwc.getRole(op) == BttRoles.POPPY_GROWER) {
                 cir.setReturnValue(INSTINCT_GREEN);
+                cir.cancel();
                 return;
             }
         }
         Role role = gwc.getRole(p);
         if (role == BttRoles.SHOUJO) {
             cir.setReturnValue(-1);
-        } else if (BttRoles.factionOf(role) == BttRoles.Faction.LONE) {
+            cir.cancel();
+        } else if (BttRoles.factionOf(role) == BttRoles.Faction.LONE
+                || BttRoles.factionOf(role) == BttRoles.Faction.OUTSIDER
+                || role == BttRoles.TRAITOR) {
+            // 中立（独行/外人/叛徒）统一为原版无辜绿，**压过** NR InstinctMixin 的 role.color()
+            // （NR 的 KILLER_SIDED_NEUTRALS 会把窃贼/小丑等染成职业色；必须 cancel）
             cir.setReturnValue(INSTINCT_GREEN);
-        } else if (role == BttRoles.TRAITOR) {
-            cir.setReturnValue(INSTINCT_GREEN); // 叛徒：本能中绿色（docx 2026-09-09）
+            cir.cancel();
+        } else if (BttRoles.isPassengerCamp(role) && role != BttRoles.BLACKDEATH) {
+            // 去掉原版"低理智=蓝"：最低档（<DEPRESSIVE）改用中档青，不再出现蓝色
+            float mood = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(p).getMood();
+            if (mood < dev.doctor4t.wathe.game.GameConstants.DEPRESSIVE_MOOD_THRESHOLD) {
+                cir.setReturnValue(0x1FAFAF);
+                cir.cancel();
+            }
         }
     }
 }
