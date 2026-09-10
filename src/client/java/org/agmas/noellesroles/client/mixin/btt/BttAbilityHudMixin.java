@@ -39,7 +39,7 @@ public abstract class BttAbilityHudMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.world);
         if (!gwc.isRunning()) return;
         Role role = gwc.getRole(client.player);
-        if (role == null || !BttAbilityKey.isNearbyRole(role)) return;
+        if (role == null || !BttAbilityKey.hasTip(role)) return;
 
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(client.player);
         Text line = Text.translatable("noellesroles.btt.tip." + role.identifier().getPath(),

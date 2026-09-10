@@ -16,6 +16,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+import org.agmas.noellesroles.ModItems;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +41,12 @@ public final class BttRoleDefs {
             knife().give(p);
             BttPlayerComponent.KEY.get(p).witchUses = 1; // 刀限一次
         });
-        def(BttRoles.CLEANER).kit(knife());
+        // 清道夫：初始[匕首]（C-084；即时·无声·1 分钟冷却写在物品上，不再是 wathe 刀 + mixin）
+        def(BttRoles.CLEANER).kit(item(ModItems.DAGGER));
+        // 炼金术士：初始[毒针]（C-084）
+        def(BttRoles.ALCHEMIST).kit(item(ModItems.POISON_NEEDLE));
+        // 恐怖分子：初始[炸弹箱]（C-084；安放从 G 键技能改为物品右键，物品 30 秒冷却）
+        def(BttRoles.TERRORIST).kit(item(ModItems.BOMB));
         def(BttRoles.SWORDSMAN).kit(knife()); // 剑客（docx 改名）：[剑] 飞剑 GAP，暂以刀代
         def(BttRoles.VETERAN).kit(p -> {
             knife().give(p);
@@ -212,6 +218,11 @@ public final class BttRoleDefs {
 
     private static BttRoleDef.Kit knife() {
         return p -> p.giveItemStack(new ItemStack(WatheItems.KNIFE));
+    }
+
+    /** C-084：BTT 自有物品 kit（冷却写在物品自身，不走 AbilityPlayerComponent） */
+    private static BttRoleDef.Kit item(Item item) {
+        return p -> p.giveItemStack(new ItemStack(item));
     }
 
     /** UI 身份初始冷却（AbilityPlayerComponent 自动同步；BttPlayerWidget 显示倒计时） */

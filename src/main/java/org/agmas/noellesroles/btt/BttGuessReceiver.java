@@ -60,7 +60,7 @@ public final class BttGuessReceiver {
             // 炸弹传递（持有者 G 键对准他人；非技能，不受醉酒影响）
             if (BttPlayerComponent.KEY.get(user).bombPlaced) {
                 if (user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity bombTarget) {
-                    transferBomb(user, bombTarget);
+                    BttBomb.transfer(user, bombTarget);
                 }
                 return;
             }
@@ -114,8 +114,6 @@ public final class BttGuessReceiver {
                 impostor(user, target, gwc, payload, guessed);
             } else if (gwc.isRole(user, BttRoles.JOURNALIST)) {
                 journalist(user, target);
-            } else if (gwc.isRole(user, BttRoles.TERRORIST)) {
-                terroristPlace(user, target);
             } else if (gwc.isRole(user, BttRoles.PARTYHOST)) {
                 partyhost(user, target);
             } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
@@ -275,47 +273,6 @@ public final class BttGuessReceiver {
         setCd(ability, GameConstants.getInTicks(0, 30));
         BttPlayerComponent.KEY.get(user).markedTarget = target.getUuid().toString();
         user.sendMessage(Text.literal("跟踪目标：" + target.getName().getString()).formatted(Formatting.GOLD), true);
-    }
-
-    // ===== 恐怖分子：<放置炸弹> 准星所指玩家；5 秒静默 → 15 秒倒计时 → 爆炸；CD 30 秒 =====
-
-    private static void terroristPlace(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(0, 30));
-        BttPlayerComponent tc = BttPlayerComponent.KEY.get(target);
-        if (tc.bombPlaced) {
-            user.sendMessage(Text.literal("目标身上已有炸弹。").formatted(Formatting.RED), true);
-            return;
-        }
-        tc.bombPlaced = true;
-        tc.bombBeeping = false;
-        tc.bombTimer = GameConstants.getInTicks(0, 5);
-        tc.bombSource = user.getUuid().toString();
-        tc.bombLastSec = -1;
-        user.sendMessage(Text.literal("炸弹已放置。").formatted(Formatting.GOLD), true);
-        target.sendMessage(Text.literal("你听到了一声轻响……").formatted(Formatting.DARK_RED), true);
-    }
-
-    /** 炸弹传递（持有者 G 键对准他人；倒计时阶段才可传递，3 秒传递冷却） */
-    private static void transferBomb(ServerPlayerEntity holder, ServerPlayerEntity target) {
-        BttPlayerComponent hc = BttPlayerComponent.KEY.get(holder);
-        if (!hc.bombPlaced || !hc.bombBeeping || hc.bombTransferCd > 0) return;
-        if (target == holder || !GameFunctions.isPlayerAliveAndSurvival(target)) return;
-        BttPlayerComponent tc = BttPlayerComponent.KEY.get(target);
-        if (tc.bombPlaced) return;
-        tc.bombPlaced = true;
-        tc.bombBeeping = true;
-        tc.beepTimer = hc.beepTimer;
-        tc.bombSource = hc.bombSource;
-        tc.bombLastSec = -1;
-        tc.bombTransferCd = GameConstants.getInTicks(0, 3);
-        hc.bombPlaced = false;
-        hc.bombBeeping = false;
-        holder.getWorld().playSound(null, target.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_ITEM_PICKUP,
-                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
-        holder.sendMessage(Text.literal("炸弹已脱手。").formatted(Formatting.GOLD), true);
-        target.sendMessage(Text.literal("有人把炸弹塞给了你！快传出去！").formatted(Formatting.DARK_RED, Formatting.BOLD), true);
     }
 
     // ===== 冒牌货：猜身份；对=窃取 kit + 目标永久醉酒（直至窃取者死亡）；CD 60s =====

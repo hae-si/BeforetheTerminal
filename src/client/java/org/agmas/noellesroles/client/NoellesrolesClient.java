@@ -26,6 +26,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.entity.EmptyEntityRenderer;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
@@ -111,6 +112,9 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
         });
         EntityRendererRegistry.register(NoellesRolesEntities.ROLE_MINE_ENTITY_ENTITY_TYPE, RoleMineEntityRenderer::new);
+        // C-084：毒气弹投掷物（飞行物品）+ 毒气云（无渲染，仅粒子）
+        EntityRendererRegistry.register(NoellesRolesEntities.POISON_GAS_BOMB, FlyingItemEntityRenderer::new);
+        EntityRendererRegistry.register(NoellesRolesEntities.POISON_GAS_CLOUD, EmptyEntityRenderer::new);
 
         // C-083 建筑师：门被撬/被卡 → 5 秒透视描边（服务端 S2C 回执）
         org.agmas.noellesroles.client.renderer.BttDoorHighlightRenderer.register();

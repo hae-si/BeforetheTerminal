@@ -40,7 +40,6 @@
     "btt.BttRoundEndDataGuardMixin",
     "btt.BttAutoStartMixin",
     "btt.BttShopBuyMixin",
-    "btt.BttCleanerSilentKnifeMixin",
     "btt.BttMaidPlatterMixin",
     "btt.BttWatheVultureThiefMixin",
     "btt.BttDoorStateMixin"

@@ -220,13 +220,15 @@ public final class BttEvents {
                     if (!GameFunctions.isPlayerAliveAndSurvival(p)) { // 持有者非炸弹死亡 → 炸弹消失
                         bc.bombPlaced = false;
                         bc.bombBeeping = false;
+                        bc.sync();
                         continue;
                     }
                     if (!bc.bombBeeping) {
                         if (bc.bombTimer > 0) bc.bombTimer--;
                         else {
                             bc.bombBeeping = true;
-                            bc.beepTimer = GameConstants.getInTicks(0, 15);
+                            bc.beepTimer = BttBomb.COUNTDOWN_TICKS;
+                            bc.sync(); // 客户端 G 键只在倒计时阶段可传出（BttAbilityKey）
                         }
                     } else if (bc.beepTimer > 0) {
                         if (bc.beepTimer % 6 == 0) {
@@ -243,6 +245,7 @@ public final class BttEvents {
                     } else {
                         bc.bombPlaced = false;
                         bc.bombBeeping = false;
+                        bc.sync();
                         world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_GENERIC_EXPLODE.value(),
                                 net.minecraft.sound.SoundCategory.PLAYERS, 3.0F, 1.0F);
                         world.spawnParticles(net.minecraft.particle.ParticleTypes.EXPLOSION,
