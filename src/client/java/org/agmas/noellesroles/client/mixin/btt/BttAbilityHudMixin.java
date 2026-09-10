@@ -45,8 +45,10 @@ public abstract class BttAbilityHudMixin {
         Text line = Text.translatable("noellesroles.btt.tip." + role.identifier().getPath(),
                 NoellesrolesClient.abilityBind.getBoundKeyLocalizedText());
 
+        // 只有「对准身边者施放」的身份才对准星目标变绿；无目标技能（含梦游病 <入梦>）恒为灰
         boolean hasTarget = false;
-        if (ProjectileUtil.getCollision(client.player, e -> e instanceof PlayerEntity && e != client.player, 6.0F)
+        if (BttAbilityKey.isNearbyRole(role)
+                && ProjectileUtil.getCollision(client.player, e -> e instanceof PlayerEntity && e != client.player, 6.0F)
                 instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity) {
             hasTarget = true;
         }

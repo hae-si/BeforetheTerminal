@@ -204,10 +204,16 @@ public final class BttEvents {
                 if (!(world instanceof ServerWorld serverWorld)) continue;
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
                 if (!(gwc.getGameMode() instanceof BeforeTheTerminalGameMode)) continue;
-                if (!gwc.isRunning()) continue;
+                if (!gwc.isRunning()) {
+                    // 梦游病：回合不再 running 时兜底收回出窍（否则客户端卡在假相机视角，C-087）
+                    BttSpirit.abortAll(serverWorld.getPlayers());
+                    continue;
+                }
 
                 for (var player : world.getPlayers()) {
-                    BttPlayerComponent.KEY.get(player).decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
+                    BttPlayerComponent pc = BttPlayerComponent.KEY.get(player);
+                    pc.decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
+                    pc.decrementMute(); // 缄默（聋哑）计时（C-086）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }

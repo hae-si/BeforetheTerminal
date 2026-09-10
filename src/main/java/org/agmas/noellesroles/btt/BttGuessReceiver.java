@@ -90,6 +90,11 @@ public final class BttGuessReceiver {
                 architect(user);
                 return;
             }
+            // 梦游病：<入梦> 灵魂出窍 ⇄ 回归（G 键直发，无目标；C-087）
+            if (gwc.isRole(user, BttRoles.MEYUUBYOU)) {
+                BttSpirit.toggle(user);
+                return;
+            }
             if (!(user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity target)) return;
             if (target == user) return;
             Role guessed = gwc.getRole(target);
@@ -116,6 +121,8 @@ public final class BttGuessReceiver {
                 journalist(user, target);
             } else if (gwc.isRole(user, BttRoles.PARTYHOST)) {
                 partyhost(user, target);
+            } else if (gwc.isRole(user, BttRoles.ABUSER)) {
+                abuser(user, target);
             } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
                 detective(user, target, gwc);
             } else if (gwc.isRole(user, BttRoles.RIGGER)) {
@@ -308,6 +315,24 @@ public final class BttGuessReceiver {
         }
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
         target.sendMessage(Text.literal("你的声音变高了……").formatted(Formatting.LIGHT_PURPLE), true);
+    }
+
+    // ===== 虐待狂：<缄默> 身边者——醉酒 30 秒 + 聋哑 30 秒，CD 30 秒（docx 2026-09-07） =====
+
+    private static void abuser(ServerPlayerEntity user, ServerPlayerEntity target) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+        if (ability.cooldown > 0) return;
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.literal("目标不在身边。").formatted(Formatting.RED), true);
+            return;
+        }
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
+        victim.applyDrunk(GameConstants.getInTicks(0, 30)); // 醉酒（BT-SYS-DRUNK）
+        victim.applyMute(GameConstants.getInTicks(0, 30));  // 聋哑（语音禁言 + 听不到，C-086）
+        user.sendMessage(Text.literal("缄默成功。").formatted(Formatting.DARK_PURPLE), true);
+        target.sendMessage(Text.literal("你被缄默了：30 秒内醉意上涌，听不见也说不出。")
+                .formatted(Formatting.DARK_PURPLE), true);
     }
 
     // ===== 舞蛇人 =====

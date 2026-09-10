@@ -83,6 +83,8 @@ public class NoellesrolesClient implements ClientModInitializer {
                     i++;
                 }
             }
+            // 梦游病：<入梦> 假相机开关 + 本体输入冻结（C-087）
+            org.agmas.noellesroles.client.spirit.SpiritCameraHandler.tick();
             if (abilityBind.wasPressed()) {
                 if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(client.world)) {
                     org.agmas.noellesroles.client.ui.btt.BttAbilityKey.handlePress(client);

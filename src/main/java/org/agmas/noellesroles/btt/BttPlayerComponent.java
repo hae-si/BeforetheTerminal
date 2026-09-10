@@ -54,6 +54,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String relType = "";
     /** 永久醉酒来源（走私犯/冒牌货 UUID；施加者死亡后解除） */
     public String drunkSource = "";
+    /** 虐待狂 <缄默> 剩余 tick（C-086：聋哑——语音禁言 + 听不到他人，由 NoellesrolesVoiceChatPlugin 读取） */
+    public int muteTicks = 0;
     /** 派对主已变声次数（2 次 → 氦气自爆） */
     public int partyUses = 0;
     /** 记者：<跟踪> 标记的目标 UUID 字符串（空=未标记） */
@@ -74,6 +76,12 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String bombSource = "";
     /** 工程师：<扫描> 透视剩余 tick（>0 时 BttEvents 令全车存活者发光） */
     public int engineerScanTicks = 0;
+    /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
+    public boolean projecting = false;
+    /** 出窍时留下的躯体坐标（客户端画本体 + 30 格半径限制的参考点） */
+    public double bodyX = 0;
+    public double bodyY = 0;
+    public double bodyZ = 0;
 
     public BttPlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -120,6 +128,43 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.drunkSource = "";
     }
 
+    // ===== 虐待狂 <缄默>（C-086，参照 NRS Silencer/SilencedPlayerComponent）=====
+    public boolean isMuted() {
+        return muteTicks > 0;
+    }
+
+    /** 施加/延长缄默（取较大值）；客户端可见（HUD/提示） */
+    public void applyMute(int ticks) {
+        this.muteTicks = Math.max(ticks, this.muteTicks);
+        this.sync();
+    }
+
+    /** 每 tick 递减（BttEvents tick 循环调用） */
+    public void decrementMute() {
+        if (this.muteTicks > 0) this.muteTicks--;
+    }
+
+    // ===== 梦游病 <入梦>（C-087；参照 NRS SpiritPlayerComponent，去掉 fork 依赖）=====
+
+    public boolean isProjecting() {
+        return this.projecting;
+    }
+
+    /** 入梦：记录躯体坐标并置出窍态（客户端可见） */
+    public void startProjecting(double x, double y, double z) {
+        this.bodyX = x;
+        this.bodyY = y;
+        this.bodyZ = z;
+        this.projecting = true;
+        this.sync();
+    }
+
+    /** 回归躯体 / 强制收回 */
+    public void stopProjecting() {
+        this.projecting = false;
+        this.sync();
+    }
+
     /** 开局清空全部回合状态 */
     public void reset() {
         cult = false;
@@ -131,6 +176,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         hunterShot = 0;
         archenemyShields = 0;
         drunkTicks = 0;
+        muteTicks = 0;
         partner = "";
         relType = "";
         drunkSource = "";
@@ -144,6 +190,10 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         bombLastSec = -1;
         bombSource = "";
         engineerScanTicks = 0;
+        projecting = false;
+        bodyX = 0;
+        bodyY = 0;
+        bodyZ = 0;
         this.sync();
     }
 
@@ -158,6 +208,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("hunterShot", hunterShot);
         tag.putInt("archenemyShields", archenemyShields);
         tag.putInt("drunkTicks", drunkTicks);
+        tag.putInt("muteTicks", muteTicks);
         tag.putString("partner", partner);
         tag.putString("relType", relType);
         tag.putString("drunkSource", drunkSource);
@@ -171,6 +222,10 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("bombLastSec", bombLastSec);
         tag.putString("bombSource", bombSource);
         tag.putInt("engineerScanTicks", engineerScanTicks);
+        tag.putBoolean("projecting", projecting);
+        tag.putDouble("bodyX", bodyX);
+        tag.putDouble("bodyY", bodyY);
+        tag.putDouble("bodyZ", bodyZ);
     }
 
     @Override
@@ -184,6 +239,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.hunterShot = tag.getInt("hunterShot");
         this.archenemyShields = tag.getInt("archenemyShields");
         this.drunkTicks = tag.getInt("drunkTicks");
+        this.muteTicks = tag.getInt("muteTicks");
         this.partner = tag.contains("partner") ? tag.getString("partner") : "";
         this.relType = tag.contains("relType") ? tag.getString("relType") : "";
         this.drunkSource = tag.contains("drunkSource") ? tag.getString("drunkSource") : "";
@@ -197,5 +253,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.bombLastSec = tag.getInt("bombLastSec");
         this.bombSource = tag.contains("bombSource") ? tag.getString("bombSource") : "";
         this.engineerScanTicks = tag.getInt("engineerScanTicks");
+        this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
+        this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;
+        this.bodyY = tag.contains("bodyY") ? tag.getDouble("bodyY") : 0;
+        this.bodyZ = tag.contains("bodyZ") ? tag.getDouble("bodyZ") : 0;
     }
 }

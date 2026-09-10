@@ -41,6 +41,15 @@
     "btt.BttAbilityHudMixin",
     "btt.BttTraitorCohortMixin",
     "btt.BttShoujoInstinctMixin",
+    "btt.BttKeyBindingAccessor",
+    "btt.BttSpiritCameraMixin",
+    "btt.BttSpiritEntityMixin",
+    "btt.BttSpiritGuiMixin",
+    "btt.BttSpiritInteractionMixin",
+    "btt.BttSpiritLocalPlayerMixin",
+    "btt.BttSpiritMinecraftMixin",
+    "btt.BttSpiritRenderDispatcherMixin",
+    "btt.BttSpiritWorldRendererMixin",
     "select.SelectScreenDoNotClose"
   ],
   "injectors": {

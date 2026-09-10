@@ -387,6 +387,8 @@
   "noellesroles.btt.tip.partyhost": "Press %s to voice-change the aimed player (2nd use = helium self-destruct)",
   "noellesroles.btt.tip.terrorist": "Hold the [Bomb Box] and right click the aimed player to plant it; during the countdown, press %s while aiming at someone to pass it on",
   "noellesroles.btt.tip.architect": "Press %s to repair the blasted/jammed door you are aiming at",
+  "noellesroles.btt.tip.abuser": "Press %s to silence the aimed player: drunk and unable to hear or speak for 30s",
+  "noellesroles.btt.tip.meyuubyou": "Press %s to project your soul out of your body (1 minute cooldown)",
   "noellesroles.btt.hud.prophet": "Pick a player and type their identity; a wrong guess kills you",
   "noellesroles.btt.hud.novelist": "Pick a player and type their identity; half correct wins solo",
   "noellesroles.btt.hud.hunter": "Pick a player to snipe; once only, killing the principal",

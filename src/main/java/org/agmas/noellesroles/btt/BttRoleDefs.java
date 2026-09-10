@@ -78,6 +78,7 @@ public final class BttRoleDefs {
         def(BttRoles.JOURNALIST); // 记者：无初始道具（<跟踪> E 屏选人 + 持续透视）
         def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
         def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（<灌酒> 简化为直接灌）
+        def(BttRoles.ABUSER).kit(knife()); // 虐待狂：初始[刀]（<缄默> 身边者，C-086）
         // ===== docx 2026-09-09 新增（C-063） =====
         def(BttRoles.POPPY_GROWER); // 罂粟农：被动天赋（本能全绿），无 kit
         def(BttRoles.AGENT).kit(knife()); // 特工：初始[刀]（<查看> G 键直发）
@@ -106,6 +107,10 @@ public final class BttRoleDefs {
         def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
         def(BttRoles.ENGINEER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <扫描> G 键直发
         def(BttRoles.ARCHITECT).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(2, 0))); // <修复> G 键直发；初始 CD 2 分钟（docx）
+        // 梦游病：<入梦> 灵魂出窍（C-087）；无道具、初始无 CD（doc 只规定用后 1 分钟），异常状态校验走 onTick
+        def(BttRoles.MEYUUBYOU)
+                .kit(p -> initialAbilityCd(p, 0))
+                .onTick((player, world, gwc) -> BttSpirit.tick(player, gwc));
         def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
 
         // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====

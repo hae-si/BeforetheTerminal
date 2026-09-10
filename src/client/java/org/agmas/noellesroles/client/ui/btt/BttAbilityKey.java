@@ -72,6 +72,12 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;
         }
+        // 梦游病：<入梦> 灵魂出窍 ⇄ 回归——G 键直发（C-087）
+        if (def.role == BttRoles.MEYUUBYOU) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
+            return;
+        }
         // 身边者技能：G 键对准准星所指玩家施放（不发选人屏）
         if (isNearbyRole(def.role)) {
             sendAimed(client);
@@ -83,15 +89,16 @@ public final class BttAbilityKey {
         client.setScreen(new LimitedInventoryScreen(client.player));
     }
 
-    /** 身边者技能（G 键对准准星所指玩家）：绳艺师/药剂师/酒保/派对主（恐怖分子 C-084 起走物品右键） */
+    /** 身边者技能（G 键对准准星所指玩家）：绳艺师/药剂师/酒保/派对主/虐待狂（恐怖分子 C-084 起走物品右键） */
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
-                || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST;
+                || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST
+                || role == BttRoles.ABUSER;
     }
 
     /** HUD 技能提示身份：身边者技能 + 恐怖分子（安放改物品后仍提示 [炸弹箱]/传递口径） */
     public static boolean hasTip(dev.doctor4t.wathe.api.Role role) {
-        return isNearbyRole(role) || role == BttRoles.TERRORIST;
+        return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU;
     }
 
     /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 */

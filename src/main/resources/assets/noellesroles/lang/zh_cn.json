@@ -314,6 +314,8 @@
   "noellesroles.btt.tip.partyhost": "按 %s 给准星所指的玩家变声（第二次变声 = 氦气自爆）",
   "noellesroles.btt.tip.terrorist": "手持[炸弹箱]右键准星所指的玩家安放；倒计时期间按 %s 对准他人可传出",
   "noellesroles.btt.tip.architect": "按 %s 修复准星所指被撬或被卡的门",
+  "noellesroles.btt.tip.abuser": "按 %s 缄默准星所指的玩家：醉酒且聋哑 30 秒",
+  "noellesroles.btt.tip.meyuubyou": "按 %s 入梦：躯体留在原地，灵魂出窍观察（1 分钟冷却）",
   "noellesroles.btt.hud.smuggler": "选择任何人灌酒：他将永久醉酒，直至你死去",
   "noellesroles.btt.hud.journalist": "选择一名玩家持续跟踪透视；未选定时，你会自动盯上离你最远的人",
   "noellesroles.btt.hud.prophet": "选择一名玩家，猜他皮囊下的名字；猜错，便是你的死期。",
