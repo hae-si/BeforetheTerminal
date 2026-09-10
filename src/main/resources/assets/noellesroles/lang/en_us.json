@@ -377,6 +377,7 @@
   "death_reason.noellesroles.identify_magic": "Identify Magic",
   "death_reason.noellesroles.helium_self_destruct": "Helium Self-destruct",
   "death_reason.noellesroles.bomb": "Bomb",
+  "death_reason.noellesroles.bloom": "Bloom",
   "noellesroles.btt.tip.rigger": "Press %s to bind the player you are aiming at",
   "noellesroles.btt.tip.pharmacist": "Press %s to cure a poisoned player / refill a healthy player's sanity",
   "noellesroles.btt.tip.bartender": "Press %s to get the aimed player drunk",
@@ -389,6 +390,7 @@
   "noellesroles.btt.tip.architect": "Press %s to repair the blasted/jammed door you are aiming at",
   "noellesroles.btt.tip.abuser": "Press %s to silence the aimed player: drunk and unable to hear or speak for 30s",
   "noellesroles.btt.tip.meyuubyou": "Press %s to project your soul out of your body (1 minute cooldown)",
+  "noellesroles.btt.tip.engineer": "Press %s to scan the train; for 10s every passenger is visible through walls",
   "noellesroles.btt.hud.prophet": "Pick a player and type their identity; a wrong guess kills you",
   "noellesroles.btt.hud.novelist": "Pick a player and type their identity; half correct wins solo",
   "noellesroles.btt.hud.hunter": "Pick a player to snipe; once only, killing the principal",
@@ -397,6 +399,6 @@
   "noellesroles.btt.hud.snake_charmer": "Pick a player and type their identity; if the principal, swap identities",
   "noellesroles.btt.hud.assassin": "Pick a player and type their identity; correct kills, wrong only they notice",
   "noellesroles.btt.hud.smuggler": "Pick anyone to get them permanently drunk until you die",
-  "noellesroles.btt.hud.journalist": "Pick a player to track with persistent glow; unmarked, you watch whoever is farthest",
+  "noellesroles.btt.hud.journalist": "Pick a player to track; your target is outlined through walls",
   "noellesroles.btt.hud.impostor": "Pick a player and type their identity; correct steals their kit and gets them permanently drunk"
 }

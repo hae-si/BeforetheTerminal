@@ -77,6 +77,9 @@ public final class BttRoleDefs {
         def(BttRoles.BARTENDER); // 酒保：无初始道具（<灌酒> G 键选人）
         def(BttRoles.JOURNALIST); // 记者：无初始道具（<跟踪> E 屏选人 + 持续透视）
         def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
+        // 花匠：初始[撬棍]（docx）+ <栽培> G 键直发（C-090）
+        // 此前整条 def 漏登记 → 客户端 `BttRoleDefs.get()` 返回 null，G 键被 `def == null` 静默拦截（技能不可达）
+        def(BttRoles.GARDENER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.CROWBAR)));
         def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（<灌酒> 简化为直接灌）
         def(BttRoles.ABUSER).kit(knife()); // 虐待狂：初始[刀]（<缄默> 身边者，C-086）
         // ===== docx 2026-09-09 新增（C-063） =====

@@ -25,4 +25,6 @@ public final class BttDeathReasons {
     public static final Identifier HELIUM_SELF_DESTRUCT = Identifier.of("noellesroles", "helium_self_destruct");
     /** 炸弹：恐怖分子炸弹箱爆炸 */
     public static final Identifier BOMB = Identifier.of("noellesroles", "bomb");
+    /** 绽放：花匠成花（铃兰）吞噬第一个靠近者 */
+    public static final Identifier BLOOM = Identifier.of("noellesroles", "bloom");
 }

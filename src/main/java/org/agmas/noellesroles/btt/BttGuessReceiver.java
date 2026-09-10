@@ -253,7 +253,7 @@ public final class BttGuessReceiver {
         user.sendMessage(Text.literal("灌酒成功。").formatted(Formatting.BLUE), true);
     }
 
-    // ===== 记者：<跟踪> 任意玩家持续透视（标记；未标记时透视最远者）；CD 30 秒 =====
+    // ===== 记者：<跟踪> 任意玩家持续透视（**只**描边显式标记；已删「未标记时透视最远者」，C-089）CD 30 秒 =====
 
     // ===== 工程师：<扫描> 透视全车 10 秒，CD 1 分钟（docx 2026-09-07） =====
 
@@ -278,7 +278,9 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(0, 30));
-        BttPlayerComponent.KEY.get(user).markedTarget = target.getUuid().toString();
+        BttPlayerComponent c = BttPlayerComponent.KEY.get(user);
+        c.markedTarget = target.getUuid().toString();
+        c.sync(); // C-089：客户端 BttEntityHighlightRenderer 按本机组件描边，必须即时同步
         user.sendMessage(Text.literal("跟踪目标：" + target.getName().getString()).formatted(Formatting.GOLD), true);
     }
 
@@ -342,11 +344,13 @@ public final class BttGuessReceiver {
     private static void gardener(ServerPlayerEntity user) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(0, 30));
         String err = BttFlowers.plant(user);
-        user.sendMessage(err == null
-                ? Text.literal("你种下了一粒种子。").formatted(Formatting.GREEN)
-                : Text.literal(err).formatted(Formatting.RED), true);
+        if (err != null) { // 不宜栽培（露天 / 距其他小花 <20m）→ 不消耗冷却（与建筑师 <修复> 同口径）
+            user.sendMessage(Text.literal(err).formatted(Formatting.RED), true);
+            return;
+        }
+        setCd(ability, GameConstants.getInTicks(0, 30));
+        user.sendMessage(Text.literal("你种下了一粒种子。").formatted(Formatting.GREEN), true);
     }
 
     // ===== 刺客：<识破> 猜身份；对=杀（识破魔法），错=仅被猜者收到通知（D3）；CD 60s =====

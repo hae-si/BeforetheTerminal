@@ -333,7 +333,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             default -> p -> false;
         };
         String winners = players.stream()
-                .filter(p -> !p.isSpectator() && !p.isCreative()) // 旁观/创造不计入胜者
+                .filter(p -> gameWorld.getRole(p) != null) // C-089：死亡=转旁观（wathe killPlayer），按阵营判胜负
                 .filter(isWinner)
                 .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
 
@@ -370,7 +370,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         String finalWinners = ws == GameFunctions.WinStatus.NONE
                 ? winners
                 : players.stream()
-                        .filter(p -> !p.isSpectator() && !p.isCreative()) // 旁观/创造不计入胜者
+                        .filter(p -> gameWorld.getRole(p) != null) // C-089：同上——只排除未登车者，不排除阵亡者
                         .filter(flipWinner)
                         .map(p -> p.getUuid().toString()).collect(java.util.stream.Collectors.joining(","));
         // 恋人并胜（C-061）：追加进胜者组
@@ -414,10 +414,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // winners 保留：结局覆盖层(finalize 后仍显示 200t)需持续读取；下一局 initializeGame 覆盖。
         btt.sync();
 
-        // BTT 回合状态清理：祭品辉光/队伍 + 回合级状态表
-        for (ServerPlayerEntity p : world.getPlayers()) {
-            p.setGlowing(false);
-        }
+        // BTT 回合状态清理：队伍 + 回合级状态表
+        // （辉光清理已随 C-089 移除：全仓不再有任何 setGlowing，透视改本机自绘描边）
         var scoreboard = world.getScoreboard();
         var team = scoreboard.getTeam("sacrifice");
         if (team != null) {

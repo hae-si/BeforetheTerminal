@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * BTT 事件接线（BT-ARCH-001 后仅做**派发与全局系统**，身份行为一律在 {@link BttRoleDefs} 声明）：
@@ -267,49 +266,21 @@ public final class BttEvents {
                     }
                 }
 
-                // 记者：<跟踪> 持续透视（标记目标；未标记时透视离自己最远的人）
-                java.util.Set<UUID> glow = new java.util.HashSet<>();
-                for (var p : world.getPlayers()) {
-                    if (!GameFunctions.isPlayerAliveAndSurvival(p) || !gwc.isRole(p, BttRoles.JOURNALIST)) continue;
-                    BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
-                    UUID marked = null;
-                    if (!c.markedTarget.isEmpty()) {
-                        try {
-                            marked = UUID.fromString(c.markedTarget);
-                        } catch (IllegalArgumentException ignored) {
-                        }
-                    }
-                    if (marked == null) {
-                        ServerPlayerEntity far = null;
-                        double best = -1;
-                        for (var o : world.getPlayers()) {
-                            if (o == p || !GameFunctions.isPlayerAliveAndSurvival(o)) continue;
-                            double dist = p.squaredDistanceTo(o);
-                            if (dist > best) {
-                                best = dist;
-                                far = o;
-                            }
-                        }
-                        if (far != null) marked = far.getUuid();
-                    }
-                    if (marked != null) glow.add(marked);
-                }
-                // 工程师：<扫描> 透视全车 10 秒（200t 逐 tick 递减；沿用记者同款 setGlowing 通道）
+                // 记者 <跟踪> / 工程师 <扫描> 的透视改为**本机自绘描边**（C-089）：
+                // Entity.setGlowing 是实体共享旗标——服务端一置**全场**都看得见（实测「总有人一直发光，
+                // 把他刀死又换成别人发光」）；且记者侧已删除「未标记时自动盯最远者」（2026-09-11 用户裁定）。
+                // 服务端只把状态同步到本人客户端：记者在 BttGuessReceiver.journalist() 赋值时同步一次；
+                // 工程师在这里逐 tick 递减并同步读秒，客户端 BttEntityHighlightRenderer 据此自绘穿墙描边。
                 for (var p : world.getPlayers()) {
                     BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
                     if (c.engineerScanTicks <= 0) continue;
                     if (!GameFunctions.isPlayerAliveAndSurvival(p)) {
                         c.engineerScanTicks = 0;
+                        c.sync();
                         continue;
                     }
-                    for (var o : world.getPlayers()) {
-                        if (o != p && GameFunctions.isPlayerAliveAndSurvival(o)) glow.add(o.getUuid());
-                    }
                     c.engineerScanTicks--;
-                }
-                for (var p : world.getPlayers()) {
-                    boolean should = glow.contains(p.getUuid()) && GameFunctions.isPlayerAliveAndSurvival(p);
-                    if (p.isGlowing() != should) p.setGlowing(should);
+                    c.sync();
                 }
             }
         });

@@ -96,9 +96,11 @@ public final class BttAbilityKey {
                 || role == BttRoles.ABUSER;
     }
 
-    /** HUD 技能提示身份：身边者技能 + 恐怖分子（安放改物品后仍提示 [炸弹箱]/传递口径） */
+    /** HUD 技能提示身份：身边者技能 + **无目标直发技能**（这些都在 G 键分支里，但此前漏进本表 → 提示恒不显示，C-090） */
     public static boolean hasTip(dev.doctor4t.wathe.api.Role role) {
-        return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU;
+        return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU
+                || role == BttRoles.MINSTREL || role == BttRoles.GARDENER || role == BttRoles.AGENT
+                || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER;
     }
 
     /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 */

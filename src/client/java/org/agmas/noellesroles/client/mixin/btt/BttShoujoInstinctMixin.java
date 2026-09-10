@@ -3,8 +3,10 @@ package org.agmas.noellesroles.client.mixin.btt;
 import dev.doctor4t.wathe.api.Role;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
+import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.btt.BttIdentity;
 import org.agmas.noellesroles.btt.BttRoles;
@@ -20,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * ③ 独行中立 = **绿色** 0x4EDD35（2026-09-07 用户实测反馈：NR InstinctMixin 会把
  *    KILLER_SIDED_NEUTRALS 成员染成 role.color()、其余"非无辜非凶手"染灰绿——独行接管键
  *    vulture/infected 正中前者；本回调先执行并 cancel，压过 NR 映射，用原版无辜高理智绿）。
+ * ④ 花匠自我透视（C-091）：花匠**被动**透视自己全部小花（红树胎生苗/铃兰掉落物，金描边、免按键；
+ *    与①教团同款"先于 isInstinctEnabled 门控"的 cancel），且**只**看花——其余实体一律 -1，避免顺带泄漏玩家配色。
  * 其余配色一律沿用原版（2026-09-06 裁定：勿自造配色）。魔女尾声"活人雷达"为过时设定，已移除（2026-09-07）。
  */
 @Mixin(WatheClient.class)
@@ -27,10 +31,16 @@ public abstract class BttShoujoInstinctMixin {
 
     /** 原版无辜（高理智）绿——与 NR InstinctMixin 的 5168437 同值 */
     private static final int INSTINCT_GREEN = 0x4EDD35;
+    /** 原版掉落物高亮金（WatheClient 对 ItemEntity 返回的 14392576 = 0xDB9D00） */
+    private static final int INSTINCT_ITEM_GOLD = 0xDB9D00;
 
     @Inject(method = "getInstinctHighlight", at = @At("HEAD"), cancellable = true)
     private static void btt$instinctOverrides(Entity target, CallbackInfoReturnable<Integer> cir) {
-        if (!(target instanceof PlayerEntity p) || p.isSpectator()) return;
+        // 花=掉落物实体，必须在"非玩家即早退"之前判断
+        if (!(target instanceof PlayerEntity p) || p.isSpectator()) {
+            btt$gardenerFlowers(target, cir);
+            return;
+        }
         var viewer = MinecraftClient.getInstance().player;
         if (viewer == null || viewer == p) return;
         if (!BttIdentity.isBttMode(viewer.getWorld())) return;
@@ -75,5 +85,19 @@ public abstract class BttShoujoInstinctMixin {
                 cir.cancel();
             }
         }
+    }
+
+    /** C-091：花匠被动透视全部小花（金描边）；非花实体一律 skip，返回 true = 已接管本次判定 */
+    private static boolean btt$gardenerFlowers(Entity target, CallbackInfoReturnable<Integer> cir) {
+        var viewer = MinecraftClient.getInstance().player;
+        if (viewer == null) return false;
+        if (!BttIdentity.isBttMode(viewer.getWorld())) return false;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
+        if (gwc.getRole(viewer) != BttRoles.GARDENER) return false;
+        if (!GameFunctions.isPlayerAliveAndSurvival(viewer)) return false;
+        cir.setReturnValue(target instanceof ItemEntity item
+                && org.agmas.noellesroles.btt.BttFlowers.isFlower(item.getStack()) ? INSTINCT_ITEM_GOLD : -1);
+        cir.cancel();
+        return true;
     }
 }

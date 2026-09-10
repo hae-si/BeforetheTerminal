@@ -1,8 +1,8 @@
 package org.agmas.noellesroles.btt;
 
-import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -17,10 +17,12 @@ import java.util.UUID;
 
 /**
  * 花匠小花（C-062，掉落物方案）：三种掉落物=三生长阶段。
- * 种子期 20s：虚拟（无实体，隐形）；幼苗期 40s：POPPY 掉落物（走近=拔除清除，20m 范围玩家收到提示）；
- * 成花期：WITHER_ROSE 掉落物（非花匠走近=死亡，花随后死亡）。
+ * 种子期 20s：虚拟（无实体，隐形）；幼苗期 40s：**红树胎生苗**掉落物（走近=拔除清除，20m 范围玩家收到提示）；
+ * 成花期：**铃兰**掉落物（非花匠走近=被吞噬，死因 `noellesroles:bloom`"绽放"；花随后死亡）。
  * 花匠自己捡不了（pickupDelay=MAX + 距离判定豁免）；实体每 100t 重建防 5 分钟消失。
- * 相邻小花 ≥20m；不能露天（isSkyVisibleAdjacent）。每株小花=花匠 1 层护盾（挡一次致命伤后花谢，见 BttEvents）。
+ * 相邻小花 ≥20m（"不能露天"已按用户裁定删除：该限制原为"小花数量≈胜利条件"而设，现已无关）；
+ * 花匠可**被动透视**全部小花（C-091，走本能高亮通道、免按键）。
+ * 每株小花=花匠 1 层护盾（挡一次致命伤后花谢，见 BttEvents）。
  */
 public final class BttFlowers {
     private BttFlowers() {}
@@ -30,6 +32,16 @@ public final class BttFlowers {
     public static final double PICK_RADIUS = 1.2;
     public static final double HINT_RADIUS = 20.0;
     private static final int ENTITY_REFRESH = 100;
+
+    /** 幼苗期掉落物：红树胎生苗（C-091 用户指定） */
+    public static final Item SPROUT_ITEM = Items.MANGROVE_PROPAGULE;
+    /** 成花期掉落物：铃兰（C-091 用户指定） */
+    public static final Item BLOOM_ITEM = Items.LILY_OF_THE_VALLEY;
+
+    /** 是否为小花实体（花匠透视用；C-091） */
+    public static boolean isFlower(ItemStack stack) {
+        return stack.isOf(SPROUT_ITEM) || stack.isOf(BLOOM_ITEM);
+    }
 
     public static final class Flower {
         public ServerWorld world;
@@ -67,9 +79,6 @@ public final class BttFlowers {
     /** <栽培>：返回错误消息，null=成功 */
     public static String plant(ServerPlayerEntity gardener) {
         ServerWorld world = gardener.getServerWorld();
-        if (dev.doctor4t.wathe.Wathe.isSkyVisibleAdjacent(gardener)) {
-            return "不能在露天栽培。";
-        }
         for (Flower f : FLOWERS) {
             if (f.world == world && f.pos.getSquaredDistance(gardener.getBlockPos()) < 20 * 20) {
                 return "距离其他小花太近（需 ≥20 米）。";
@@ -94,12 +103,12 @@ public final class BttFlowers {
             if (f.stage == 0 && f.stageTicks >= SEED_TICKS) {
                 f.stage = 1;
                 f.stageTicks = 0;
-                spawnEntity(f, new ItemStack(Items.POPPY));
+                spawnEntity(f, new ItemStack(SPROUT_ITEM));
                 hintNearby(f, "附近传来花香……");
             } else if (f.stage == 1 && f.stageTicks >= SPROUT_TICKS) {
                 f.stage = 2;
                 f.stageTicks = 0;
-                spawnEntity(f, new ItemStack(Items.WITHER_ROSE));
+                spawnEntity(f, new ItemStack(BLOOM_ITEM));
             }
             if (f.entity != null && f.entity.isRemoved()) f.entity = null;
             if (f.entity != null && f.stageTicks > 0 && f.stageTicks % ENTITY_REFRESH == 0) {
@@ -121,7 +130,7 @@ public final class BttFlowers {
                 ServerPlayerEntity touched = nearestPlayer(f, gardener);
                 if (touched == null) continue;
                 ServerPlayerEntity owner = world.getPlayerByUuid(f.gardener) instanceof ServerPlayerEntity o ? o : null;
-                GameFunctions.killPlayer(touched, true, owner, GameConstants.DeathReasons.GENERIC);
+                GameFunctions.killPlayer(touched, true, owner, BttDeathReasons.BLOOM);
                 discard(f);
                 FLOWERS.remove(f);
             }
@@ -152,6 +161,7 @@ public final class BttFlowers {
     }
 
     private static void spawnEntity(Flower f, ItemStack stack) {
+        if (f.entity != null) f.entity.discard(); // C-091：阶段推进必须换掉旧实体（原先幼苗长成花后，胎生苗仍留在地上）
         ItemEntity entity = new ItemEntity(f.world,
                 f.pos.getX() + 0.5, f.pos.getY() + 0.5, f.pos.getZ() + 0.5, stack);
         entity.setPickupDelay(Integer.MAX_VALUE); // 永不可拾取（交互走距离判定）
