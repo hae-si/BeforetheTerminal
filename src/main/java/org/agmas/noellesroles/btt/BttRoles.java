@@ -165,7 +165,8 @@ public final class BttRoles {
 
     /** 刺客：接管 guesser（NR 识破 UI/packet 原生；assassin 键删，GUESSER Role 由 C-043 恢复） */
     public static final Role ASSASSIN = takeover(Noellesroles.GUESSER_ROLE, Faction.PRINCIPAL);
-    public static final Role IMPOSTOR = register("impostor", 0x800000, Faction.PRINCIPAL);
+    /** 小恶魔（用户 2026-09-11 新增，取代冒牌货；与刺客同色 = 同阵营同色对）：[刀] + <印记>，被印记的独行/外人中立在其死亡后成为小恶魔 */
+    public static final Role IMP = register("imp", ASSASSIN.color(), Faction.PRINCIPAL);
     /** 演员：接管 NR morphling 键（MorphlingRendererMixin 易容原生；显示名 lang→演员） */
     public static final Role ACTOR = takeover(Noellesroles.MORPHLING, Faction.PRINCIPAL);
     /** 偷渡客：接管 NR phantom 键（隐身能力原生=NR 幽灵 G 键；stowaway 键删除——用户指令 2026-09-05；假人/指纹延后） */
@@ -235,12 +236,14 @@ public final class BttRoles {
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
             BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX,
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
-            IMPOSTOR, TERRORIST, PARTYHOST, GARDENER, EX_UNDERCOVER, BLACKDEATH,
-            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST, PROFESSOR);
+            IMP, TERRORIST, PARTYHOST, GARDENER, EX_UNDERCOVER, BLACKDEATH,
+            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
+            CANNIBAL, PHILOSOPHER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
     /** BTT 席位池排除表：空（酒保随 C-060 醉酒实装解除搁置；NR 泄漏点已门控） */
+    /** 排除表（不参与席位分配）；当前为空（冒牌货已按用户 2026-09-11 裁定**整体删除**，由小恶魔取代） */
     private static final java.util.Set<Role> EXCLUDED = java.util.Set.of();
 
     /**
@@ -261,7 +264,7 @@ public final class BttRoles {
                 {CONDUCTOR, ATTENDANT}, {ARCHITECT, RIGGER}, {SHOUJO, DRIVER}, {MAID, POSTMAN},
                 {CANNIBAL, PHILOSOPHER}, {UNDERCOVER, EX_UNDERCOVER},
                 // 主犯 1-10
-                {ASSASSIN, IMPOSTOR}, {ACTOR, STOWAWAY}, {MAGICIAN, SMUGGLER}, {AGENT, GODFATHER}, {RIOT, VORTOX},
+                {ASSASSIN, IMP}, {ACTOR, STOWAWAY}, {MAGICIAN, SMUGGLER}, {AGENT, GODFATHER}, {RIOT, VORTOX},
                 // 从犯 1-8
                 {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, PARTYHOST},
                 // 独行 1-4
@@ -318,6 +321,33 @@ public final class BttRoles {
     public static boolean isKillerSeat(Role role) {
         Faction f = factionOf(role);
         return f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE;
+    }
+
+    // ===== 第二身份（C-110）=====
+
+    /** 按 identifier 字符串还原 Role（在本局注册表 `WatheRoles.ROLES` 内扫描；BTT 新键亦注册其中） */
+    public static Role byId(String id) {
+        if (id == null || id.isEmpty()) return null;
+        for (Role r : WatheRoles.ROLES) {
+            if (r.identifier().toString().equals(id)) return r;
+        }
+        return null;
+    }
+
+    /** 当前**实际扮演**的身份：借来的技能身份优先（食人族/前任系），否则自身身份 */
+    public static Role effectiveRole(dev.doctor4t.wathe.cca.GameWorldComponent gwc, net.minecraft.entity.player.PlayerEntity p) {
+        Role borrowed = byId(BttPlayerComponent.KEY.get(p).borrowedRole);
+        return borrowed != null ? borrowed : gwc.getRole(p);
+    }
+
+    /**
+     * 主动技能判定（C-110）：自身身份**或**借来的技能身份。仅用于**技能键**分派（<技能> = 主动，docx 口径），
+     * 不用于被动天赋/免死等（那些仍走 {@code gwc.isRole}）。
+     */
+    public static boolean isPlayingAs(dev.doctor4t.wathe.cca.GameWorldComponent gwc, net.minecraft.entity.player.PlayerEntity p, Role role) {
+        if (gwc.isRole(p, role)) return true;
+        Role borrowed = byId(BttPlayerComponent.KEY.get(p).borrowedRole);
+        return borrowed != null && borrowed == role;
     }
 
     /** 阵营=乘客侧（执法/平民/狂人；叛徒系/黑死病/凶手除外） */

@@ -40,6 +40,15 @@ public final class BttRoleDefs {
     public static void init() {
         // ===== 初始物品 =====
         def(BttRoles.GODFATHER).kit(knife());
+        // 食人族：无道具；<习得技能>（平民尸体）CD 1 分钟（docx）→ 初始 CD 同值（C-110）
+        def(BttRoles.CANNIBAL).kit(p -> initialAbilityCd(p, CD_1MIN));
+        // 哲人：无道具；<领悟> 仅限一次（docx），初始 CD 按 C-099 统一 1 分钟（C-110）
+        def(BttRoles.PHILOSOPHER).kit(p -> initialAbilityCd(p, CD_1MIN));
+        // 饕餮：初始[撬棍]（docx）+ <绑架> 身边者（C-109）；冷却 1 分钟（docx）→ 初始 CD 同值
+        def(BttRoles.KIDNAPPER).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
+            initialAbilityCd(p, CD_1MIN);
+        });
         // 偷渡客：初始[刀]；<隐蔽> 冷却 2 分钟 → 初始 CD 同值（C-107/C-099；<假尸> 已按用户 2026-09-11 回退）
         def(BttRoles.STOWAWAY).kit(p -> {
             knife().give(p);
@@ -167,8 +176,8 @@ public final class BttRoleDefs {
         def(BttRoles.NOVELIST).kit(p -> initialAbilityCd(p, CD_1MIN));
         // 舞蛇人：无道具；初始 CD 60s
         def(BttRoles.SNAKE_CHARMER).kit(p -> initialAbilityCd(p, CD_1MIN));
-        // 冒牌货：C-099 补齐 def（此前整条漏登记 → `def == null` 静默吞掉窃取 UI；docx：初始[刀] + <窃取> 1 分钟）
-        def(BttRoles.IMPOSTOR).kit(p -> {
+        // 小恶魔（取代冒牌货）：初始[刀]；<印记> 冷却 1 分钟（「更换选择冷却一分钟」）→ 初始 CD 同值
+        def(BttRoles.IMP).kit(p -> {
             knife().give(p);
             initialAbilityCd(p, CD_1MIN);
         });

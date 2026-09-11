@@ -40,17 +40,33 @@ public final class BttGuessReceiver {
             if (!gwc.isRunning()) return;
             // 醉酒：技能失效（不自知）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
-            if (!gwc.isRole(user, BttRoles.AMNESIAC)) return;
-            if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
-            if (BttBodyComponent.KEY.get(body).isAmnesiacUsed()) return;
-            Role dead = gwc.getRole(body.getPlayerUuid());
-            if (dead == null) return;
-            BttBodyComponent.KEY.get(body).markAmnesiacUsed();
-            BttRoleDef d = BttRoleDefs.get(dead);
-            if (d != null) d.dispatchKit(user);
-            user.sendMessage(Text.literal("你取回了 "
-                    + BttIdentity.displayName(dead).getString() + " 的遗物。")
-                    .withColor(colorOf(user)), true);
+            // ===== 失忆患者（C-110，照 StupidExpress RoleSelectionHandler）：从尸体上得到**身份和阵营** =====
+            // 「仅限一次」由角色改变本身保证（`AMNESIAC` 已不在 `getRole` 里）
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.AMNESIAC)) {
+                if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
+                if (BttBodyComponent.KEY.get(body).isAmnesiacUsed()) return;
+                Role dead = gwc.getRole(body.getPlayerUuid());
+                if (dead == null) return;
+                BttBodyComponent.KEY.get(body).markAmnesiacUsed();
+                BttSecondIdentity.takeOver(user, dead);
+                user.sendMessage(BttSecondIdentity.tookOverText(dead), true);
+                return;
+            }
+            // ===== 食人族（C-110）：从**平民乘客**尸体上"暂时习得他的技能"（不改阵营、不发道具），CD 1 分钟 =====
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.CANNIBAL)) {
+                if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
+                Role dead = gwc.getRole(body.getPlayerUuid());
+                if (dead == null || BttRoles.factionOf(dead) != BttRoles.Faction.CIVILIAN) return; // 只吃平民乘客
+                AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
+                if (ability.cooldown > 0) return;
+                ability.cooldown = GameConstants.getInTicks(1, 0);
+                ability.sync();
+                BttSecondIdentity.borrow(user, dead, GameConstants.getInTicks(1, 0)); // 借 60 秒（与冷却同步）【待作者】
+                user.sendMessage(Text.literal("你从 " + BttIdentity.displayName(dead).getString()
+                                + " 的尸体上暂时习得了他的技能。")
+                        .withColor(BttRoles.CANNIBAL.color()), true);
+                return;
+            }
         });
         // 律师 <起诉>（C-103）：单包提交全部指名
         ServerPlayNetworking.registerGlobalReceiver(BttLawyerC2SPacket.ID, (payload, context) -> {
@@ -59,7 +75,7 @@ public final class BttGuessReceiver {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
-            if (!gwc.isRole(user, BttRoles.LAWYER)) return;
+            if (!BttRoles.isPlayingAs(gwc, user, BttRoles.LAWYER)) return;
             lawyer(user, gwc, payload.picks());
         });
         ServerPlayNetworking.registerGlobalReceiver(BttGuessC2SPacket.ID, (payload, context) -> {
@@ -77,41 +93,41 @@ public final class BttGuessReceiver {
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
             // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
-            if (gwc.isRole(user, BttRoles.MINSTREL)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.MINSTREL)) {
                 minstrel(user);
                 return;
             }
-            if (gwc.isRole(user, BttRoles.GARDENER)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.GARDENER)) {
                 gardener(user);
                 return;
             }
             // 纵火犯：<浇汽油> 最近的未浇湿者（G 键直发；C-092 抄 NRS 病原体，3 格 + 视线）
-            if (gwc.isRole(user, BttRoles.ARSONIST)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.ARSONIST)) {
                 BttArsonist.douse(user, gwc);
                 return;
             }
             // 特工：<查看> 本局身份列表（G 键直发）
-            if (gwc.isRole(user, BttRoles.AGENT)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.AGENT)) {
                 agent(user, gwc);
                 return;
             }
             // 工程师：<扫描> 透视全车 10 秒（G 键直发）
-            if (gwc.isRole(user, BttRoles.ENGINEER)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.ENGINEER)) {
                 engineer(user);
                 return;
             }
             // 建筑师：<修复> 准星所指被撬/被卡的门（G 键直发；docx 冷却 2 分钟）
-            if (gwc.isRole(user, BttRoles.ARCHITECT)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.ARCHITECT)) {
                 architect(user);
                 return;
             }
             // 演员：<装死> 开关（G 键直发，无目标；C-106）
-            if (gwc.isRole(user, BttRoles.ACTOR)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.ACTOR)) {
                 BttActor.toggle(user, BttPlayerComponent.KEY.get(user));
                 return;
             }
             // 梦游病：<入梦> 灵魂出窍 ⇄ 回归（G 键直发，无目标；C-087）
-            if (gwc.isRole(user, BttRoles.MEYUUBYOU)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.MEYUUBYOU)) {
                 BttSpirit.toggle(user);
                 return;
             }
@@ -119,38 +135,42 @@ public final class BttGuessReceiver {
             if (target == user) return;
             Role guessed = gwc.getRole(target);
 
-            if (gwc.isRole(user, BttRoles.PROPHET)) {
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.PROPHET)) {
                 prophet(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.NOVELIST)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.NOVELIST)) {
                 novelist(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.HUNTER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.HUNTER)) {
                 hunter(user, target, gwc);
-            } else if (gwc.isRole(user, BttRoles.MESSIAH)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.MESSIAH)) {
                 messiah(user, target, gwc, payload);
-            } else if (gwc.isRole(user, BttRoles.BARTENDER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.BARTENDER)) {
                 bartender(user, target);
-            } else if (gwc.isRole(user, BttRoles.SNAKE_CHARMER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.SNAKE_CHARMER)) {
                 snakeCharmer(user, target, gwc);
-            } else if (gwc.isRole(user, BttRoles.ASSASSIN)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.ASSASSIN)) {
                 assassin(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.SMUGGLER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.SMUGGLER)) {
                 smuggler(user, target);
-            } else if (gwc.isRole(user, BttRoles.IMPOSTOR)) {
-                impostor(user, target, gwc, payload, guessed);
-            } else if (gwc.isRole(user, BttRoles.JOURNALIST)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.IMP)) {
+                BttImp.mark(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.JOURNALIST)) {
                 journalist(user, target);
-            } else if (gwc.isRole(user, BttRoles.PARTYHOST)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PARTYHOST)) {
                 partyhost(user, target);
-            } else if (gwc.isRole(user, BttRoles.ABUSER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.ABUSER)) {
                 abuser(user, target);
-            } else if (gwc.isRole(user, BttRoles.PROFESSOR)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PROFESSOR)) {
                 professor(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.KIDNAPPER)) {
+                BttKidnapper.swallow(user, target, BttPlayerComponent.KEY.get(target));
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PHILOSOPHER)) {
+                philosopher(user, target, gwc);
 
-            } else if (gwc.isRole(user, BttRoles.DETECTIVE)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.DETECTIVE)) {
                 detective(user, target, gwc);
-            } else if (gwc.isRole(user, BttRoles.RIGGER)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.RIGGER)) {
                 rigger(user, target);
-            } else if (gwc.isRole(user, BttRoles.PHARMACIST)) {
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PHARMACIST)) {
                 pharmacist(user, target);
             }
         });
@@ -307,23 +327,6 @@ public final class BttGuessReceiver {
         user.sendMessage(Text.literal("跟踪目标：" + target.getName().getString()).withColor(colorOf(user)), true);
     }
 
-    // ===== 冒牌货：猜身份；对=窃取 kit + 目标永久醉酒（直至窃取者死亡）；CD 60s =====
-
-    private static void impostor(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc,
-                                 BttGuessC2SPacket payload, Role guessed) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(1, 0));
-        if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            BttRoleDef d = BttRoleDefs.get(guessed);
-            if (d != null) d.dispatchKit(user); // 窃取（物品层；技能层移植见 ROADMAP BT-IMPOSTOR）
-            BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
-            user.sendMessage(Text.literal("窃取成功：" + BttIdentity.displayName(guessed).getString())
-                    .withColor(colorOf(user)), true);
-        } else {
-            user.sendMessage(Text.literal("猜错了。").withColor(colorOf(user)), true);
-        }
-    }
 
     // ===== 派对主：<变声> 身边者——按键标记，10–30 秒后自动生效（一次=醉酒，两次=氦气自爆）；CD 30s（C-093/C-097） =====
 
@@ -336,6 +339,26 @@ public final class BttGuessReceiver {
                 .withColor(colorOf(user)), true);
     }
 
+
+    // ===== 哲人（C-110）：选择一名在场**平民乘客** → 得到他的能力，他醉酒直到你死亡（docx；仅限一次） =====
+
+    private static void philosopher(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc) {
+        BttPlayerComponent uc = BttPlayerComponent.KEY.get(user);
+        if (uc.identitySpent) return; // 仅限一次（错选也算用掉）
+        uc.identitySpent = true;
+        Role targetRole = gwc.getRole(target);
+        if (targetRole == null || BttRoles.factionOf(targetRole) != BttRoles.Faction.CIVILIAN) {
+            user.sendMessage(Text.literal("他不是平民乘客——你什么也没得到。")
+                    .withColor(BttRoles.PHILOSOPHER.color()), true);
+            return;
+        }
+        BttSecondIdentity.takeOver(user, targetRole);
+        // 「他醉酒直到你死亡」：永久醉 + 施加者死亡解除（D8 既有口径）
+        BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
+        target.sendMessage(Text.literal("哲人夺走了你的能力——你醉得厉害。")
+                .withColor(BttRoles.PHILOSOPHER.color()), true);
+        user.sendMessage(BttSecondIdentity.tookOverText(targetRole), true);
+    }
 
     // ===== 教授：<使用药剂> 身边者——目标获得 1 层护盾（免疫下一次致命伤），CD 1 分钟（C-104） =====
 

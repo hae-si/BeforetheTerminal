@@ -51,7 +51,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String partner = "";
     /** 关系类型 LOVER/ARCHENEMY/TWINS */
     public String relType = "";
-    /** 永久醉酒来源（走私犯/冒牌货 UUID；施加者死亡后解除） */
+    /** 永久醉酒来源（走私犯/哲人 UUID；施加者死亡后解除） */
     public String drunkSource = "";
     /** 虐待狂 <缄默> 剩余 tick（C-086：聋哑——语音禁言 + 听不到他人，由 NoellesrolesVoiceChatPlugin 读取） */
     public int muteTicks = 0;
@@ -87,6 +87,16 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public boolean professorShield = false;
     /** 演员 <装死>：是否处于躺倒态（**客户端可见** —— 本机把该玩家按尸体姿态渲染；C-106，开关式无时长） */
     public boolean fakeDead = false;
+    /** 饕餮 <绑架>：吞下本玩家者（UUID 字符串，空 = 不在腹中；**客户端可见** —— 本机据此冻结输入/隐藏名牌；C-109） */
+    public String swallowedBy = "";
+    /** 第二身份（C-110）：**借来的技能身份** identifier 字符串（空 = 无；**客户端可见** —— 客户端据此切技能 UI）；不改阵营 */
+    public String borrowedRole = "";
+    /** 借来的技能剩余 tick（服务端；0 = 永久到本局结束） */
+    public int borrowedTicks = 0;
+    /** 第二身份（C-110）：仅限一次的「夺取身份」是否已用掉（哲人；服务端） */
+    public boolean identitySpent = false;
+    /** 小恶魔 <印记> 的目标 UUID 字符串（空 = 未印记；服务端回合状态，C-111） */
+    public String impMark = "";
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -129,7 +139,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         if (this.drunkTicks > 0) this.drunkTicks--;
     }
 
-    /** 永久醉酒（走私犯/冒牌货）：施加者死亡后由 kill hook 解除 */
+    /** 永久醉酒（走私犯/哲人）：施加者死亡后由 kill hook 解除 */
     public void applyPermanentDrunk(java.util.UUID source) {
         this.drunkTicks = Integer.MAX_VALUE / 4;
         this.drunkSource = source.toString();
@@ -192,6 +202,42 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     /** 护盾挡下一次致命伤：消耗（服务端状态，无客户端可见字段） */
     public void consumeProfessorShield() {
         this.professorShield = false;
+    }
+
+    // ===== 第二身份：借技能（C-110）=====
+
+    public boolean isBorrowing() {
+        return !this.borrowedRole.isEmpty();
+    }
+
+    public void setBorrowedRole(String roleId, int ticks) {
+        this.borrowedRole = roleId;
+        this.borrowedTicks = ticks;
+        this.sync();
+    }
+
+    public void clearBorrowedRole() {
+        this.borrowedRole = "";
+        this.borrowedTicks = 0;
+        this.sync();
+    }
+
+    // ===== 饕餮 <绑架>（C-109）=====
+
+    public boolean isSwallowed() {
+        return !this.swallowedBy.isEmpty();
+    }
+
+    /** 被吞：记下饕餮 uuid 并同步（客户端据此冻结输入、隐藏名牌） */
+    public void setSwallowedBy(String kidnapperUuid) {
+        this.swallowedBy = kidnapperUuid;
+        this.sync();
+    }
+
+    /** 出腹 / 回合清理：清态并同步 */
+    public void clearSwallowed() {
+        this.swallowedBy = "";
+        this.sync();
     }
 
     // ===== 演员 <装死>（C-106）=====
@@ -263,6 +309,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         thiefRevealTicks = 0;
         professorShield = false;
         fakeDead = false;
+        swallowedBy = "";
+        borrowedRole = "";
+        borrowedTicks = 0;
+        identitySpent = false;
+        impMark = "";
         projecting = false;
         gasolineHintTicks = 0;
         bodyX = 0;
@@ -301,6 +352,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("thiefRevealTicks", thiefRevealTicks);
         tag.putBoolean("professorShield", professorShield);
         tag.putBoolean("fakeDead", fakeDead);
+        tag.putString("swallowedBy", swallowedBy);
+        tag.putString("borrowedRole", borrowedRole);
+        tag.putInt("borrowedTicks", borrowedTicks);
+        tag.putBoolean("identitySpent", identitySpent);
+        tag.putString("impMark", impMark);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
         tag.putDouble("bodyX", bodyX);
@@ -338,6 +394,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.thiefRevealTicks = tag.getInt("thiefRevealTicks");
         this.professorShield = tag.contains("professorShield") && tag.getBoolean("professorShield");
         this.fakeDead = tag.contains("fakeDead") && tag.getBoolean("fakeDead");
+        this.swallowedBy = tag.contains("swallowedBy") ? tag.getString("swallowedBy") : "";
+        this.borrowedRole = tag.contains("borrowedRole") ? tag.getString("borrowedRole") : "";
+        this.borrowedTicks = tag.getInt("borrowedTicks");
+        this.identitySpent = tag.contains("identitySpent") && tag.getBoolean("identitySpent");
+        this.impMark = tag.contains("impMark") ? tag.getString("impMark") : "";
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
         this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;

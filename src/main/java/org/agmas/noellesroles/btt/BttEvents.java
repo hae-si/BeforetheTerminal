@@ -51,6 +51,8 @@ public final class BttEvents {
         registerMaidGive();
         registerPsychopathShield();
         registerProfessorShield();
+        registerKidnapperImmunity();
+        registerImpSuccession();
         guardHmlPool();
     }
 
@@ -183,6 +185,28 @@ public final class BttEvents {
         });
     }
 
+    // ===== 小恶魔：死亡时印记目标继位（C-111；注册在最后 → 其它免死否决优先，被免死时不会继位） =====
+
+    private static void registerImpSuccession() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            if (victim instanceof ServerPlayerEntity serverVictim
+                    && GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, BttRoles.IMP)) {
+                BttImp.succession(serverVictim);
+            }
+            return true; // 小恶魔照常死亡
+        });
+    }
+
+    // ===== 饕餮：被吞者在腹中不受任何死亡（C-109） =====
+
+    private static void registerKidnapperImmunity() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            return !BttPlayerComponent.KEY.get(victim).isSwallowed(); // 在肚子里 → 否决死亡
+        });
+    }
+
     // ===== 明星：被枪杀不死亡（全局否决） =====
 
     private static void registerStarImmunity() {
@@ -232,6 +256,8 @@ public final class BttEvents {
                     BttArsonist.tickGasoline(player, pc); // 纵火犯：被浇者延迟"闻到汽油味"提示（C-092）
                     BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 10–30 秒后生效（C-093/C-097）
                     BttActor.tick(player, pc); // 演员：装死读秒（C-106）
+                    BttKidnapper.tick(player, pc); // 饕餮：被吞者跟随/释放（C-109）
+                    BttSecondIdentity.tick(player, pc); // 第二身份：借来的技能到期归还（C-110）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }

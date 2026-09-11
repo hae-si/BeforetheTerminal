@@ -82,8 +82,11 @@ public final class SpiritCameraHandler {
         }
 
         // C-106：演员 <装死> 期间同样冻结移动输入（躺倒不该滑行），但不切相机、不藏手
-        boolean fakeDead = BttPlayerComponent.KEY.get(MC.player).isFakeDead();
-        if (active || fakeDead) {
+        BttPlayerComponent selfPc = BttPlayerComponent.KEY.get(MC.player);
+        boolean fakeDead = selfPc.isFakeDead();
+        // C-109：被饕餮吞下期间同样冻结输入（相机已挂在饕餮身上，自己不该再走动）
+        boolean swallowed = selfPc.isSwallowed();
+        if (active || fakeDead || swallowed) {
             // 躯体静止：真实玩家输入清空（保留潜行）
             if (MC.player.input instanceof KeyboardInput) {
                 Input frozen = new Input();

@@ -25,6 +25,10 @@ public abstract class BttSpiritNameMixin {
         if (SpiritCameraHandler.isActive() && instance != MinecraftClient.getInstance().player) {
             return Text.literal("");
         }
+        // C-109：被饕餮吞下的玩家不该在饕餮身上透出名牌（隐身效果不挡 wathe 的注视名牌）
+        if (org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(instance).isSwallowed()) {
+            return Text.literal("");
+        }
         return original.call(instance);
     }
 }

@@ -47,10 +47,10 @@ public final class BttAbilityKey {
             }
             return;
         }
-        BttRoleDef def = BttRoleDefs.get(gwc.getRole(client.player));
+        BttRoleDef def = BttRoleDefs.get(BttRoles.effectiveRole(gwc, client.player)); // C-110：借来的技能身份优先
         if (def == null) return;
         // 失忆患者：G 键 + 注视尸体（自带射线 4 格——NR targetBody 在暗处/2 格距离下不可用）
-        if (def.role == BttRoles.AMNESIAC) {
+        if (def.role == BttRoles.AMNESIAC || def.role == BttRoles.CANNIBAL) {
             var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(client.player,
                     e -> e instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity, 4.0);
             if (!(hit instanceof net.minecraft.util.hit.EntityHitResult ehr)) return;
@@ -100,7 +100,7 @@ public final class BttAbilityKey {
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
                 || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST
-                || role == BttRoles.ABUSER || role == BttRoles.PROFESSOR;
+                || role == BttRoles.ABUSER || role == BttRoles.PROFESSOR || role == BttRoles.KIDNAPPER;
     }
 
     /** HUD 技能提示身份：身边者技能 + **无目标直发技能**（这些都在 G 键分支里，但此前漏进本表 → 提示恒不显示，C-090） */
@@ -108,15 +108,17 @@ public final class BttAbilityKey {
         return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.MINSTREL || role == BttRoles.GARDENER || role == BttRoles.AGENT
                 || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER
-                || role == BttRoles.ARSONIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
+                || role == BttRoles.ARSONIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR
+                || role == BttRoles.CANNIBAL || role == BttRoles.PHILOSOPHER || role == BttRoles.IMP;
     }
 
-    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 + 律师（多指名，C-103） */
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/记者 + 律师/哲人/小恶魔（C-103/C-110/C-111） */
     public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
                 || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
-                || role == BttRoles.ASSASSIN || role == BttRoles.SMUGGLER || role == BttRoles.IMPOSTOR
-                || role == BttRoles.JOURNALIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
+                || role == BttRoles.ASSASSIN || role == BttRoles.SMUGGLER
+                || role == BttRoles.JOURNALIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR
+                || role == BttRoles.PHILOSOPHER || role == BttRoles.IMP;
     }
 
     /** 点头像即发 **NR 原生**包（演员 <易容>；`MorphC2SPacket`，NR 原生无冷却、持续 35 秒，C-106） */
@@ -149,7 +151,7 @@ public final class BttAbilityKey {
         if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(MinecraftClient.getInstance().world)) return false;
         var gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().world);
         if (!gwc.isRunning()) return false;
-        BttRoleDef def = BttRoleDefs.get(gwc.getRole(p));
+        BttRoleDef def = BttRoleDefs.get(BttRoles.effectiveRole(gwc, p)); // C-110：借来的技能身份优先
         return def != null && isUiRole(def.role);
     }
 
@@ -160,6 +162,8 @@ public final class BttAbilityKey {
 
     /** 任意人技能中点击即发动（无需输入角色文本）：猎人/侦探 */
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE;
+        // 哲人：点头像即夺取；小恶魔：点头像即印记
+        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.PHILOSOPHER
+                || role == BttRoles.IMP;
     }
 }

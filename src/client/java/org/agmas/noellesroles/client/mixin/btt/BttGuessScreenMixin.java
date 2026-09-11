@@ -52,7 +52,7 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
         if (!BttIdentity.isBttMode(player.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(player.getWorld());
         if (!gwc.isRunning()) return;
-        BttRoleDef def = BttRoleDefs.get(gwc.getRole(player));
+        BttRoleDef def = BttRoleDefs.get(org.agmas.noellesroles.btt.BttRoles.effectiveRole(gwc, player)); // C-110：借来的技能身份优先
         if (def == null || !org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isUiRole(def.role)) return;
         boolean instant = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isInstant(def.role);
         boolean multiPick = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isMultiPick(def.role);
@@ -107,7 +107,8 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
             }
         }
         // E 键技能说明（参照 NR voodoo 的 renderVoodooText）——**色 = 身份色**（C-098；此前恒白）
-        BttRoleDef def = BttRoleDefs.get(GameWorldComponent.KEY.get(player.getWorld()).getRole(player));
+        BttRoleDef def = BttRoleDefs.get(org.agmas.noellesroles.btt.BttRoles.effectiveRole(
+                GameWorldComponent.KEY.get(player.getWorld()), player)); // C-110
         if (def != null && BttAbilityKey.isAnyRole(def.role)) {
             Text desc = Text.translatable("noellesroles.btt.hud." + def.role.identifier().getPath());
             context.drawTextWithShadow(textRenderer, desc,

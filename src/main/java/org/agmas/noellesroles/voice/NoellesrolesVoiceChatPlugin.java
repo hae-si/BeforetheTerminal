@@ -24,9 +24,52 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         return Noellesroles.MOD_ID;
     }
 
+    /** 服务端语音 API（C-109 胃袋分组需要在事件外拿到它） */
+    private static VoicechatServerApi serverApi;
+    /** 饕餮 uuid → 其"胃袋"分组 */
+    private static final java.util.Map<java.util.UUID, de.maxhenkel.voicechat.api.Group> STOMACH_GROUPS = new java.util.HashMap<>();
+
     @Override
     public void initialize(VoicechatApi api) {
+        if (api instanceof VoicechatServerApi server) serverApi = server;
         VoicechatPlugin.super.initialize(api);
+    }
+
+    // ===== 饕餮 <绑架> 胃袋分组（C-109）=====
+
+    /**
+     * 把被吞者放进饕餮的"胃袋"分组（照 NRS `addToStomachGroup` 口径）：组内互通、**外部听不见被吞者**；
+     * 饕餮本人**不进组**（保持与外界正常通话）。被吞者逐 tick 被传送到饕餮身上，故其"听觉位置"也在饕餮处
+     * ——即 {@code Type.NORMAL} 组下他们仍能听到饕餮周围的动静（自带"附身"效果）。
+     */
+    public static void joinStomach(ServerPlayerEntity kidnapper, ServerPlayerEntity victim) {
+        if (serverApi == null) return;
+        de.maxhenkel.voicechat.api.Group group = STOMACH_GROUPS.get(kidnapper.getUuid());
+        // 自愈：voicechat 会在组内无人时自动删组（NRS 用 RemoveGroupEvent 清理，这里直接校验存在性）
+        if (group != null && serverApi.getGroup(group.getId()) == null) {
+            STOMACH_GROUPS.remove(kidnapper.getUuid());
+            group = null;
+        }
+        if (group == null) {
+            String name = kidnapper.getName().getString();
+            if (name.length() > 12) name = name.substring(0, 12); // 组名上限 16
+            group = serverApi.groupBuilder()
+                    .setPersistent(false)
+                    .setHidden(true)
+                    .setType(de.maxhenkel.voicechat.api.Group.Type.NORMAL)
+                    .setName("btt-" + name)
+                    .build();
+            STOMACH_GROUPS.put(kidnapper.getUuid(), group);
+        }
+        VoicechatConnection connection = serverApi.getConnectionOf(victim.getUuid());
+        if (connection != null) connection.setGroup(group);
+    }
+
+    /** 出腹：回到普通近距离语音 */
+    public static void leaveStomach(ServerPlayerEntity victim) {
+        if (serverApi == null) return;
+        VoicechatConnection connection = serverApi.getConnectionOf(victim.getUuid());
+        if (connection != null) connection.setGroup(null);
     }
 
     public void paranoidEvent(MicrophonePacketEvent event) {

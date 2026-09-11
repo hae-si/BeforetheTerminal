@@ -52,9 +52,8 @@ public abstract class BttKillHookMixin {
         // === ① 全局：杀人历史（任何击杀均记录） ===
         BttPlayerComponent.KEY.get(shooter).hasKilled = 1;
 
-        // === ① 全局：永久醉酒解除（走私犯/冒牌货死亡 → 其目标解除，D8） ===
-        if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.SMUGGLER)
-                || gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.IMPOSTOR)) {
+        // === ① 全局：永久醉酒解除（走私犯死亡 → 其目标解除，D8） ===
+        if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.SMUGGLER)) {
             for (ServerPlayerEntity p : world.getPlayers()) {
                 BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
                 if (victim.getUuid().toString().equals(c.drunkSource)) c.clearDrunk();
