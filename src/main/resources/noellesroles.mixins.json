@@ -43,7 +43,8 @@
     "btt.BttMaidPlatterMixin",
     "btt.BttWatheVultureThiefMixin",
     "btt.BttDoorStateMixin",
-    "btt.BttSpiritDamageMixin"
+    "btt.BttSpiritDamageMixin",
+    "btt.BttWorldBlackoutMixin"
   ],
   "injectors": {
     "defaultRequire": 1

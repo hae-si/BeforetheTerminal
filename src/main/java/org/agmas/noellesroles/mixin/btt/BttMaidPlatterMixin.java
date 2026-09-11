@@ -15,7 +15,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.btt.BttIdentity;
-import org.agmas.noellesroles.btt.BttPlayerComponent;
 import org.agmas.noellesroles.btt.BttRoles;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,7 +25,8 @@ import java.util.List;
 
 /**
  * 女仆：餐盘取餐（C-032 定案后回接——C-032 证明此前摘除属误伤）。
- * doc"可拿取双倍的食物和饮料"；用户口径（2026-09-05）：本局共取 2 份后停止。
+ * doc"可拿取双倍的食物和饮料"；口径 = NRS `mixin/waiter/WaiterPlatterMixin`（2026-09-11 用户裁定"本局累计 ≤2 显然不是设计意图，看 NRS 的 waiter"）：
+ * 普通玩家同类只能持 1 份，女仆**可同时持 2 份餐盘/托盘物品**；持满 2 份即拒绝，**吃完/送出后可再取**（无本局累计上限）。
  * 注入点=onUse 空手取餐分支首行 getStoredItems；女仆路径复刻原版给予（含毒标记转移）后短路。
  */
 @Mixin(FoodPlatterBlock.class)
@@ -48,20 +48,12 @@ public abstract class BttMaidPlatterMixin {
             cir.setReturnValue(ActionResult.SUCCESS);
             return;
         }
-        if (BttPlayerComponent.KEY.get(player).maidPickups >= 2) {
+        // NRS 口径：女仆**同时**最多持 2 份"餐盘类"物品（持满即拒绝；吃完/赠出后可再取，无本局累计上限）
+        if (heldFromPlatter(player, platter) >= 2) {
             cir.setReturnValue(ActionResult.SUCCESS);
             return;
         }
-        // 并发双倍：同款持有 <2 份才可取
-        List<ItemStack> eligible = new java.util.ArrayList<>();
-        for (ItemStack platterItem : platter) {
-            if (countOf(player, platterItem.getItem()) < 2) eligible.add(platterItem);
-        }
-        if (eligible.isEmpty()) {
-            cir.setReturnValue(ActionResult.SUCCESS);
-            return;
-        }
-        ItemStack randomItem = eligible.get(world.random.nextInt(eligible.size())).copy();
+        ItemStack randomItem = platter.get(world.random.nextInt(platter.size())).copy();
         randomItem.setCount(1);
         randomItem.set(DataComponentTypes.MAX_STACK_SIZE, 1);
         String poisoner = blockEntity.getPoisoner();
@@ -71,14 +63,18 @@ public abstract class BttMaidPlatterMixin {
         }
         player.playSoundToPlayer(SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 1f, 1f);
         player.setStackInHand(Hand.MAIN_HAND, randomItem);
-        BttPlayerComponent.KEY.get(player).maidPickups++;
+        // 无数值需累加：上限 = 当前持有份数（C-102）
         cir.setReturnValue(ActionResult.SUCCESS);
     }
 
-    private static int countOf(PlayerEntity player, net.minecraft.item.Item item) {
+    /** 女仆当前持有的"餐盘类"物品份数（同 NRS `matchCount`：按餐盘上出现过的种类匹配、逐格计 1 份） */
+    private static int heldFromPlatter(PlayerEntity player, List<ItemStack> platter) {
+        java.util.Set<net.minecraft.item.Item> types = new java.util.HashSet<>();
+        for (ItemStack platterItem : platter) types.add(platterItem.getItem());
         int n = 0;
         for (int i = 0; i < player.getInventory().size(); i++) {
-            if (player.getInventory().getStack(i).isOf(item)) n += player.getInventory().getStack(i).getCount();
+            ItemStack invItem = player.getInventory().getStack(i);
+            if (!invItem.isEmpty() && types.contains(invItem.getItem())) n++;
         }
         return n;
     }

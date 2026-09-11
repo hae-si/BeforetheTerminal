@@ -13,7 +13,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 
@@ -50,8 +49,9 @@ public final class BttArchitect {
         for (ServerPlayerEntity architect : world.getPlayers()) {
             if (!gwc.isRole(architect, BttRoles.ARCHITECT)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(architect)) continue;
+            // C-098：技能通知（动作栏）用身份色
             architect.sendMessage(Text.literal(blasted ? "一扇门被撬开了！" : "一扇门被卡住了！")
-                    .formatted(blasted ? Formatting.RED : Formatting.GOLD), true);
+                    .withColor(BttRoles.ARCHITECT.color()), true);
             ServerPlayNetworking.send(architect, new BttDoorHighlightS2CPacket(pos, blasted));
         }
     }
@@ -65,11 +65,11 @@ public final class BttArchitect {
         if (!(architect.raycast(REPAIR_RANGE, 1.0F, false) instanceof BlockHitResult hit)) return false;
         DoorBlockEntity door = doorAt(world, hit.getBlockPos());
         if (door == null) {
-            architect.sendMessage(Text.literal("准星前方没有门。").formatted(Formatting.RED), true);
+            architect.sendMessage(Text.literal("准星前方没有门。").withColor(BttRoles.ARCHITECT.color()), true);
             return false;
         }
         if (!door.isBlasted() && !door.isJammed()) {
-            architect.sendMessage(Text.literal("这扇门既没被撬也没被卡。").formatted(Formatting.RED), true);
+            architect.sendMessage(Text.literal("这扇门既没被撬也没被卡。").withColor(BttRoles.ARCHITECT.color()), true);
             return false;
         }
         restop(world, door);
@@ -82,7 +82,7 @@ public final class BttArchitect {
             }
         }
         world.playSound(null, door.getPos(), WatheSounds.BLOCK_DOOR_TOGGLE, SoundCategory.BLOCKS, 1f, 1.2f);
-        architect.sendMessage(Text.literal("门已修复！").formatted(Formatting.GREEN), true);
+        architect.sendMessage(Text.literal("门已修复！").withColor(BttRoles.ARCHITECT.color()), true);
         return true;
     }
 

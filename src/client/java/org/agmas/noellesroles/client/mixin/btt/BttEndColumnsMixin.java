@@ -15,6 +15,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.btt.BttGameWorldComponent;
 import org.agmas.noellesroles.btt.BttIdentity;
+import org.agmas.noellesroles.btt.BttRelationships;
+import org.agmas.noellesroles.btt.BttRoles;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -87,16 +89,22 @@ public abstract class BttEndColumnsMixin {
         String key = endingKey(lastEnding);
         if (key != null) {
             int color = switch (key) {
+                // 三阵营结局沿用既有色；其余一律取**身份色**（勿自造颜色，C-098）
                 case "trial" -> 0xFF55FF55;
                 case "journey" -> 0xFF55FFFF;
                 case "blood" -> 0xFFFF5555;
-                case "thief" -> 0xFFAA00AA;
-                case "novelist" -> 0xFF00FFFF; // 小说家=角色青色（用户 2026-09-06；原 0xFFAF7ADB 紫）
-                case "majo" -> 0xFFFF00FF; // 魔女=角色色（洋红）
-                case "cult", "kidnapper", "gardener" -> 0xFFAA00AA; // 教团/饕餮/花匠=尾声紫（色值待定）
-                case "arsonist" -> 0xFFFF4500; // 纵火犯=角色色（C-092）
+                case "thief" -> 0xFF000000 | BttRoles.THIEF.color();      // 窃贼（C-098：原尾声紫）
+                case "novelist" -> 0xFF000000 | BttRoles.NOVELIST.color();
+                case "majo" -> 0xFF000000 | BttRoles.MAJO.color();
+                case "cult" -> 0xFF000000 | BttRoles.MESSIAH.color();      // 教团=救世主色（C-098：原「色值待定」紫）
+                case "kidnapper" -> 0xFF000000 | BttRoles.KIDNAPPER.color();
+                case "gardener" -> 0xFF000000 | BttRoles.GARDENER.color();
+                case "arsonist" -> 0xFF000000 | BttRoles.ARSONIST.color();
                 case "naku" -> 0xFF8B0000;
-                case "heretic_killer", "heretic_passenger" -> 0xFF800000; // 异端特殊结局=角色色
+                case "heretic_killer", "heretic_passenger" -> 0xFF000000 | BttRoles.HERETIC.color();
+                // 关系色：docx「关系」章（唯一事实源 = BttRelationships 常量，C-098）
+                case "lovers" -> 0xFF000000 | BttRelationships.COLOR_LOVERS;
+                case "archenemy" -> 0xFF000000 | BttRelationships.COLOR_ARCHENEMY;
                 default -> 0xFFFFFFFF;
             };
             Text endText = Text.translatable("noellesroles.ending." + key).withColor(color);

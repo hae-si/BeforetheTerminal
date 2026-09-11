@@ -55,13 +55,21 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
         BttRoleDef def = BttRoleDefs.get(gwc.getRole(player));
         if (def == null || !org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isUiRole(def.role)) return;
         boolean instant = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isInstant(def.role);
+        boolean multiPick = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isMultiPick(def.role);
+        boolean morph = org.agmas.noellesroles.client.ui.btt.BttAbilityKey.isMorphRole(def.role);
+        if (morph) instant = true; // 演员 <易容>：点头像即发 morph 包（无冷却）
 
         SelectPlayerWidget.selectedPlayer = null;
         SelectPlayerWidget.instantMode = instant;
         SelectRoleWidget.stopClosing = false;
+        if (multiPick) org.agmas.noellesroles.client.ui.btt.BttLawyerPick.reset();
 
         List<UUID> entries = new ArrayList<>(player.networkHandler.getPlayerUuids());
         entries.remove(player.getUuid());
+        if (multiPick) {
+            // 律师：名单 = 在场玩家（**含已死亡席位**——用户 2026-09-11 裁定"已死的凶手也要点出"）
+            entries.removeIf(uuid -> MinecraftClient.getInstance().world.getPlayerByUuid(uuid) == null);
+        }
         int apart = 36;
         LimitedInventoryScreen self = (LimitedInventoryScreen) (Object) this;
         int x = self.width / 2 - entries.size() * apart / 2 + 9;
@@ -73,7 +81,7 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
             addDrawableChild(child);
             child.visible = false;
         }
-        if (!instant) {
+        if (!instant && !multiPick) {
             BttRoleWidget child = new BttRoleWidget(self, textRenderer, (width / 2) - 100, y);
             addDrawableChild(child);
             child.setVisible(false);
@@ -98,12 +106,20 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
                 if (child instanceof BttPlayerWidget gpw) gpw.visible = true;
             }
         }
-        // E 键技能说明（参照 NR voodoo 的 renderVoodooText）
+        // E 键技能说明（参照 NR voodoo 的 renderVoodooText）——**色 = 身份色**（C-098；此前恒白）
         BttRoleDef def = BttRoleDefs.get(GameWorldComponent.KEY.get(player.getWorld()).getRole(player));
         if (def != null && BttAbilityKey.isAnyRole(def.role)) {
             Text desc = Text.translatable("noellesroles.btt.hud." + def.role.identifier().getPath());
             context.drawTextWithShadow(textRenderer, desc,
-                    width / 2 - textRenderer.getWidth(desc) / 2, (height - 32) / 2 + 40, 0xFFFFFF);
+                    width / 2 - textRenderer.getWidth(desc) / 2, (height - 32) / 2 + 40, def.role.color());
+        }
+        // 律师 <起诉>：指名进度（C-103；色 = 身份色，C-098）
+        if (def != null && BttAbilityKey.isMultiPick(def.role)) {
+            Text progress = Text.translatable("noellesroles.btt.lawyer.progress",
+                    org.agmas.noellesroles.client.ui.btt.BttLawyerPick.picks().size(),
+                    org.agmas.noellesroles.client.ui.btt.BttLawyerPick.needed(player));
+            context.drawTextWithShadow(textRenderer, progress,
+                    width / 2 - textRenderer.getWidth(progress) / 2, (height - 32) / 2 + 64, def.role.color());
         }
     }
 }

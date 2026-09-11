@@ -62,9 +62,15 @@ public final class BttAbilityKey {
         // 吟游诗人/花匠/工程师/建筑师/纵火犯：<歌唱>/<栽培>/<扫描>/<修复>/<浇汽油> 无需目标——
         // G 键直发（target=自己占位；门由服务端射线/最近者判定）
         if (def.role == BttRoles.MINSTREL || def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER
-                || def.role == BttRoles.ARCHITECT || def.role == BttRoles.ARSONIST) {
+                || def.role == BttRoles.ARCHITECT || def.role == BttRoles.ARSONIST || def.role == BttRoles.ACTOR) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
+            return;
+        }
+        // 偷渡客：<隐蔽> 走 NR 原生 ability 包（服务端 PHANTOM 分支；BTT 冷却 2 分钟、隐身 30 秒，C-107）
+        if (def.role == BttRoles.STOWAWAY) {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
+                    new org.agmas.noellesroles.packet.AbilityC2SPacket());
             return;
         }
         // 特工：<查看> 本局身份列表——G 键直发（client 渲染由接收器 Action Bar 回执）
@@ -94,7 +100,7 @@ public final class BttAbilityKey {
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
                 || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST
-                || role == BttRoles.ABUSER;
+                || role == BttRoles.ABUSER || role == BttRoles.PROFESSOR;
     }
 
     /** HUD 技能提示身份：身边者技能 + **无目标直发技能**（这些都在 G 键分支里，但此前漏进本表 → 提示恒不显示，C-090） */
@@ -102,15 +108,25 @@ public final class BttAbilityKey {
         return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.MINSTREL || role == BttRoles.GARDENER || role == BttRoles.AGENT
                 || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER
-                || role == BttRoles.ARSONIST;
+                || role == BttRoles.ARSONIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
     }
 
-    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 */
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/冒牌货/记者 + 律师（多指名，C-103） */
     public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
                 || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
                 || role == BttRoles.ASSASSIN || role == BttRoles.SMUGGLER || role == BttRoles.IMPOSTOR
-                || role == BttRoles.JOURNALIST;
+                || role == BttRoles.JOURNALIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
+    }
+
+    /** 点头像即发 **NR 原生**包（演员 <易容>；`MorphC2SPacket`，NR 原生无冷却、持续 35 秒，C-106） */
+    public static boolean isMorphRole(dev.doctor4t.wathe.api.Role role) {
+        return role == BttRoles.ACTOR;
+    }
+
+    /** 多指名技能（律师 <起诉>：点 N 次凑齐后单包提交） */
+    public static boolean isMultiPick(dev.doctor4t.wathe.api.Role role) {
+        return role == BttRoles.LAWYER;
     }
 
     /** G 键身边者技能：取**准星所指玩家**（≤6 格）直接发包；未对准他人则不施放 */

@@ -125,8 +125,9 @@ public class BeforeTheTerminalGameMode extends GameMode {
         if (candidates.isEmpty()) return;
         Role inherited = candidates.get(world.getRandom().nextInt(candidates.size()));
         BttRoleDefs.get(inherited).dispatchKit(p);
+        // C-098：身份通知（动作栏）用**被继承身份**的身份色
         p.sendMessage(Text.literal("你继承了不在场的" + BttIdentity.displayName(inherited).getString()
-                + "（" + label + "）的行头。").formatted(Formatting.LIGHT_PURPLE), true);
+                + "（" + label + "）的行头。").withColor(inherited.color()), true);
     }
 
     private static void startEpilogueBroadcast(String type, java.util.List<ServerPlayerEntity> players) {
@@ -137,20 +138,26 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case "CULT" -> { key = "cult"; color = BttRoles.MESSIAH.color(); }
             case "KIDNAPPER" -> { key = "kidnapper"; color = BttRoles.KIDNAPPER.color(); }
             case "GARDENER" -> { key = "gardener"; color = BttRoles.GARDENER.color(); }
-            default -> { key = "survival"; color = 0xFFFFFF; }
+            // 生还尾声 = 凶手阵营尾声（docx）；色取 doc 凶手阵营色 #FF0000（勿自造颜色，C-098）
+            default -> { key = "survival"; color = FACTION_KILLER_COLOR; }
         }
         net.minecraft.sound.SoundEvent track = BttSounds.forEpilogue(type);
         for (ServerPlayerEntity p : players) {
             stopEpilogueSounds(p); // 切换尾声 → 停掉上一首
-            // 标题：加粗 + 身份色；宣言：白色
+            // 标题：加粗 + 身份色；小标题：身份色（C-098；此前恒白）
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleS2CPacket(
                     Text.translatable("noellesroles.epilogue." + key + ".title").withColor(color).formatted(Formatting.BOLD)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.SubtitleS2CPacket(
-                    Text.translatable("noellesroles.epilogue." + key + ".line").formatted(Formatting.WHITE)));
+                    Text.translatable("noellesroles.epilogue." + key + ".line").withColor(color)));
             p.networkHandler.sendPacket(new net.minecraft.network.packet.s2c.play.TitleFadeS2CPacket(10, 70, 10));
             p.playSoundToPlayer(track, net.minecraft.sound.SoundCategory.MUSIC, 1.0f, 1.0f); // 尾声 BGM
         }
     }
+
+    /** doc 阵营色：凶手阵营 #FF0000（乘客阵营 #66FF00，生还尾声用前者；C-098） */
+    public static final int FACTION_KILLER_COLOR = 0xFF0000;
+    /** doc 阵营色：乘客阵营 #66FF00 */
+    public static final int FACTION_PASSENGER_COLOR = 0x66FF00;
 
     /** 停止全部尾声 BGM（切换尾声 / 结束回合时调用） */
     private static void stopEpilogueSounds(ServerPlayerEntity p) {

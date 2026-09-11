@@ -43,7 +43,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     /** 小说家猜对次数 */
     public int novelistHits = 0;
     /** 女仆取餐次数 */
-    public int maidPickups = 0;
     /** 猎人是否已用狙击 */
     public int hunterShot = 0;
     /** 醉酒剩余 tick */
@@ -62,7 +61,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String delayedKind = "";
     /** C-093 延时技能：待生效标记的目标 UUID 字符串 */
     public String delayedTarget = "";
-    /** C-093 延时技能：生效倒计时 tick（>0 时 BttDelayed 每 tick 递减） */
+    /** C-093 延时技能：生效倒计时 tick（>0 时 BttDelayed 每 tick 递减；C-097 起取值 200–600 = 10–30 秒随机） */
     public int delayedTicks = 0;
     /** 记者：<跟踪> 标记的目标 UUID 字符串（空=未标记） */
     public String markedTarget = "";
@@ -84,9 +83,13 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int engineerScanTicks = 0;
     /** 窃贼：<搜刮> 后全员透视剩余 tick（>0 时客户端本机自绘全车描边，C-095；同 engineerScanTicks 口径） */
     public int thiefRevealTicks = 0;
+    /** 教授 <使用药剂>：目标身上挂着的护盾层（1 层，免疫下一次致命伤；服务端状态，C-104） */
+    public boolean professorShield = false;
+    /** 演员 <装死>：是否处于躺倒态（**客户端可见** —— 本机把该玩家按尸体姿态渲染；C-106，开关式无时长） */
+    public boolean fakeDead = false;
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
-    /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092） */
+    /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
     public int gasolineHintTicks = 0;
     /** 出窍时留下的躯体坐标（客户端画本体 + 30 格半径限制的参考点） */
     public double bodyX = 0;
@@ -173,6 +176,36 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.gasolineHintTicks = ticks;
     }
 
+    // ===== 教授 <使用药剂>：护盾（C-104）=====
+
+    public boolean hasProfessorShield() {
+        return this.professorShield;
+    }
+
+    /** 挂上 1 层护盾；已有则返回 false（调用方据此**不扣冷却**，同虐待狂待生效标记口径） */
+    public boolean applyProfessorShield() {
+        if (this.professorShield) return false;
+        this.professorShield = true;
+        return true;
+    }
+
+    /** 护盾挡下一次致命伤：消耗（服务端状态，无客户端可见字段） */
+    public void consumeProfessorShield() {
+        this.professorShield = false;
+    }
+
+    // ===== 演员 <装死>（C-106）=====
+
+    public boolean isFakeDead() {
+        return this.fakeDead;
+    }
+
+    /** 切换躺倒态（客户端据此渲染尸体姿态 / 恢复站姿） */
+    public void setFakeDead(boolean value) {
+        this.fakeDead = value;
+        this.sync();
+    }
+
     // ===== 窃贼 <搜刮> 后全员透视（C-095）=====
 
     /** 搜刮成功：置全员透视读秒并同步（BttEvents 逐 tick 递减） */
@@ -208,7 +241,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         witchUses = 0;
         hasKilled = 0;
         novelistHits = 0;
-        maidPickups = 0;
         hunterShot = 0;
         drunkTicks = 0;
         muteTicks = 0;
@@ -229,6 +261,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         bombSource = "";
         engineerScanTicks = 0;
         thiefRevealTicks = 0;
+        professorShield = false;
+        fakeDead = false;
         projecting = false;
         gasolineHintTicks = 0;
         bodyX = 0;
@@ -245,7 +279,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("witchUses", witchUses);
         tag.putInt("hasKilled", hasKilled);
         tag.putInt("novelistHits", novelistHits);
-        tag.putInt("maidPickups", maidPickups);
         tag.putInt("hunterShot", hunterShot);
         tag.putInt("drunkTicks", drunkTicks);
         tag.putInt("muteTicks", muteTicks);
@@ -266,6 +299,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("bombSource", bombSource);
         tag.putInt("engineerScanTicks", engineerScanTicks);
         tag.putInt("thiefRevealTicks", thiefRevealTicks);
+        tag.putBoolean("professorShield", professorShield);
+        tag.putBoolean("fakeDead", fakeDead);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
         tag.putDouble("bodyX", bodyX);
@@ -281,7 +316,6 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.witchUses = tag.getInt("witchUses");
         this.hasKilled = tag.getInt("hasKilled");
         this.novelistHits = tag.getInt("novelistHits");
-        this.maidPickups = tag.getInt("maidPickups");
         this.hunterShot = tag.getInt("hunterShot");
         this.drunkTicks = tag.getInt("drunkTicks");
         this.muteTicks = tag.getInt("muteTicks");
@@ -302,6 +336,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.bombSource = tag.contains("bombSource") ? tag.getString("bombSource") : "";
         this.engineerScanTicks = tag.getInt("engineerScanTicks");
         this.thiefRevealTicks = tag.getInt("thiefRevealTicks");
+        this.professorShield = tag.contains("professorShield") && tag.getBoolean("professorShield");
+        this.fakeDead = tag.contains("fakeDead") && tag.getBoolean("fakeDead");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
         this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;

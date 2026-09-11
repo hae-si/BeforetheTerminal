@@ -134,7 +134,12 @@ public class BttPoisonGasCloudEntity extends Entity {
                     ? Math.max(1, poison.poisonTicks - POISON_TICKS)
                     : POISON_TICKS;
             poison.setPoisonTicks(poisonTicks, this.ownerUuid);
-            player.sendMessage(Text.literal("你吸入了毒气！").formatted(Formatting.DARK_GREEN), true);
+            // C-098：技能反馈（动作栏）用**投掷者身份色**；无法解析身份时保留原深绿
+            dev.doctor4t.wathe.api.Role ownerRole = this.ownerUuid == null ? null
+                    : dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world).getRole(this.ownerUuid);
+            player.sendMessage(ownerRole == null
+                    ? Text.literal("你吸入了毒气！").formatted(Formatting.DARK_GREEN)
+                    : Text.literal("你吸入了毒气！").withColor(ownerRole.color()), true);
         }
     }
 

@@ -31,12 +31,21 @@ public final class BttRoleDefs {
 
     /** 老兵刀使用次数上限（doc：只能使用三次） */
     static final int VETERAN_KNIFE_USES = 3;
+    /** 技能冷却/初始冷却统一值 = 1 分钟（C-099；doc「大多数冷却时长已统一为一分钟」；供 `mixin/btt` 复用） */
+    public static final int CD_1MIN = GameConstants.getInTicks(1, 0);
+    /** doc 特别说明的 30 秒档（走私犯/炼金术士/恐怖分子/虐待狂/派对主/花匠/小说家猜错） */
+    public static final int CD_30S = GameConstants.getInTicks(0, 30);
     private static final Map<dev.doctor4t.wathe.api.Role, BttRoleDef> DEFS = new HashMap<>();
 
     public static void init() {
         // ===== 初始物品 =====
         def(BttRoles.GODFATHER).kit(knife());
-        def(BttRoles.ACTOR).kit(knife());
+        // 偷渡客：初始[刀]；<隐蔽> 冷却 2 分钟 → 初始 CD 同值（C-107/C-099；<假尸> 已按用户 2026-09-11 回退）
+        def(BttRoles.STOWAWAY).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, GameConstants.getInTicks(2, 0));
+        });
+        def(BttRoles.ACTOR).kit(p -> knife().give(p)); // 演员：初始[刀]；<装死> 开关 + <易容> 均**无冷却**（C-106）
         def(BttRoles.WITCH).kit(p -> {
             knife().give(p);
             BttPlayerComponent.KEY.get(p).witchUses = 1; // 刀限一次
@@ -56,11 +65,11 @@ public final class BttRoleDefs {
         revolverKit(BttRoles.RAILWAY_POLICE);
         revolverKit(BttRoles.LAWYER);
         revolverKit(BttRoles.HUNTER);
-        // 猎人 UI 初始 CD=0（覆盖 NR generalCooldownTicks，否则开局选人件被灰）
+        // 猎人：C-099 起给初始 CD 1 分钟（doc「所有技能都有初始冷却」；此前为 0 以免开局选人件被灰）
         BttRoleDef hunter = def(BttRoles.HUNTER);
         hunter.kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
-            initialAbilityCd(p, 0);
+            initialAbilityCd(p, CD_1MIN);
         });
         revolverKit(BttRoles.BANDIT);
         // 魔女：初始[枪]+[撬棍]（docx；外人枪不扔枪/1 分钟 CD 走 BttExecutionMixin 外人分支）
@@ -68,20 +77,36 @@ public final class BttRoleDefs {
             p.giveItemStack(new ItemStack(WatheItems.REVOLVER));
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
         });
-        // 救世主：初始[撬棍]；<预知> 初始冷却 2 分钟（docx）
+        // 救世主：初始[撬棍]；<预知> 冷却 1 分钟、**包括初始冷却**（docx 2026-09-11）
         def(BttRoles.MESSIAH).kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
-            initialAbilityCd(p, GameConstants.getInTicks(2, 0));
+            initialAbilityCd(p, CD_1MIN);
         });
         // ===== 醉酒投放者（BT-SYS-DRUNK，C-060） =====
-        def(BttRoles.BARTENDER); // 酒保：无初始道具（<灌酒> G 键选人）
-        def(BttRoles.JOURNALIST); // 记者：无初始道具（<跟踪> E 屏选人 + 持续透视）
-        def(BttRoles.MINSTREL);  // 吟游诗人：无初始道具（<歌唱> G 键直发）
-        // 花匠：初始[撬棍]（docx）+ <栽培> G 键直发（C-090）
+        def(BttRoles.BARTENDER).kit(p -> initialAbilityCd(p, CD_1MIN)); // 酒保：<灌酒> 1 分钟（docx）
+        def(BttRoles.JOURNALIST).kit(p -> initialAbilityCd(p, CD_1MIN)); // 记者：<跟踪> 1 分钟（docx 2026-09-11：30s→1min）
+        def(BttRoles.MINSTREL).kit(p -> initialAbilityCd(p, CD_1MIN));  // 吟游诗人：<歌唱> 1 分钟（docx 2026-09-11：2min→1min）
+        // 教授：<使用药剂> 身边者（给予 1 层护盾，免疫下一次致命伤；C-104）；无道具；CD 1 分钟（C-099：docx 未特别说明）
+        def(BttRoles.PROFESSOR).kit(p -> initialAbilityCd(p, CD_1MIN));
+        // 花匠：初始[撬棍]（docx）+ <栽培> G 键直发（C-090）；冷却 30 秒（docx）
         // 此前整条 def 漏登记 → 客户端 `BttRoleDefs.get()` 返回 null，G 键被 `def == null` 静默拦截（技能不可达）
-        def(BttRoles.GARDENER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.CROWBAR)));
-        def(BttRoles.SMUGGLER).kit(knife()); // 走私犯：初始[刀]（<灌酒> 简化为直接灌）
-        def(BttRoles.ABUSER).kit(knife()); // 虐待狂：初始[刀]（<缄默> 身边者，C-086）
+        def(BttRoles.GARDENER).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
+            initialAbilityCd(p, CD_30S);
+        });
+        def(BttRoles.SMUGGLER).kit(p -> { // 走私犯：初始[刀]（<灌酒> 直接灌）；CD 30 秒（docx）
+            knife().give(p);
+            initialAbilityCd(p, CD_30S);
+        });
+        def(BttRoles.ABUSER).kit(p -> { // 虐待狂：初始[刀]（<缄默> 身边者，C-086）；CD 30 秒（docx）
+            knife().give(p);
+            initialAbilityCd(p, CD_30S);
+        });
+        // 派对主：C-099 补齐 def（此前整条漏登记 → 与 C-090 花匠同因，`def == null` 静默吞掉但技能）；初始[刀] + CD 30 秒
+        def(BttRoles.PARTYHOST).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, CD_30S);
+        });
         // ===== docx 2026-09-09 新增（C-063） =====
         def(BttRoles.POPPY_GROWER); // 罂粟农：被动天赋（本能全绿），无 kit
         def(BttRoles.AGENT).kit(knife()); // 特工：初始[刀]（<查看> G 键直发）
@@ -105,16 +130,20 @@ public final class BttRoleDefs {
         def(BttRoles.CABALLERO).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.RANGER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
-        def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <调查> G 键技能
-        def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <拘束> G 键技能
-        def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <给糖> G 键技能
-        def(BttRoles.ENGINEER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0))); // <扫描> G 键直发
-        def(BttRoles.ARCHITECT).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(2, 0))); // <修复> G 键直发；初始 CD 2 分钟（docx）
-        // 梦游病：<入梦> 灵魂出窍（C-087）；无道具、初始无 CD（doc 只规定用后 1 分钟），异常状态校验走 onTick
+        def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, CD_1MIN)); // <调查> 1 分钟
+        def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, CD_1MIN)); // <拘束> 1 分钟
+        def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, CD_1MIN)); // <喂药> 1 分钟
+        def(BttRoles.ENGINEER).kit(p -> initialAbilityCd(p, CD_1MIN)); // <扫描> 1 分钟
+        def(BttRoles.ARCHITECT).kit(p -> initialAbilityCd(p, CD_1MIN)); // <修复> G 键直发；1 分钟（docx 2026-09-11：2min→1min）
+        // 梦游病：<入梦> 灵魂出窍（C-087）；无道具；C-099 起初始 CD 1 分钟（doc「冷却一分钟」+「所有技能都有初始冷却」）
         def(BttRoles.MEYUUBYOU)
-                .kit(p -> initialAbilityCd(p, 0))
+                .kit(p -> initialAbilityCd(p, CD_1MIN))
                 .onTick((player, world, gwc) -> BttSpirit.tick(player, gwc));
-        def(BttRoles.THIEF).kit(p -> p.giveItemStack(new ItemStack(WatheItems.KEY)));      // 万能钥匙
+        // 窃贼：初始[万能钥匙]；<搜刮> docx 未给冷却 → C-099 按统一值 1 分钟（初始 CD 同值）
+        def(BttRoles.THIEF).kit(p -> {
+            p.giveItemStack(new ItemStack(WatheItems.KEY));
+            initialAbilityCd(p, CD_1MIN);
+        });
         // 纵火犯：初始[万能钥匙] + <浇汽油> G 键直发（C-092 抄 NRS 病原体；初始 CD 10s，动态冷却见 BttArsonist）
         def(BttRoles.ARSONIST).kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.KEY));
@@ -123,18 +152,28 @@ public final class BttRoleDefs {
 
         // ===== BT-P2-UI 五身份（选人 UI；冷却载体=NR AbilityPlayerComponent 自动同步） =====
         // 预言家：无道具；初始 CD 60s
-        def(BttRoles.PROPHET).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0)));
+        def(BttRoles.PROPHET).kit(p -> initialAbilityCd(p, CD_1MIN));
         // 刺客：初始[刀]；初始 CD 60s
         def(BttRoles.ASSASSIN).kit(p -> {
             knife().give(p);
-            initialAbilityCd(p, GameConstants.getInTicks(1, 0));
+            initialAbilityCd(p, CD_1MIN);
         });
-        // 魔术师：初始[刀]；无 CD（耗 100 狂气为旧设定，已废弃）
-        def(BttRoles.MAGICIAN).kit(knife());
-        // 小说家：无道具无初始 CD（猜错才 30s）
-        def(BttRoles.NOVELIST).kit(p -> {});
+        // 魔术师：初始[刀]；<交换> 用后 1 分钟（NR 原生 setCooldown）+ C-099 初始 CD 1 分钟
+        def(BttRoles.MAGICIAN).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, CD_1MIN);
+        });
+        // 小说家：无道具；猜错进入 30s 冷却，C-099 起另给初始 CD 1 分钟
+        def(BttRoles.NOVELIST).kit(p -> initialAbilityCd(p, CD_1MIN));
         // 舞蛇人：无道具；初始 CD 60s
-        def(BttRoles.SNAKE_CHARMER).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(1, 0)));
+        def(BttRoles.SNAKE_CHARMER).kit(p -> initialAbilityCd(p, CD_1MIN));
+        // 冒牌货：C-099 补齐 def（此前整条漏登记 → `def == null` 静默吞掉窃取 UI；docx：初始[刀] + <窃取> 1 分钟）
+        def(BttRoles.IMPOSTOR).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, CD_1MIN);
+        });
+        // 失忆患者：注视尸体取回遗物（BttCorpseActionC2SPacket）；C-099 补齐 def（同因：漏登记致 G 键不可达）
+        def(BttRoles.AMNESIAC);
 
         // ===== P2A-002 补全 =====
         // 女仆：赠予手持的食物/饮料（双倍取餐在 BttMaidPlatterMixin）
@@ -233,9 +272,16 @@ public final class BttRoleDefs {
         return p -> p.giveItemStack(new ItemStack(WatheItems.KNIFE));
     }
 
-    /** C-084：BTT 自有物品 kit（冷却写在物品自身，不走 AbilityPlayerComponent） */
+    /**
+     * C-084：BTT 自有物品 kit（冷却写在物品自身，不走 AbilityPlayerComponent）。
+     * C-099：发放时即套用该物品的冷却（doc「所有技能都有初始冷却」）——匕首 1 分钟 / 毒针·炸弹 30 秒。
+     */
     private static BttRoleDef.Kit item(Item item) {
-        return p -> p.giveItemStack(new ItemStack(item));
+        return p -> {
+            p.giveItemStack(new ItemStack(item));
+            Integer cd = GameConstants.ITEM_COOLDOWNS.get(item);
+            if (cd != null) p.getItemCooldownManager().set(item, cd);
+        };
     }
 
     /** UI 身份初始冷却（AbilityPlayerComponent 自动同步；BttPlayerWidget 显示倒计时） */

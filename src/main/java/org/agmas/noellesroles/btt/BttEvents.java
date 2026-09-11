@@ -50,6 +50,7 @@ public final class BttEvents {
         BttShopGate.init();
         registerMaidGive();
         registerPsychopathShield();
+        registerProfessorShield();
         guardHmlPool();
     }
 
@@ -64,8 +65,9 @@ public final class BttEvents {
             if (!gwc0.isRole(victim, org.agmas.noellesroles.btt.BttRoles.GARDENER)) return true;
             if (BttFlowers.count(sw) <= 0) return true;
             BttFlowers.removeOne(sw);
+            // C-098：花匠技能反馈（动作栏）用身份色
             victim.sendMessage(net.minecraft.text.Text.literal("一株小花替你枯萎了……")
-                    .formatted(net.minecraft.util.Formatting.GREEN), true);
+                    .withColor(org.agmas.noellesroles.btt.BttRoles.GARDENER.color()), true);
             return false;
         });
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
@@ -111,8 +113,9 @@ public final class BttEvents {
             if (!mood.tasks.containsKey(need)) return ActionResult.PASS;
             if (!target.getInventory().insertStack(held.copy())) return ActionResult.PASS;
             user.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
+            // C-098：女仆技能反馈（动作栏）用身份色
             user.sendMessage(net.minecraft.text.Text.literal("赠予 " + target.getName().getString()
-                    + " 一份食物。").formatted(net.minecraft.util.Formatting.LIGHT_PURPLE), true);
+                    + " 一份食物。").withColor(org.agmas.noellesroles.btt.BttRoles.MAID.color()), true);
             return ActionResult.SUCCESS;
         });
     }
@@ -165,6 +168,21 @@ public final class BttEvents {
         });
     }
 
+    // ===== 教授：<使用药剂> 给予的护盾（免疫一次致命伤；C-104） =====
+
+    private static void registerProfessorShield() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            BttPlayerComponent shieldPc = BttPlayerComponent.KEY.get(victim);
+            if (!shieldPc.hasProfessorShield()) return true;
+            shieldPc.consumeProfessorShield(); // 药剂化解这一次致命伤
+            // C-098：技能反馈（动作栏）用施放者（教授）的身份色
+            victim.sendMessage(net.minecraft.text.Text.literal("药剂替你挡下了这一击……")
+                    .withColor(BttRoles.PROFESSOR.color()), true);
+            return false;
+        });
+    }
+
     // ===== 明星：被枪杀不死亡（全局否决） =====
 
     private static void registerStarImmunity() {
@@ -212,7 +230,8 @@ public final class BttEvents {
                     pc.decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     pc.decrementMute(); // 缄默（聋哑）计时（C-086）
                     BttArsonist.tickGasoline(player, pc); // 纵火犯：被浇者延迟"闻到汽油味"提示（C-092）
-                    BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 30 秒后生效（C-093）
+                    BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 10–30 秒后生效（C-093/C-097）
+                    BttActor.tick(player, pc); // 演员：装死读秒（C-106）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }
@@ -245,8 +264,10 @@ public final class BttEvents {
                         int sec = (bc.beepTimer + 19) / 20;
                         if (sec != bc.bombLastSec) {
                             bc.bombLastSec = sec;
+                            // C-098：炸弹倒计时（恐怖分子技能反馈）用身份色
                             p.sendMessage(net.minecraft.text.Text.literal("炸弹倒计时：" + sec + " 秒")
-                                    .formatted(net.minecraft.util.Formatting.RED, net.minecraft.util.Formatting.BOLD), true);
+                                    .formatted(net.minecraft.util.Formatting.BOLD)
+                                    .withColor(org.agmas.noellesroles.btt.BttRoles.TERRORIST.color()), true);
                         }
                         bc.beepTimer--;
                     } else {

@@ -387,6 +387,10 @@ public class Noellesroles implements ModInitializer {
             if (gameWorldComponent.isRole(context.player(), MORPHLING)) {
                 MorphlingPlayerComponent morphlingPlayerComponent = (MorphlingPlayerComponent) MorphlingPlayerComponent.KEY.get(context.player());
                 morphlingPlayerComponent.startMorph(payload.player());
+                // C-106：BTT 演员 <易容> = **永久**（用户 2026-09-11「E键也是永久易容」；NR 原生 35 秒）
+                if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(context.player().getWorld())) {
+                    morphlingPlayerComponent.setMorphTicks(Integer.MAX_VALUE / 4);
+                }
             }
         });
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.VULTURE_PACKET, (payload, context) -> {
@@ -540,7 +544,9 @@ public class Noellesroles implements ModInitializer {
             }
             if (gameWorldComponent.isRole(context.player(), PHANTOM) && abilityPlayerComponent.cooldown <= 0) {
                 context.player().addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, 30 * 20,0,true,false,true));
-                abilityPlayerComponent.cooldown = GameConstants.getInTicks(1, 30);
+                // C-107：偷渡客 <隐蔽> —— BTT 口径冷却 2 分钟（用户 2026-09-11；NR 原生 1.5 分钟），隐身时长 30 秒不变
+                abilityPlayerComponent.cooldown = org.agmas.noellesroles.btt.BttIdentity.isBttMode(context.player().getWorld())
+                        ? GameConstants.getInTicks(2, 0) : GameConstants.getInTicks(1, 30);
             }
         });
     }

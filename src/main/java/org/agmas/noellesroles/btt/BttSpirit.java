@@ -5,7 +5,6 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 
 /**
@@ -32,7 +31,7 @@ public final class BttSpirit {
         if (ability.cooldown > 0) return;
         if (!GameFunctions.isPlayerAliveAndSurvival(user)) return;
         pc.startProjecting(user.getX(), user.getY(), user.getZ());
-        user.sendMessage(Text.literal("躯体留在原地……灵魂出窍。").formatted(Formatting.GRAY), true);
+        user.sendMessage(Text.literal("躯体留在原地……灵魂出窍。").withColor(BttRoles.MEYUUBYOU.color()), true);
     }
 
     /** 主动/强制回归：清出窍态 + 起 1 分钟冷却（躯体会被传走时同样走这里） */
@@ -53,7 +52,7 @@ public final class BttSpirit {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         ability.setCooldown(COOLDOWN_TICKS);
         ability.sync();
-        if (message != null) user.sendMessage(Text.literal(message).formatted(Formatting.GRAY), true);
+        if (message != null) user.sendMessage(Text.literal(message).withColor(BttRoles.MEYUUBYOU.color()), true);
     }
 
     /** def.onTick：出窍期间校验异常状态（只在 running 时被派发） */

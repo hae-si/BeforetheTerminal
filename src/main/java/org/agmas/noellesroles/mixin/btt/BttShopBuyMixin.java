@@ -41,7 +41,10 @@ public abstract class BttShopBuyMixin {
         ci.cancel();
         // 醉酒：商店失效；凶手用狂气被拒并因此得知自己醉酒（doc：不自知的唯一例外）
         if (BttPlayerComponent.KEY.get(player).isDrunk()) {
-            player.sendMessage(Text.literal("你喝醉了，无法使用商店。").formatted(Formatting.BLUE), true);
+            // C-098：商店属「能力」，其动作栏反馈用身份色
+            var drunkRole = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(player.getWorld()).getRole(player);
+            player.sendMessage(Text.literal("你喝醉了，无法使用商店。")
+                    .withColor(drunkRole == null ? 0xFFFFFF : drunkRole.color()), true);
             return;
         }
         if (index < 0 || index >= BttShopGate.BTT_ENTRIES.size()) return;

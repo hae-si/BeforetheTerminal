@@ -81,14 +81,16 @@ public final class SpiritCameraHandler {
             disable();
         }
 
-        if (active) {
+        // C-106：演员 <装死> 期间同样冻结移动输入（躺倒不该滑行），但不切相机、不藏手
+        boolean fakeDead = BttPlayerComponent.KEY.get(MC.player).isFakeDead();
+        if (active || fakeDead) {
             // 躯体静止：真实玩家输入清空（保留潜行）
             if (MC.player.input instanceof KeyboardInput) {
                 Input frozen = new Input();
                 frozen.sneaking = MC.player.input.sneaking;
                 MC.player.input = frozen;
             }
-            MC.gameRenderer.setRenderHand(false);
+            if (active) MC.gameRenderer.setRenderHand(false);
         }
     }
 }

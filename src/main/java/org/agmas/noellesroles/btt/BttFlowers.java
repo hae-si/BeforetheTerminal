@@ -8,7 +8,6 @@ import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
@@ -155,7 +154,8 @@ public final class BttFlowers {
     private static void hintNearby(Flower f, String message) {
         for (ServerPlayerEntity p : f.world.getPlayers()) {
             if (p.getBlockPos().getSquaredDistance(f.pos) <= HINT_RADIUS * HINT_RADIUS) {
-                p.sendMessage(Text.literal(message).formatted(Formatting.GREEN), true);
+                // C-098：花匠技能反馈（动作栏）用身份色
+                p.sendMessage(Text.literal(message).withColor(BttRoles.GARDENER.color()), true);
             }
         }
     }

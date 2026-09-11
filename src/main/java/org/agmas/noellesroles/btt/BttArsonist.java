@@ -6,7 +6,6 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 
 import java.util.UUID;
@@ -17,7 +16,8 @@ import java.util.UUID;
  *   <li>初始 [万能钥匙]；&lt;浇汽油&gt; = G 键直发（无目标、无选人屏）；</li>
  *   <li>目标规则同 NRS：**最近的**未浇湿存活玩家，3 格内且**有视线**（不能隔墙浇）；</li>
  *   <li>冷却 = 动态基数（NRS 同款：开局人数 &gt;24→7s / ≥18→10s / ≥12→15s / 其余 20s），初始 CD 10s；</li>
- *   <li>被浇者 **十几秒后**（10–20s 随机）收到延迟提示「你闻到了汽油的气味……」——**无音效**（用户 2026-09-11 裁定，NRS 的打喷嚏音效删除）；</li>
+ *   <li>被浇者 **10–30 秒后**（{@link BttDelayed#randomDelayTicks} 统一区间 200–600 ticks 随机）收到延迟提示
+ *       「你闻到了汽油的气味……」——**无音效**（用户 2026-09-11 裁定，NRS 的打喷嚏音效删除）；</li>
  *   <li>用户 2026-09-11 裁定：**不装**「未浇湿者雷达」（NRS 的 compass action bar + 目标提示一律不移植）；</li>
  *   <li>独胜：除自己外**全部存活玩家**都被浇湿 → 立即 {@link BttEndings.Ending#ARSONIST_WIN}（同 NRS 病原体，无需额外"点燃"操作）。</li>
  * </ul>
@@ -30,9 +30,6 @@ public final class BttArsonist {
     private static final double RANGE_SQUARED = 9.0;
     /** 初始冷却（NRS：开局 10 秒） */
     static final int INITIAL_CD_TICKS = 10 * 20;
-    /** 延迟提示最短/最长（doc「延迟十几秒」= 10–20s） */
-    private static final int SMELL_DELAY_MIN = 200;
-    private static final int SMELL_DELAY_RANDOM = 201;
 
     /** 动态冷却基数（NRS PathogenPlayerComponent#setBaseCooldownByPlayerCount） */
     public static int baseCooldownTicks(int playerCount) {
@@ -67,11 +64,12 @@ public final class BttArsonist {
 
         BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
         victim.setDoused();
-        victim.scheduleGasolineHint(SMELL_DELAY_MIN + user.getRandom().nextInt(SMELL_DELAY_RANDOM));
+        // C-097：延迟提示与虐待狂/派对主延时统一为 200–600 ticks（10–30 秒）
+        victim.scheduleGasolineHint(BttDelayed.randomDelayTicks(user.getRandom()));
 
         setCd(ability, baseCooldownTicks(gwc.getRoles().size()));
         user.sendMessage(Text.literal("你给 " + target.getName().getString() + " 浇上了汽油。")
-                .formatted(Formatting.GOLD), true);
+                .withColor(BttRoles.ARSONIST.color()), true);
 
         if (allOthersDoused(user, gwc)) {
             win(user, gwc);
@@ -83,7 +81,8 @@ public final class BttArsonist {
         if (pc.gasolineHintTicks <= 0) return;
         if (--pc.gasolineHintTicks > 0) return;
         if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
-        player.sendMessage(Text.literal("你闻到了汽油的气味……"), true);
+        // C-098：技能反馈用身份色（纵火犯）
+        player.sendMessage(Text.literal("你闻到了汽油的气味……").withColor(BttRoles.ARSONIST.color()), true);
     }
 
     /** 除自己外的全部**存活**玩家都已被浇湿（死亡者不计，同 NRS 病原体胜利判定） */

@@ -74,7 +74,7 @@ public abstract class SelectPlayerWidget extends ButtonWidget {
                 this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(Text.literal(name)) / 2, this.getY() - 9);
     }
 
-    private static void drawHighlight(DrawContext context, int x, int y) {
+    protected static void drawHighlight(DrawContext context, int x, int y) {
         int color = -1862287543;
         context.fillGradient(RenderLayer.getGuiOverlay(), x, y, x + 16, y + 14, color, color, 0);
         context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 14, x + 15, y + 15, color, color, 0);

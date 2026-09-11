@@ -71,7 +71,9 @@ public abstract class BttKillHookMixin {
         if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.STAR)) {
             for (ServerPlayerEntity p : world.getPlayers()) {
                 if (gwc.isInnocent(p)) {
-                    p.sendMessage(net.minecraft.text.Text.literal("明星死亡了！").formatted(net.minecraft.util.Formatting.GOLD), true);
+                    // C-098：身份通知（动作栏）用明星的身份色
+                    p.sendMessage(net.minecraft.text.Text.literal("明星死亡了！")
+                            .withColor(org.agmas.noellesroles.btt.BttRoles.STAR.color()), true);
                 }
             }
         }

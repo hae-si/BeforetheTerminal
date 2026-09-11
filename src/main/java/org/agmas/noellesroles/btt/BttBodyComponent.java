@@ -23,6 +23,7 @@ public class BttBodyComponent implements Component {
     /** 失忆患者是否已从此尸体取过遗物 */
     public boolean amnesiacUsed = false;
 
+
     public BttBodyComponent(PlayerBodyEntity body) {
         this.body = body;
     }
@@ -34,6 +35,7 @@ public class BttBodyComponent implements Component {
     public void markAmnesiacUsed() {
         this.amnesiacUsed = true;
     }
+
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {

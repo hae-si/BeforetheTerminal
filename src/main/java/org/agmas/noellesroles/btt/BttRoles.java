@@ -236,7 +236,7 @@ public final class BttRoles {
             BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX,
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMPOSTOR, TERRORIST, PARTYHOST, GARDENER, EX_UNDERCOVER, BLACKDEATH,
-            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST);
+            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST, PROFESSOR);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -309,6 +309,15 @@ public final class BttRoles {
         Faction f = factionOf(role);
         return f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE
                 || role == TRAITOR || role == EX_TRAITOR || role == BLACKDEATH;
+    }
+
+    /**
+     * **凶手席位**（= 主犯/从犯；C-103 律师 <起诉> 口径：「场上的所有凶手，**不包括**加入凶手阵营的其他身份」——
+     * 叛徒/前任叛徒/黑死病占 MAD 席位、虽属凶手阵营但**不算**凶手席位）。
+     */
+    public static boolean isKillerSeat(Role role) {
+        Faction f = factionOf(role);
+        return f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE;
     }
 
     /** 阵营=乘客侧（执法/平民/狂人；叛徒系/黑死病/凶手除外） */

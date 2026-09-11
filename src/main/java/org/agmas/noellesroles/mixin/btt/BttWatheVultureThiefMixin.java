@@ -44,8 +44,8 @@ public abstract class BttWatheVultureThiefMixin {
         BodyDeathReasonComponent death = BodyDeathReasonComponent.KEY.get(body);
         if (death.vultured) { ci.cancel(); return; }
 
-        // 复刻 NR 吃尸效果
-        ability.cooldown = GameConstants.getInTicks(0, 20);
+        // 复刻 NR 吃尸效果；C-099：docx 未给 <搜刮> 冷却 → 按「大多数冷却统一 1 分钟」取 1 分钟（原 NR 原生 20 秒）
+        ability.cooldown = org.agmas.noellesroles.btt.BttRoleDefs.CD_1MIN;
         ability.sync();
         VulturePlayerComponent vulture = VulturePlayerComponent.KEY.get(user);
         vulture.bodiesEaten++;
@@ -70,8 +70,9 @@ public abstract class BttWatheVultureThiefMixin {
                             dev.doctor4t.wathe.game.GameFunctions.WinStatus.NONE);
             dev.doctor4t.wathe.game.GameFunctions.stopGame(user.getServerWorld());
         } else {
+            // C-098：技能反馈（动作栏）用盗窃者身份色
             user.sendMessage(net.minecraft.text.Text.literal("已搜刮 " + vulture.bodiesEaten + " / " + vulture.bodiesRequired + " 具。")
-                    .formatted(net.minecraft.util.Formatting.AQUA), true);
+                    .withColor(org.agmas.noellesroles.btt.BttRoles.THIEF.color()), true);
         }
         ci.cancel();
     }

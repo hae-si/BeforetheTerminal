@@ -32,7 +32,7 @@ public final class BttBomb {
         if (target == user) return false;
         BttPlayerComponent tc = BttPlayerComponent.KEY.get(target);
         if (tc.bombPlaced) {
-            user.sendMessage(Text.literal("目标身上已有炸弹。").formatted(Formatting.RED), true);
+            user.sendMessage(Text.literal("目标身上已有炸弹。").withColor(BttRoles.TERRORIST.color()), true);
             return false;
         }
         tc.bombPlaced = true;
@@ -41,8 +41,8 @@ public final class BttBomb {
         tc.bombSource = user.getUuid().toString();
         tc.bombLastSec = -1;
         tc.sync(); // 客户端需要同步（HUD/G 键传递门控读本组件）
-        user.sendMessage(Text.literal("炸弹已放置。").formatted(Formatting.GOLD), true);
-        target.sendMessage(Text.literal("你听到了一声轻响……").formatted(Formatting.DARK_RED), true);
+        user.sendMessage(Text.literal("炸弹已放置。").withColor(BttRoles.TERRORIST.color()), true);
+        target.sendMessage(Text.literal("你听到了一声轻响……").withColor(BttRoles.TERRORIST.color()), true);
         return true;
     }
 
@@ -69,9 +69,9 @@ public final class BttBomb {
         tc.sync();
         holder.getWorld().playSound(null, target.getBlockPos(), SoundEvents.ENTITY_ITEM_PICKUP,
                 SoundCategory.PLAYERS, 1.0F, 1.0F);
-        holder.sendMessage(Text.literal("炸弹已脱手。").formatted(Formatting.GOLD), true);
+        holder.sendMessage(Text.literal("炸弹已脱手。").withColor(BttRoles.TERRORIST.color()), true);
         target.sendMessage(Text.literal("有人把炸弹塞给了你！快传出去！")
-                .formatted(Formatting.DARK_RED, Formatting.BOLD), true);
+                .formatted(Formatting.BOLD).withColor(BttRoles.TERRORIST.color()), true);
         return true;
     }
 

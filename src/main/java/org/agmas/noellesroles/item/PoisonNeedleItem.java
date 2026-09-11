@@ -1,6 +1,7 @@
 package org.agmas.noellesroles.item;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.block_entity.BeveragePlateBlockEntity;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -8,11 +9,11 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.btt.BttIdentity;
@@ -24,7 +25,8 @@ import java.util.List;
  * 毒针（C-084，doc 炼金术士初始 [毒针]）：右键身边者注入毒药，冷却 30 秒。
  * 口径：固定 40 秒中毒（wathe {@link PlayerPoisonComponent} 原生判定，死因 wathe `poison`）；
  * 目标已中毒则**加速**（剩余时间 - 40 秒，参照 NRS 毒师口径，最少 1 tick）。
- * doc「或餐盘」= 餐盘注入未实装 → ROADMAP BT-ITEM-SET / BT-SYS-SHOP。
+ * 餐盘/酒杯注入（doc「给身边者或餐盘注入毒药」；ROADMAP BT-NEEDLE-TRAY，C-101）：
+ * 右键餐盘/酒杯块 → `BeveragePlateBlockEntity.setPoisoner`，毒标记由取餐者带走并随进食生效（wathe 原生链）。
  */
 public class PoisonNeedleItem extends Item {
     /** 一次注入的中毒时长（40 秒） */
@@ -63,10 +65,44 @@ public class PoisonNeedleItem extends Item {
                 ? Math.max(1, poison.poisonTicks - BASE_POISON_TICKS)
                 : BASE_POISON_TICKS;
         poison.setPoisonTicks(ticks, alchemist.getUuid());
+        applyCooldown(alchemist);
+        alchemist.sendMessage(Text.literal("毒针已刺入 " + victim.getName().getString() + " 的皮肤。")
+                .withColor(BttRoles.ALCHEMIST.color()), true);
+        return ActionResult.SUCCESS;
+    }
+
+    /**
+     * 餐盘/酒杯注入（doc「给身边者或餐盘注入毒药」；C-101，ROADMAP BT-NEEDLE-TRAY）。
+     * 与 wathe {@code FoodPlatterBlock.onUse} 的 POISON_VIAL 分支同口径：`getPoisoner() == null` 才可下毒
+     * （已有毒不覆盖、不扣冷却）；毒标记由取餐者带走（wathe `WatheDataComponentTypes.POISONER` → `PlayerEntityMixin` 进食生效）。
+     */
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        World world = context.getWorld();
+        if (world.isClient()) return ActionResult.PASS;
+        if (context.getHand() != Hand.MAIN_HAND) return ActionResult.PASS; // 与 wathe 毒瓶同口径：只看主手
+        if (!(world.getBlockEntity(context.getBlockPos()) instanceof BeveragePlateBlockEntity plate)) return ActionResult.PASS;
+        if (!(context.getPlayer() instanceof ServerPlayerEntity alchemist)) return ActionResult.PASS;
+        if (!BttIdentity.isBttMode(world)) return ActionResult.PASS;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
+        if (!gwc.isRunning()) return ActionResult.PASS;
+        if (!gwc.isRole(alchemist, BttRoles.ALCHEMIST)) return ActionResult.PASS;
+        if (plate.getPoisoner() != null) {
+            alchemist.sendMessage(Text.literal("这个餐盘已经被下过毒了。")
+                    .withColor(BttRoles.ALCHEMIST.color()), true);
+            return ActionResult.SUCCESS;
+        }
+        if (alchemist.getItemCooldownManager().isCoolingDown(this)) return ActionResult.PASS;
+        plate.setPoisoner(alchemist.getUuidAsString());
+        applyCooldown(alchemist);
+        alchemist.sendMessage(Text.literal("你把毒药滴进了餐盘。")
+                .withColor(BttRoles.ALCHEMIST.color()), true);
+        return ActionResult.SUCCESS;
+    }
+
+    /** 物品层冷却 = 该物品在 `GameConstants.ITEM_COOLDOWNS` 的登记值（缺省 30 秒；C-099 口径） */
+    private void applyCooldown(ServerPlayerEntity alchemist) {
         alchemist.getItemCooldownManager().set(this,
                 GameConstants.ITEM_COOLDOWNS.getOrDefault(this, GameConstants.getInTicks(0, 30)));
-        alchemist.sendMessage(Text.literal("毒针已刺入 " + victim.getName().getString() + " 的皮肤。")
-                .formatted(Formatting.DARK_GREEN), true);
-        return ActionResult.SUCCESS;
     }
 }

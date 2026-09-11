@@ -5,7 +5,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.agmas.harpymodloader.component.WorldModifierComponent;
 import org.agmas.harpymodloader.modifiers.HMLModifiers;
@@ -31,12 +30,20 @@ import java.util.UUID;
 public final class BttRelationships {
     private BttRelationships() {}
 
+    /**
+     * 关系色（docx「关系」章，C-098「先前未明确的关系颜色见doc」）：
+     * 恋人 {@code #FFC0CB}、宿敌 {@code #800080}、双子 {@code #66FF00}。此前为自拟值（FF69B4/FF4500/00CED1），一律回改。
+     */
+    public static final int COLOR_LOVERS = 0xFFC0CB;
+    public static final int COLOR_ARCHENEMY = 0x800080;
+    public static final int COLOR_TWINS = 0x66FF00;
+
     public static final Modifier MOD_LOVERS = HMLModifiers.registerModifier(
-            new Modifier(Identifier.of(Noellesroles.MOD_ID, "lovers"), 0xFF69B4, null, null, false, false));
+            new Modifier(Identifier.of(Noellesroles.MOD_ID, "lovers"), COLOR_LOVERS, null, null, false, false));
     public static final Modifier MOD_ARCHENEMY = HMLModifiers.registerModifier(
-            new Modifier(Identifier.of(Noellesroles.MOD_ID, "archenemy"), 0xFF4500, null, null, false, false));
+            new Modifier(Identifier.of(Noellesroles.MOD_ID, "archenemy"), COLOR_ARCHENEMY, null, null, false, false));
     public static final Modifier MOD_TWINS = HMLModifiers.registerModifier(
-            new Modifier(Identifier.of(Noellesroles.MOD_ID, "twins"), 0x00CED1, null, null, false, false));
+            new Modifier(Identifier.of(Noellesroles.MOD_ID, "twins"), COLOR_TWINS, null, null, false, false));
 
     /** 关系对（a,b=玩家 UUID；type=LOVER/ARCHENEMY/TWINS） */
     public record Pair(UUID a, UUID b, String type) {}
@@ -129,14 +136,14 @@ public final class BttRelationships {
             if (notify == null) continue;
             switch (pair.type()) {
                 case "LOVER" -> {
-                    if (pa != null) notify.accept(pair.a(), Text.literal("你的恋人是 " + nameOf(pb) + "。").formatted(Formatting.LIGHT_PURPLE));
-                    if (pb != null) notify.accept(pair.b(), Text.literal("你的恋人是 " + nameOf(pa) + "。").formatted(Formatting.LIGHT_PURPLE));
+                    if (pa != null) notify.accept(pair.a(), Text.literal("你的恋人是 " + nameOf(pb) + "。").withColor(COLOR_LOVERS));
+                    if (pb != null) notify.accept(pair.b(), Text.literal("你的恋人是 " + nameOf(pa) + "。").withColor(COLOR_LOVERS));
                 }
                 case "ARCHENEMY" -> {
                     if (pa != null) notify.accept(pair.a(), Text.literal("你的宿敌是 " + nameOf(pb)
-                            + "（" + BttIdentity.displayName(seats.get(pair.b())).getString() + "）。").formatted(Formatting.RED));
+                            + "（" + BttIdentity.displayName(seats.get(pair.b())).getString() + "）。").withColor(COLOR_ARCHENEMY));
                     if (pb != null) notify.accept(pair.b(), Text.literal("你的宿敌是 " + nameOf(pa)
-                            + "（" + BttIdentity.displayName(seats.get(pair.a())).getString() + "）。").formatted(Formatting.RED));
+                            + "（" + BttIdentity.displayName(seats.get(pair.a())).getString() + "）。").withColor(COLOR_ARCHENEMY));
                 }
                 // 双子：互不知晓 ✓
             }
