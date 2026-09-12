@@ -21,7 +21,7 @@ public final class BttShopGate {
 
     /** BTT 局内凶手商店条目（顺序即索引约定；双端一致）。价目=docx 2026-09-07（毒药/蝎子 25、裹尸袋 100） */
     public static final List<ShopEntry> BTT_ENTRIES = List.of(
-            new ShopEntry(WatheItems.GRENADE.getDefaultStack(), 250, ShopEntry.Type.WEAPON),
+            new ShopEntry(WatheItems.GRENADE.getDefaultStack(), 300, ShopEntry.Type.WEAPON),
             // 疯魔面具：直接触发疯魔模式（同 wathe 原版匿名子类覆写 onBuy），而非发放物品
             new ShopEntry(WatheItems.PSYCHO_MODE.getDefaultStack(), 350, ShopEntry.Type.WEAPON) {
                 @Override
@@ -33,7 +33,7 @@ public final class BttShopGate {
             new ShopEntry(WatheItems.SCORPION.getDefaultStack(), 25, ShopEntry.Type.POISON),
             new ShopEntry(new ItemStack(ModItems.MASTER_KEY), 50, ShopEntry.Type.TOOL),
             new ShopEntry(WatheItems.CROWBAR.getDefaultStack(), 25, ShopEntry.Type.TOOL),
-            new ShopEntry(WatheItems.BODY_BAG.getDefaultStack(), 100, ShopEntry.Type.TOOL),
+            new ShopEntry(WatheItems.BODY_BAG.getDefaultStack(), 50, ShopEntry.Type.TOOL), // C-113：裹尸袋 100→50 狂气（用户裁定）
             // 短路器：直接触发全车停电（同 wathe 原版覆写 onBuy）
             new ShopEntry(WatheItems.BLACKOUT.getDefaultStack(), 200, ShopEntry.Type.TOOL) {
                 @Override

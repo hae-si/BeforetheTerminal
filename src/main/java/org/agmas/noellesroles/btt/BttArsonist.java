@@ -33,12 +33,8 @@ public final class BttArsonist {
 
     /** 动态冷却基数（NRS PathogenPlayerComponent#setBaseCooldownByPlayerCount） */
     public static int baseCooldownTicks(int playerCount) {
-        int seconds;
-        if (playerCount > 24) seconds = 7;
-        else if (playerCount >= 18) seconds = 10;
-        else if (playerCount >= 12) seconds = 15;
-        else seconds = 20;
-        return GameConstants.getInTicks(0, seconds);
+        // docx 2026-09-12：浇汽油冷却固定 10 秒（原按开局人数动态 7/10/15/20s）
+        return GameConstants.getInTicks(0, 10);
     }
 
     /** &lt;浇汽油&gt; 主逻辑（BttGuessReceiver G 键直发入口） */
@@ -68,7 +64,7 @@ public final class BttArsonist {
         victim.scheduleGasolineHint(BttDelayed.randomDelayTicks(user.getRandom()));
 
         setCd(ability, baseCooldownTicks(gwc.getRoles().size()));
-        user.sendMessage(Text.literal("你给 " + target.getName().getString() + " 浇上了汽油。")
+        user.sendMessage(Text.translatable("noellesroles.btt.action.arsonist.doused", target.getName().getString())
                 .withColor(BttRoles.ARSONIST.color()), true);
 
         if (allOthersDoused(user, gwc)) {
@@ -82,7 +78,7 @@ public final class BttArsonist {
         if (--pc.gasolineHintTicks > 0) return;
         if (!GameFunctions.isPlayerAliveAndSurvival(player)) return;
         // C-098：技能反馈用身份色（纵火犯）
-        player.sendMessage(Text.literal("你闻到了汽油的气味……").withColor(BttRoles.ARSONIST.color()), true);
+        player.sendMessage(Text.translatable("noellesroles.btt.action.arsonist.smell").withColor(BttRoles.ARSONIST.color()), true);
     }
 
     /** 除自己外的全部**存活**玩家都已被浇湿（死亡者不计，同 NRS 病原体胜利判定） */

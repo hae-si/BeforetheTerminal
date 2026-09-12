@@ -96,7 +96,7 @@ public final class BttRoleDefs {
         def(BttRoles.JOURNALIST).kit(p -> initialAbilityCd(p, CD_1MIN)); // 记者：<跟踪> 1 分钟（docx 2026-09-11：30s→1min）
         def(BttRoles.MINSTREL).kit(p -> initialAbilityCd(p, CD_1MIN));  // 吟游诗人：<歌唱> 1 分钟（docx 2026-09-11：2min→1min）
         // 教授：<使用药剂> 身边者（给予 1 层护盾，免疫下一次致命伤；C-104）；无道具；CD 1 分钟（C-099：docx 未特别说明）
-        def(BttRoles.PROFESSOR).kit(p -> initialAbilityCd(p, CD_1MIN));
+        def(BttRoles.PROFESSOR).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(2, 0)));
         // 花匠：初始[撬棍]（docx）+ <栽培> G 键直发（C-090）；冷却 30 秒（docx）
         // 此前整条 def 漏登记 → 客户端 `BttRoleDefs.get()` 返回 null，G 键被 `def == null` 静默拦截（技能不可达）
         def(BttRoles.GARDENER).kit(p -> {
@@ -112,7 +112,7 @@ public final class BttRoleDefs {
             initialAbilityCd(p, CD_30S);
         });
         // 派对主：C-099 补齐 def（此前整条漏登记 → 与 C-090 花匠同因，`def == null` 静默吞掉但技能）；初始[刀] + CD 30 秒
-        def(BttRoles.PARTYHOST).kit(p -> {
+        def(BttRoles.COMEDIAN).kit(p -> {
             knife().give(p);
             initialAbilityCd(p, CD_30S);
         });

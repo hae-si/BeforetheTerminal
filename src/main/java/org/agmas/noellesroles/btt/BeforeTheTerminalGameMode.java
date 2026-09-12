@@ -101,6 +101,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
 
         // 身份宣告：wathe 原版迎新覆盖层（身份名+凶手数+乘客数）。游戏内聊天框不可见，
         // 不再输出聊天行；中立/外人数不展示（策划 2026-09-04）。
+        // C-115（docx 2026-09-12）：[万能钥匙] 开局分配给**一名随机执法乘客**
+        java.util.List<ServerPlayerEntity> enforcers = new java.util.ArrayList<>();
+        for (ServerPlayerEntity p : players) {
+            if (BttRoles.factionOf(seats.get(p.getUuid())) == BttRoles.Faction.ENFORCER) enforcers.add(p);
+        }
+        if (!enforcers.isEmpty()) {
+            enforcers.get(world.getRandom().nextInt(enforcers.size()))
+                    .giveItemStack(new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.KEY));
+        }
+
         int killers = 0;
         int passengers = 0;
         for (Role r : seats.values()) {
@@ -128,8 +138,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // C-110：技能层同步继承（阵营不变；"和一位随机的不在场身份无异"）——D16 只做了物品层
         BttSecondIdentity.borrow(p, inherited, 0);
         // C-098：身份通知（动作栏）用**被继承身份**的身份色
-        p.sendMessage(Text.literal("你继承了不在场的" + BttIdentity.displayName(inherited).getString()
-                + "（" + label + "）的行头。").withColor(inherited.color()), true);
+        p.sendMessage(Text.translatable("noellesroles.btt.action.inherit.kit",
+                BttIdentity.displayName(inherited).getString(), label).withColor(inherited.color()), true);
     }
 
     private static void startEpilogueBroadcast(String type, java.util.List<ServerPlayerEntity> players) {
@@ -141,7 +151,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             case "KIDNAPPER" -> { key = "kidnapper"; color = BttRoles.KIDNAPPER.color(); }
             case "GARDENER" -> { key = "gardener"; color = BttRoles.GARDENER.color(); }
             // 生还尾声 = 凶手阵营尾声（docx）；色取 doc 凶手阵营色 #FF0000（勿自造颜色，C-098）
-            default -> { key = "survival"; color = FACTION_KILLER_COLOR; }
+            default -> { key = "survival"; color = FACTION_PASSENGER_COLOR; } // C-113：生还尾声改乘客绿（用户裁定）
         }
         net.minecraft.sound.SoundEvent track = BttSounds.forEpilogue(type);
         for (ServerPlayerEntity p : players) {
@@ -282,6 +292,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
         } else if (cultWin) {
             ending = BttEndings.Ending.CULT_WIN;
         } else if (gameTime.getTime() <= epilogueTicks) {
+            // C-113：尾声期间**团灭级结局仍即时**（用户裁定：凶手/乘客/魔女/教团杀光其他阵营、独行除外 → 直接胜利）。
+            // 原实现把常规判定整体挂起 → 尾声里已把对面杀光却要等倒计时走完，与 docx 胜负逻辑不符。
+            BttEndings.Ending wipe = BttEndings.decide(alivePrincipals, aliveAccomplices,
+                    alivePassengers, aliveOutsiderNeutrals, false);
+            if ((wipe == BttEndings.Ending.BLOOD_EXPRESS || wipe == BttEndings.Ending.NAKU_KORO) && !onlyBlackdeathLeft) {
+                wipe = BttEndings.Ending.NONE; // 黑死病在场且存活：凶手胜利需全灭
+            }
+            if (wipe != BttEndings.Ending.NONE) {
+                ending = wipe; // 立即结算
+            } else {
             // 主持人翁动态认领（存活者中按优先级）；当前主持人翁阵营全灭 → desired 自动落到下一位 → 链式切换
             String desired = majoAlive ? "MAJO" : messiahAlive ? "CULT"
                     : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
@@ -306,6 +326,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                         yield d;
                     }
                 };
+            }
             }
         } else {
             bttState.epilogueType = "";

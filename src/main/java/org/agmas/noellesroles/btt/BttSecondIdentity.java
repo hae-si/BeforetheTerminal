@@ -70,7 +70,7 @@ public final class BttSecondIdentity {
 
     /** 提示（身份色由调用方决定；这里统一用新身份色） */
     public static Text tookOverText(Role role) {
-        return Text.literal("你的身份已经变作 " + BttIdentity.displayName(role).getString() + "。")
-                .withColor(role.color());
+        return Text.translatable("noellesroles.btt.action.second.took_over",
+                BttIdentity.displayName(role).getString()).withColor(role.color());
     }
 }

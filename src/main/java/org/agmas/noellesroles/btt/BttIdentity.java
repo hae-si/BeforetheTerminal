@@ -28,7 +28,7 @@ public final class BttIdentity {
 
     /** 席位上限（列车 18 人基准） */
     public static final int MIN_PLAYERS = 6;
-    public static final int MAX_PLAYERS = 18;
+    public static final int MAX_PLAYERS = 24; // docx 2026-09-12：剧本模式 6~24（基准 18）
 
     /**
      * 纯函数：doc 席位公式分配（2026-09-06 策划大改/C-037 适配）：

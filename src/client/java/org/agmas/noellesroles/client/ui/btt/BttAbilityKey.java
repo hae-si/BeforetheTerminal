@@ -33,20 +33,7 @@ public final class BttAbilityKey {
         if (!org.agmas.noellesroles.btt.BttIdentity.isBttMode(client.world)) return;
         var gwc = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(client.world);
         if (!gwc.isRunning()) return;
-        // 炸弹持有者：G 键对准他人传递炸弹（优先于身份技能）
-        var pc = org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(client.player);
-        if (pc.bombPlaced) {
-            if (pc.bombBeeping) {
-                var hit = net.minecraft.entity.projectile.ProjectileUtil.getCollision(client.player,
-                        e -> e instanceof net.minecraft.entity.player.PlayerEntity && e != client.player, (float) NEARBY_RANGE);
-                if (hit instanceof net.minecraft.util.hit.EntityHitResult ehr
-                        && ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity target) {
-                    net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
-                            new org.agmas.noellesroles.btt.BttGuessC2SPacket(target.getUuid(), ""));
-                }
-            }
-            return;
-        }
+        // C-113：炸弹相关不再走 G 键（传递只保留物品右键）
         BttRoleDef def = BttRoleDefs.get(BttRoles.effectiveRole(gwc, client.player)); // C-110：借来的技能身份优先
         if (def == null) return;
         // 失忆患者：G 键 + 注视尸体（自带射线 4 格——NR targetBody 在暗处/2 格距离下不可用）
@@ -90,26 +77,24 @@ public final class BttAbilityKey {
             sendAimed(client);
             return;
         }
-        // 任意人技能：打开背包选人屏
-        if (!isAnyRole(def.role)) return;
-        if (client.currentScreen != null) return;
-        client.setScreen(new LimitedInventoryScreen(client.player));
+        // C-113：任意人技能是 **E 键技能**——G 键不再打开选人屏（用户裁定：E 键技能不需要按 G 打开）
     }
 
     /** 身边者技能（G 键对准准星所指玩家）：绳艺师/药剂师/酒保/派对主/虐待狂（恐怖分子 C-084 起走物品右键） */
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
-                || role == BttRoles.BARTENDER || role == BttRoles.PARTYHOST
-                || role == BttRoles.ABUSER || role == BttRoles.PROFESSOR || role == BttRoles.KIDNAPPER;
+                || role == BttRoles.BARTENDER || role == BttRoles.COMEDIAN
+                || role == BttRoles.ABUSER || role == BttRoles.PROFESSOR || role == BttRoles.KIDNAPPER || role == BttRoles.IMP;
     }
 
     /** HUD 技能提示身份：身边者技能 + **无目标直发技能**（这些都在 G 键分支里，但此前漏进本表 → 提示恒不显示，C-090） */
     public static boolean hasTip(dev.doctor4t.wathe.api.Role role) {
-        return isNearbyRole(role) || role == BttRoles.TERRORIST || role == BttRoles.MEYUUBYOU
+        // C-113：恐怖分子的炸弹已改纯物品右键（无 G 键技能）→ 不再出提示；E 键技能亦不出提示（见下）
+        return isNearbyRole(role) || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.MINSTREL || role == BttRoles.GARDENER || role == BttRoles.AGENT
                 || role == BttRoles.AMNESIAC || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER
-                || role == BttRoles.ARSONIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR
-                || role == BttRoles.CANNIBAL || role == BttRoles.PHILOSOPHER || role == BttRoles.IMP;
+                || role == BttRoles.ARSONIST || role == BttRoles.ACTOR || role == BttRoles.CANNIBAL;
+        // C-113：E 键技能（任意人：律师/哲人/小恶魔等）不出右下角提示、G 键也不开选人屏（见 isAnyRole）
     }
 
     /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/走私犯/记者 + 律师/哲人/小恶魔（C-103/C-110/C-111） */
@@ -118,7 +103,7 @@ public final class BttAbilityKey {
                 || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
                 || role == BttRoles.ASSASSIN || role == BttRoles.SMUGGLER
                 || role == BttRoles.JOURNALIST || role == BttRoles.LAWYER || role == BttRoles.ACTOR
-                || role == BttRoles.PHILOSOPHER || role == BttRoles.IMP;
+                || role == BttRoles.PHILOSOPHER;
     }
 
     /** 点头像即发 **NR 原生**包（演员 <易容>；`MorphC2SPacket`，NR 原生无冷却、持续 35 秒，C-106） */
@@ -163,7 +148,6 @@ public final class BttAbilityKey {
     /** 任意人技能中点击即发动（无需输入角色文本）：猎人/侦探 */
     public static boolean isInstant(dev.doctor4t.wathe.api.Role role) {
         // 哲人：点头像即夺取；小恶魔：点头像即印记
-        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.PHILOSOPHER
-                || role == BttRoles.IMP;
+        return role == BttRoles.HUNTER || role == BttRoles.DETECTIVE || role == BttRoles.PHILOSOPHER;
     }
 }

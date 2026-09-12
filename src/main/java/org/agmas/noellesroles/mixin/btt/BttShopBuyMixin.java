@@ -43,7 +43,7 @@ public abstract class BttShopBuyMixin {
         if (BttPlayerComponent.KEY.get(player).isDrunk()) {
             // C-098：商店属「能力」，其动作栏反馈用身份色
             var drunkRole = dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(player.getWorld()).getRole(player);
-            player.sendMessage(Text.literal("你喝醉了，无法使用商店。")
+            player.sendMessage(Text.translatable("noellesroles.btt.action.shop.drunk")
                     .withColor(drunkRole == null ? 0xFFFFFF : drunkRole.color()), true);
             return;
         }
@@ -51,15 +51,18 @@ public abstract class BttShopBuyMixin {
         ShopEntry entry = BttShopGate.BTT_ENTRIES.get(index);
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment() && this.balance < entry.price())
             this.balance = entry.price() * 10;
+        // C-113：裹尸袋无购买冷却（其余条目仍受物品自身冷却约束）
+        boolean cooldownOk = entry.stack().isOf(dev.doctor4t.wathe.index.WatheItems.BODY_BAG)
+                || !this.player.getItemCooldownManager().isCoolingDown(entry.stack().getItem());
         if (this.balance >= entry.price()
-                && !this.player.getItemCooldownManager().isCoolingDown(entry.stack().getItem())
+                && cooldownOk
                 && entry.onBuy(this.player)) {
             this.balance -= entry.price();
             if (this.player instanceof ServerPlayerEntity player) {
                 player.networkHandler.sendPacket(new PlaySoundS2CPacket(Registries.SOUND_EVENT.getEntry(WatheSounds.UI_SHOP_BUY), SoundCategory.PLAYERS, player.getX(), player.getY(), player.getZ(), 1.0f, 0.9f + this.player.getRandom().nextFloat() * 0.2f, this.player.getRandom().nextLong()));
             }
         } else {
-            this.player.sendMessage(Text.literal("Purchase Failed").formatted(Formatting.DARK_RED), true);
+            this.player.sendMessage(Text.translatable("noellesroles.btt.action.shop.failed").formatted(Formatting.DARK_RED), true);
             if (this.player instanceof ServerPlayerEntity player) {
                 player.networkHandler.sendPacket(new PlaySoundS2CPacket(Registries.SOUND_EVENT.getEntry(WatheSounds.UI_SHOP_BUY_FAIL), SoundCategory.PLAYERS, player.getX(), player.getY(), player.getZ(), 1.0f, 0.9f + this.player.getRandom().nextFloat() * 0.2f, this.player.getRandom().nextLong()));
             }

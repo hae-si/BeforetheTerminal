@@ -95,6 +95,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int borrowedTicks = 0;
     /** 第二身份（C-110）：仅限一次的「夺取身份」是否已用掉（哲人；服务端） */
     public boolean identitySpent = false;
+    /** 饕餮：入腹时被吞者理智是否 >0（决定"理智归零"能否作为释放条件；服务端，C-113） */
+    public boolean swallowedMoodOk = false;
     /** 小恶魔 <印记> 的目标 UUID 字符串（空 = 未印记；服务端回合状态，C-111） */
     public String impMark = "";
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
@@ -314,6 +316,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         borrowedTicks = 0;
         identitySpent = false;
         impMark = "";
+        swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
         bodyX = 0;
@@ -357,6 +360,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("borrowedTicks", borrowedTicks);
         tag.putBoolean("identitySpent", identitySpent);
         tag.putString("impMark", impMark);
+        tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
         tag.putDouble("bodyX", bodyX);
@@ -399,6 +403,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.borrowedTicks = tag.getInt("borrowedTicks");
         this.identitySpent = tag.contains("identitySpent") && tag.getBoolean("identitySpent");
         this.impMark = tag.contains("impMark") ? tag.getString("impMark") : "";
+        this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
         this.bodyX = tag.contains("bodyX") ? tag.getDouble("bodyX") : 0;

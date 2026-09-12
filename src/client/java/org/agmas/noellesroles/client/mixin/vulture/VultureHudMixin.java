@@ -37,7 +37,7 @@ public abstract class VultureHudMixin {
             }
 
             drawY -= getTextRenderer().getWrappedLinesHeight(line, 999999);
-            context.drawTextWithShadow(getTextRenderer(), line, context.getScaledWindowWidth() - getTextRenderer().getWidth(line), drawY, NoellesrolesClient.targetBody == null ? Colors.GRAY : Noellesroles.VULTURE.color());
+            context.drawTextWithShadow(getTextRenderer(), line, context.getScaledWindowWidth() - getTextRenderer().getWidth(line), drawY, Noellesroles.VULTURE.color()); // C-113：恒用身份色（原"未注视尸体则灰"）
         }
     }
 }

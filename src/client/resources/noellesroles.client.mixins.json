@@ -41,8 +41,6 @@
     "btt.BttAbilityHudMixin",
     "btt.BttFakeDeathPoseMixin",
     "btt.BttFakeDeathAnglesMixin",
-    "btt.BttAnnouncementColorMixin",
-    "btt.BttWelcomeColorMixin",
     "btt.BttTraitorCohortMixin",
     "btt.BttShoujoInstinctMixin",
     "btt.BttKeyBindingAccessor",

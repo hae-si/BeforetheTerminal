@@ -68,7 +68,7 @@ public final class BttEvents {
             if (BttFlowers.count(sw) <= 0) return true;
             BttFlowers.removeOne(sw);
             // C-098：花匠技能反馈（动作栏）用身份色
-            victim.sendMessage(net.minecraft.text.Text.literal("一株小花替你枯萎了……")
+            victim.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.shield")
                     .withColor(org.agmas.noellesroles.btt.BttRoles.GARDENER.color()), true);
             return false;
         });
@@ -116,8 +116,9 @@ public final class BttEvents {
             if (!target.getInventory().insertStack(held.copy())) return ActionResult.PASS;
             user.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
             // C-098：女仆技能反馈（动作栏）用身份色
-            user.sendMessage(net.minecraft.text.Text.literal("赠予 " + target.getName().getString()
-                    + " 一份食物。").withColor(org.agmas.noellesroles.btt.BttRoles.MAID.color()), true);
+            user.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.maid.give",
+                            target.getName().getString())
+                    .withColor(org.agmas.noellesroles.btt.BttRoles.MAID.color()), true);
             return ActionResult.SUCCESS;
         });
     }
@@ -179,7 +180,7 @@ public final class BttEvents {
             if (!shieldPc.hasProfessorShield()) return true;
             shieldPc.consumeProfessorShield(); // 药剂化解这一次致命伤
             // C-098：技能反馈（动作栏）用施放者（教授）的身份色
-            victim.sendMessage(net.minecraft.text.Text.literal("药剂替你挡下了这一击……")
+            victim.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.professor.shield")
                     .withColor(BttRoles.PROFESSOR.color()), true);
             return false;
         });
@@ -284,14 +285,16 @@ public final class BttEvents {
                         }
                     } else if (bc.beepTimer > 0) {
                         if (bc.beepTimer % 6 == 0) {
-                            world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(),
+                            // C-113：改物理器件音（原为乐音 BLOCK_NOTE_BLOCK_PLING；复用本 mod 的器件 beep）
+                            world.playSound(null, p.getBlockPos(),
+                                    net.minecraft.sound.SoundEvent.of(net.minecraft.util.Identifier.of("noellesroles", "role_mine_beep")),
                                     net.minecraft.sound.SoundCategory.PLAYERS, 2.0F, 1.0F);
                         }
                         int sec = (bc.beepTimer + 19) / 20;
                         if (sec != bc.bombLastSec) {
                             bc.bombLastSec = sec;
                             // C-098：炸弹倒计时（恐怖分子技能反馈）用身份色
-                            p.sendMessage(net.minecraft.text.Text.literal("炸弹倒计时：" + sec + " 秒")
+                            p.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.bomb.countdown", sec)
                                     .formatted(net.minecraft.util.Formatting.BOLD)
                                     .withColor(org.agmas.noellesroles.btt.BttRoles.TERRORIST.color()), true);
                         }
@@ -301,7 +304,8 @@ public final class BttEvents {
                         bc.bombBeeping = false;
                         BttBomb.clear(p);
                         bc.sync();
-                        world.playSound(null, p.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_GENERIC_EXPLODE.value(),
+                        // C-113：爆炸改用 wathe 手雷爆炸音（物理爆炸音，原为原版通用爆炸）
+                        world.playSound(null, p.getBlockPos(), dev.doctor4t.wathe.index.WatheSounds.ITEM_GRENADE_EXPLODE,
                                 net.minecraft.sound.SoundCategory.PLAYERS, 3.0F, 1.0F);
                         world.spawnParticles(net.minecraft.particle.ParticleTypes.EXPLOSION,
                                 p.getX(), p.getY() + 0.5, p.getZ(), 2, 0, 0, 0, 0);

@@ -50,7 +50,8 @@ public final class BttArchitect {
             if (!gwc.isRole(architect, BttRoles.ARCHITECT)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(architect)) continue;
             // C-098：技能通知（动作栏）用身份色
-            architect.sendMessage(Text.literal(blasted ? "一扇门被撬开了！" : "一扇门被卡住了！")
+            architect.sendMessage(Text.translatable(blasted
+                            ? "noellesroles.btt.action.architect.blasted" : "noellesroles.btt.action.architect.jammed")
                     .withColor(BttRoles.ARCHITECT.color()), true);
             ServerPlayNetworking.send(architect, new BttDoorHighlightS2CPacket(pos, blasted));
         }
@@ -65,11 +66,11 @@ public final class BttArchitect {
         if (!(architect.raycast(REPAIR_RANGE, 1.0F, false) instanceof BlockHitResult hit)) return false;
         DoorBlockEntity door = doorAt(world, hit.getBlockPos());
         if (door == null) {
-            architect.sendMessage(Text.literal("准星前方没有门。").withColor(BttRoles.ARCHITECT.color()), true);
+            architect.sendMessage(Text.translatable("noellesroles.btt.action.architect.no_door").withColor(BttRoles.ARCHITECT.color()), true);
             return false;
         }
         if (!door.isBlasted() && !door.isJammed()) {
-            architect.sendMessage(Text.literal("这扇门既没被撬也没被卡。").withColor(BttRoles.ARCHITECT.color()), true);
+            architect.sendMessage(Text.translatable("noellesroles.btt.action.architect.intact").withColor(BttRoles.ARCHITECT.color()), true);
             return false;
         }
         restop(world, door);
@@ -82,7 +83,7 @@ public final class BttArchitect {
             }
         }
         world.playSound(null, door.getPos(), WatheSounds.BLOCK_DOOR_TOGGLE, SoundCategory.BLOCKS, 1f, 1.2f);
-        architect.sendMessage(Text.literal("门已修复！").withColor(BttRoles.ARCHITECT.color()), true);
+        architect.sendMessage(Text.translatable("noellesroles.btt.action.architect.repaired").withColor(BttRoles.ARCHITECT.color()), true);
         return true;
     }
 

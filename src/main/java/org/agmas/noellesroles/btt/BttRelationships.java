@@ -136,14 +136,14 @@ public final class BttRelationships {
             if (notify == null) continue;
             switch (pair.type()) {
                 case "LOVER" -> {
-                    if (pa != null) notify.accept(pair.a(), Text.literal("你的恋人是 " + nameOf(pb) + "。").withColor(COLOR_LOVERS));
-                    if (pb != null) notify.accept(pair.b(), Text.literal("你的恋人是 " + nameOf(pa) + "。").withColor(COLOR_LOVERS));
+                    if (pa != null) notify.accept(pair.a(), Text.translatable("noellesroles.btt.action.rel.lover", nameOf(pb)).withColor(COLOR_LOVERS));
+                    if (pb != null) notify.accept(pair.b(), Text.translatable("noellesroles.btt.action.rel.lover", nameOf(pa)).withColor(COLOR_LOVERS));
                 }
                 case "ARCHENEMY" -> {
-                    if (pa != null) notify.accept(pair.a(), Text.literal("你的宿敌是 " + nameOf(pb)
-                            + "（" + BttIdentity.displayName(seats.get(pair.b())).getString() + "）。").withColor(COLOR_ARCHENEMY));
-                    if (pb != null) notify.accept(pair.b(), Text.literal("你的宿敌是 " + nameOf(pa)
-                            + "（" + BttIdentity.displayName(seats.get(pair.a())).getString() + "）。").withColor(COLOR_ARCHENEMY));
+                    if (pa != null) notify.accept(pair.a(), Text.translatable("noellesroles.btt.action.rel.archenemy",
+                            nameOf(pb), BttIdentity.displayName(seats.get(pair.b())).getString()).withColor(COLOR_ARCHENEMY));
+                    if (pb != null) notify.accept(pair.b(), Text.translatable("noellesroles.btt.action.rel.archenemy",
+                            nameOf(pa), BttIdentity.displayName(seats.get(pair.a())).getString()).withColor(COLOR_ARCHENEMY));
                 }
                 // 双子：互不知晓 ✓
             }

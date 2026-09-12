@@ -50,7 +50,7 @@ public abstract class CoronerHudMixin {
     private static void coronerRoleNameRenderer(TextRenderer renderer, ClientPlayerEntity player, DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         if (NoellesrolesClient.targetBody != null) {
-            if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.CORONER) || gameWorldComponent.isRole(MinecraftClient.getInstance().player, org.agmas.noellesroles.btt.BttRoles.GODFATHER) || gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE) || WatheClient.isPlayerSpectatingOrCreative()) {
+            if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.CORONER) || gameWorldComponent.isRole(MinecraftClient.getInstance().player, org.agmas.noellesroles.btt.BttRoles.GODFATHER) || (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE) && !org.agmas.noellesroles.btt.BttIdentity.isBttMode(MinecraftClient.getInstance().player.getWorld())) || WatheClient.isPlayerSpectatingOrCreative()) { // C-113：BTT 窃贼不得验尸
 
                 context.getMatrices().push();
                 context.getMatrices().translate((float)context.getScaledWindowWidth() / 2.0F, (float)context.getScaledWindowHeight() / 2.0F + 6.0F, 0.0F);
@@ -78,7 +78,7 @@ public abstract class CoronerHudMixin {
                     Text roleInfo = Text.translatable("hud.coroner.role_info").withColor(Colors.RED).append(Harpymodloader.getRoleName(foundRole).withColor(foundRole.color()));
                     context.drawTextWithShadow(renderer, roleInfo, -renderer.getWidth(roleInfo) / 2, 48, Colors.WHITE);
                 }
-                if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE) ) {
+                if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE) && !org.agmas.noellesroles.btt.BttIdentity.isBttMode(MinecraftClient.getInstance().player.getWorld())) { // C-113
                     if (bodyDeathReasonComponent.vultured) {
                         Text roleInfo = Text.translatable("hud.vulture.already_consumed").withColor(Noellesroles.VULTURE.color());
                         context.drawTextWithShadow(renderer, roleInfo, -renderer.getWidth(roleInfo) / 2, 48, Colors.WHITE);

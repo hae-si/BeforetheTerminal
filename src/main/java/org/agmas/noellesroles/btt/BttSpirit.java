@@ -24,35 +24,35 @@ public final class BttSpirit {
     static void toggle(ServerPlayerEntity user) {
         BttPlayerComponent pc = BttPlayerComponent.KEY.get(user);
         if (pc.isProjecting()) {
-            returnToBody(user, "你回到了躯体。");
+            returnToBody(user, Text.translatable("noellesroles.btt.action.meyuubyou.return"));
             return;
         }
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (!GameFunctions.isPlayerAliveAndSurvival(user)) return;
         pc.startProjecting(user.getX(), user.getY(), user.getZ());
-        user.sendMessage(Text.literal("躯体留在原地……灵魂出窍。").withColor(BttRoles.MEYUUBYOU.color()), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.meyuubyou.out").withColor(BttRoles.MEYUUBYOU.color()), true);
     }
 
     /** 主动/强制回归：清出窍态 + 起 1 分钟冷却（躯体会被传走时同样走这里） */
-    static void returnToBody(ServerPlayerEntity user, String message) {
+    static void returnToBody(ServerPlayerEntity user, Text message) {
         if (!BttPlayerComponent.KEY.get(user).isProjecting()) return;
         returnToBodyInternal(user, message);
     }
 
     /** 外部强制收回（受伤等；供 BttSpiritDamageMixin 调用） */
-    public static void forceReturn(ServerPlayerEntity user, String message) {
+    public static void forceReturn(ServerPlayerEntity user, Text message) {
         if (!BttPlayerComponent.KEY.get(user).isProjecting()) return;
         returnToBodyInternal(user, message);
     }
 
-    private static void returnToBodyInternal(ServerPlayerEntity user, String message) {
+    private static void returnToBodyInternal(ServerPlayerEntity user, Text message) {
         BttPlayerComponent pc = BttPlayerComponent.KEY.get(user);
         pc.stopProjecting();
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         ability.setCooldown(COOLDOWN_TICKS);
         ability.sync();
-        if (message != null) user.sendMessage(Text.literal(message).withColor(BttRoles.MEYUUBYOU.color()), true);
+        if (message != null) user.sendMessage(message.copy().withColor(BttRoles.MEYUUBYOU.color()), true);
     }
 
     /** def.onTick：出窍期间校验异常状态（只在 running 时被派发） */
@@ -64,7 +64,7 @@ public final class BttSpirit {
             return;
         }
         if (!gwc.isRole(user, BttRoles.MEYUUBYOU)) {
-            returnToBody(user, "入梦被打断了。");
+            returnToBody(user, Text.translatable("noellesroles.btt.action.meyuubyou.interrupted"));
         }
     }
 

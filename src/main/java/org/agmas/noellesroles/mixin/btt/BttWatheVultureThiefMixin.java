@@ -45,20 +45,19 @@ public abstract class BttWatheVultureThiefMixin {
         if (death.vultured) { ci.cancel(); return; }
 
         // 复刻 NR 吃尸效果；C-099：docx 未给 <搜刮> 冷却 → 按「大多数冷却统一 1 分钟」取 1 分钟（原 NR 原生 20 秒）
-        ability.cooldown = org.agmas.noellesroles.btt.BttRoleDefs.CD_1MIN;
+        ability.cooldown = GameConstants.getInTicks(0, 10); // docx 2026-09-12：搜刮 CD 10 秒（原 1 分钟）
         ability.sync();
         VulturePlayerComponent vulture = VulturePlayerComponent.KEY.get(user);
         vulture.bodiesEaten++;
         vulture.sync();
-        user.getWorld().playSound(null, user.getBlockPos(), SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.MASTER, 1.0F, 0.5F);
-        user.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 40, 2));
+        // C-113：窃贼是**搜刮**不是"吃尸"（用户裁定，参照 NRS）——去掉 burp 音与缓慢
         death.vultured = true;
         // C-095：搜刮成功后短暂透视全员 10 秒（NRS vulture setHighlightTicks 同值；BTT 走本机描边，不吃 fork 的 GetInstinctHighlight）
         BttPlayerComponent.KEY.get(user).setThiefReveal(GameConstants.getInTicks(0, 10));
 
         // 过半 → 窃贼独胜
         long players = user.getWorld().getPlayers().size();
-        if (vulture.bodiesEaten * 2 >= players) {
+        if (vulture.bodiesEaten * 3 >= players) {
             BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(user.getWorld());
             btt.lastEnding = "THIEF_WIN";
             btt.winners = user.getUuid().toString();
@@ -71,7 +70,7 @@ public abstract class BttWatheVultureThiefMixin {
             dev.doctor4t.wathe.game.GameFunctions.stopGame(user.getServerWorld());
         } else {
             // C-098：技能反馈（动作栏）用盗窃者身份色
-            user.sendMessage(net.minecraft.text.Text.literal("已搜刮 " + vulture.bodiesEaten + " / " + vulture.bodiesRequired + " 具。")
+            user.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.thief.scavenge", vulture.bodiesEaten, vulture.bodiesRequired)
                     .withColor(org.agmas.noellesroles.btt.BttRoles.THIEF.color()), true);
         }
         ci.cancel();

@@ -27,7 +27,7 @@ public final class BttActor {
         if (!GameFunctions.isPlayerAliveAndSurvival(user)) return;
         boolean lying = !pc.isFakeDead();
         pc.setFakeDead(lying);
-        user.sendMessage(Text.literal(lying ? "你倒了下去……" : "你站了起来。")
+        user.sendMessage(Text.translatable(lying ? "noellesroles.btt.action.actor.down" : "noellesroles.btt.action.actor.up")
                 .withColor(BttRoles.ACTOR.color()), true);
     }
 

@@ -57,13 +57,14 @@ public final class BttGuessReceiver {
                 if (!(user.getServerWorld().getEntity(payload.body()) instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity body)) return;
                 Role dead = gwc.getRole(body.getPlayerUuid());
                 if (dead == null || BttRoles.factionOf(dead) != BttRoles.Faction.CIVILIAN) return; // 只吃平民乘客
+                BttBodyComponent.KEY.get(body).markAmnesiacUsed(); // docx 2026-09-12：尸体被吃掉
                 AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
                 if (ability.cooldown > 0) return;
                 ability.cooldown = GameConstants.getInTicks(1, 0);
                 ability.sync();
                 BttSecondIdentity.borrow(user, dead, GameConstants.getInTicks(1, 0)); // 借 60 秒（与冷却同步）【待作者】
-                user.sendMessage(Text.literal("你从 " + BttIdentity.displayName(dead).getString()
-                                + " 的尸体上暂时习得了他的技能。")
+                user.sendMessage(Text.translatable("noellesroles.btt.action.cannibal.learn",
+                                BttIdentity.displayName(dead).getString())
                         .withColor(BttRoles.CANNIBAL.color()), true);
                 return;
             }
@@ -83,13 +84,7 @@ public final class BttGuessReceiver {
             if (!BttIdentity.isBttMode(user.getWorld())) return;
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
-            // 炸弹传递（持有者 G 键对准他人；非技能，不受醉酒影响）
-            if (BttPlayerComponent.KEY.get(user).bombPlaced) {
-                if (user.getServerWorld().getPlayerByUuid(payload.target()) instanceof ServerPlayerEntity bombTarget) {
-                    BttBomb.transfer(user, bombTarget);
-                }
-                return;
-            }
+            // C-113：炸弹相关不再走 G 键（用户裁定）——传递只保留物品右键
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
             // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
@@ -155,8 +150,8 @@ public final class BttGuessReceiver {
                 BttImp.mark(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.JOURNALIST)) {
                 journalist(user, target);
-            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PARTYHOST)) {
-                partyhost(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.COMEDIAN)) {
+                comedian(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.ABUSER)) {
                 abuser(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PROFESSOR)) {
@@ -183,11 +178,12 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            user.sendMessage(Text.literal("猜测正确：" + target.getName().getString() + " 是 "
-                    + BttIdentity.displayName(guessed).getString()).withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.prophet.correct",
+                    target.getName().getString(), BttIdentity.displayName(guessed).getString())
+                    .withColor(colorOf(user)), true);
             setCd(ability, GameConstants.getInTicks(1, 0));
         } else {
-            user.sendMessage(Text.literal("你猜错了。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.prophet.wrong").withColor(colorOf(user)), true);
             GameFunctions.killPlayer(user, true, null, BttDeathReasons.PROPHECY_INTERRUPTED);
         }
     }
@@ -202,7 +198,7 @@ public final class BttGuessReceiver {
             BttPlayerComponent userComp = BttPlayerComponent.KEY.get(user);
             int hits = ++userComp.novelistHits;
             // doc 口径文案（用户指定 2026-09-05）；猜错不播报
-            broadcast(user, Text.literal("小说家进行了正确的猜测！").withColor(colorOf(user)));
+            broadcast(user, Text.translatable("noellesroles.btt.action.novelist.correct").withColor(colorOf(user)));
             // 独胜判定前移到 receiver（2026-09-07 用户指令，与窃贼 BttWatheVultureThiefMixin 同模式）：
             // 猜对过半 → 立即写结局并 stopGame，不再等 GameMode tick
             if (hits * 2 >= user.getServerWorld().getPlayers().size()) {
@@ -232,12 +228,12 @@ public final class BttGuessReceiver {
         Role guessed = gwc.getRole(target);
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
             BttPlayerComponent.KEY.get(target).setCult(true);
-            broadcast(user, Text.literal(target.getName().getString() + " 已成为教团信徒！")
+            broadcast(user, Text.translatable("noellesroles.btt.action.cult.converted", target.getName().getString())
                     .withColor(colorOf(user)));
-            target.sendMessage(Text.literal("你成为了教团信徒（教团可互相透视）。")
+            target.sendMessage(Text.translatable("noellesroles.btt.action.cult.joined")
                     .withColor(colorOf(user)), true);
         } else {
-            broadcast(user, Text.literal("救世主是 " + user.getName().getString() + "！")
+            broadcast(user, Text.translatable("noellesroles.btt.action.messiah.reveal", user.getName().getString())
                     .withColor(colorOf(user)));
         }
     }
@@ -256,8 +252,8 @@ public final class BttGuessReceiver {
             Role r = gwc.getRole(p);
             if (r != null) unique.add(BttIdentity.displayName(r).getString());
         }
-        user.sendMessage(Text.literal("── 本局身份列表 ──").withColor(colorOf(user)), true);
-        user.sendMessage(Text.literal(String.join("、", unique)).withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.agent.header").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.agent.entries", String.join(Text.translatable("noellesroles.btt.action.agent.separator").getString(), unique)).withColor(colorOf(user)), true);
     }
 
     // ===== 酒保：<灌酒> 身边者醉酒 1 分钟，CD 1 分钟（docx 2026-09-07） =====
@@ -266,12 +262,12 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
             return;
         }
         setCd(ability, GameConstants.getInTicks(1, 0));
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
-        user.sendMessage(Text.literal("灌酒成功。").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.common.pour_done").withColor(colorOf(user)), true);
     }
 
     // ===== 吟游诗人：<歌唱> 全场醉酒 1 分钟，CD 1 分钟（docx 2026-09-11：原 2 分钟） =====
@@ -283,7 +279,7 @@ public final class BttGuessReceiver {
         for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
             BttPlayerComponent.KEY.get(p).applyDrunk(GameConstants.getInTicks(1, 0));
         }
-        user.sendMessage(Text.literal("你唱起了一支歌……").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.minstrel.sing").withColor(colorOf(user)), true);
     }
 
     // ===== 走私犯：<灌酒> 任何人永久醉酒，CD 30 秒（施加者死亡后解除，D11/D8） =====
@@ -293,7 +289,7 @@ public final class BttGuessReceiver {
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(0, 30));
         BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
-        user.sendMessage(Text.literal("灌酒成功。").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.common.pour_done").withColor(colorOf(user)), true);
     }
 
     // ===== 记者：<跟踪> 任意玩家持续透视（**只**描边显式标记；已删「未标记时透视最远者」，C-089）CD 1 分钟（docx 2026-09-11：原 30 秒） =====
@@ -305,7 +301,7 @@ public final class BttGuessReceiver {
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(1, 0));
         BttPlayerComponent.KEY.get(user).engineerScanTicks = GameConstants.getInTicks(0, 10);
-        user.sendMessage(Text.literal("扫描中……全车人员已标记 10 秒。").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.engineer.scan").withColor(colorOf(user)), true);
     }
 
     // ===== 建筑师：<修复> 准星所指被撬/被卡的门；CD 1 分钟（docx 2026-09-11：原 2 分钟） =====
@@ -324,18 +320,18 @@ public final class BttGuessReceiver {
         BttPlayerComponent c = BttPlayerComponent.KEY.get(user);
         c.markedTarget = target.getUuid().toString();
         c.sync(); // C-089：客户端 BttEntityHighlightRenderer 按本机组件描边，必须即时同步
-        user.sendMessage(Text.literal("跟踪目标：" + target.getName().getString()).withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.journalist.track", target.getName().getString()).withColor(colorOf(user)), true);
     }
 
 
     // ===== 派对主：<变声> 身边者——按键标记，10–30 秒后自动生效（一次=醉酒，两次=氦气自爆）；CD 30s（C-093/C-097） =====
 
-    private static void partyhost(ServerPlayerEntity user, ServerPlayerEntity target) {
+    private static void comedian(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        if (!BttDelayed.schedule(user, BttDelayed.PARTYHOST, target)) return; // 已有待生效标记 → 不扣 CD
+        if (!BttDelayed.schedule(user, BttDelayed.COMEDIAN, target)) return; // 已有待生效标记 → 不扣 CD
         setCd(ability, GameConstants.getInTicks(0, 30));
-        user.sendMessage(Text.literal("你标记了 " + target.getName().getString() + "：10–30 秒后变声生效。")
+        user.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.marked", target.getName().getString())
                 .withColor(colorOf(user)), true);
     }
 
@@ -348,14 +344,14 @@ public final class BttGuessReceiver {
         uc.identitySpent = true;
         Role targetRole = gwc.getRole(target);
         if (targetRole == null || BttRoles.factionOf(targetRole) != BttRoles.Faction.CIVILIAN) {
-            user.sendMessage(Text.literal("他不是平民乘客——你什么也没得到。")
+            user.sendMessage(Text.translatable("noellesroles.btt.action.philosopher.miss")
                     .withColor(BttRoles.PHILOSOPHER.color()), true);
             return;
         }
         BttSecondIdentity.takeOver(user, targetRole);
         // 「他醉酒直到你死亡」：永久醉 + 施加者死亡解除（D8 既有口径）
         BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
-        target.sendMessage(Text.literal("哲人夺走了你的能力——你醉得厉害。")
+        target.sendMessage(Text.translatable("noellesroles.btt.action.philosopher.victim")
                 .withColor(BttRoles.PHILOSOPHER.color()), true);
         user.sendMessage(BttSecondIdentity.tookOverText(targetRole), true);
     }
@@ -366,17 +362,17 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").withColor(BttRoles.PROFESSOR.color()), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(BttRoles.PROFESSOR.color()), true);
             return;
         }
         if (!BttPlayerComponent.KEY.get(target).applyProfessorShield()) { // 已有药剂 → 不扣冷却
-            user.sendMessage(Text.literal("他身上已经有你的药剂了。").withColor(BttRoles.PROFESSOR.color()), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.professor.already").withColor(BttRoles.PROFESSOR.color()), true);
             return;
         }
-        setCd(ability, GameConstants.getInTicks(1, 0)); // C-099：docx 未特别说明 → 统一 1 分钟
-        user.sendMessage(Text.literal("你为 " + target.getName().getString() + " 注射了药剂。")
+        setCd(ability, GameConstants.getInTicks(2, 0)); // docx 2026-09-12：教授 CD 2 分钟
+        user.sendMessage(Text.translatable("noellesroles.btt.action.professor.give", target.getName().getString())
                 .withColor(BttRoles.PROFESSOR.color()), true);
-        target.sendMessage(Text.literal("教授给了你一剂药剂：下一次致命伤会被它化解。")
+        target.sendMessage(Text.translatable("noellesroles.btt.action.professor.received")
                 .withColor(BttRoles.PROFESSOR.color()), true);
     }
 
@@ -386,12 +382,12 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
             return;
         }
         if (!BttDelayed.schedule(user, BttDelayed.ABUSER, target)) return; // 已有待生效标记 → 不扣 CD
         setCd(ability, GameConstants.getInTicks(0, 30));
-        user.sendMessage(Text.literal("你标记了 " + target.getName().getString() + "：10–30 秒后缄默生效。")
+        user.sendMessage(Text.translatable("noellesroles.btt.action.abuser.marked", target.getName().getString())
                 .withColor(colorOf(user)), true);
     }
 
@@ -402,13 +398,13 @@ public final class BttGuessReceiver {
     private static void gardener(ServerPlayerEntity user) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        String err = BttFlowers.plant(user);
+        Text err = BttFlowers.plant(user);
         if (err != null) { // 不宜栽培（露天 / 距其他小花 <20m）→ 不消耗冷却（与建筑师 <修复> 同口径）
-            user.sendMessage(Text.literal(err).withColor(colorOf(user)), true);
+            user.sendMessage(err.copy().withColor(colorOf(user)), true);
             return;
         }
         setCd(ability, GameConstants.getInTicks(0, 30));
-        user.sendMessage(Text.literal("你种下了一粒种子。").withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.gardener.planted").withColor(colorOf(user)), true);
     }
 
     // ===== 刺客：<识破> 猜身份；对=杀（识破魔法），错=仅被猜者收到通知（D3）；CD 60s =====
@@ -419,11 +415,11 @@ public final class BttGuessReceiver {
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(1, 0));
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
-            user.sendMessage(Text.literal("识破成功。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.assassin.hit").withColor(colorOf(user)), true);
             GameFunctions.killPlayer(target, true, user, BttDeathReasons.IDENTIFY_MAGIC);
         } else {
             // 猜错：仅被猜者收到通知（不向全场揭示）
-            target.sendMessage(Text.literal(user.getName().getString() + " 未能揭下你的面具……")
+            target.sendMessage(Text.translatable("noellesroles.btt.action.assassin.miss", user.getName().getString())
                     .withColor(colorOf(user)), true);
         }
     }
@@ -435,8 +431,9 @@ public final class BttGuessReceiver {
         if (ability.cooldown > 0) return;
         setCd(ability, GameConstants.getInTicks(1, 0));
         boolean killed = BttPlayerComponent.KEY.get(target).hasKilled > 0;
-        user.sendMessage(Text.literal(target.getName().getString()
-                + (killed ? " 曾经杀过人" : " 没有杀过人")).withColor(colorOf(user)), true);
+        user.sendMessage(Text.translatable(killed
+                        ? "noellesroles.btt.action.detective.killed" : "noellesroles.btt.action.detective.clean",
+                target.getName().getString()).withColor(colorOf(user)), true);
     }
 
     // ===== 绳艺师：<拘束> 目标 15s，CD 60s =====
@@ -445,12 +442,12 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
             return;
         }
         setCd(ability, GameConstants.getInTicks(1, 0));
         target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
-                net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 15), 250, false, true));
+                net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 15), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子
     }
 
     // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====
@@ -459,7 +456,7 @@ public final class BttGuessReceiver {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
         if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.literal("目标不在身边。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
             return;
         }
         setCd(ability, GameConstants.getInTicks(1, 0));
@@ -472,7 +469,7 @@ public final class BttGuessReceiver {
 
     private static void hunter(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc) {
         if (BttPlayerComponent.KEY.get(user).hunterShot == 1) {
-            user.sendMessage(Text.literal("你已经用过狙击了。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.hunter.used").withColor(colorOf(user)), true);
             return;
         }
         BttPlayerComponent.KEY.get(user).hunterShot = 1;
@@ -482,11 +479,11 @@ public final class BttGuessReceiver {
         huntAbility.sync();
         Role targetRole = gwc.getRole(target);
         if (targetRole != null && BttRoles.factionOf(targetRole) == BttRoles.Faction.PRINCIPAL) {
-            broadcast(user, Text.literal("猎人狙击成功了！").withColor(colorOf(user)));
+            broadcast(user, Text.translatable("noellesroles.btt.action.hunter.success").withColor(colorOf(user)));
             // 能杀死人而非枪击：用狙击魔法死因（doc 死因表），避开处决链
             GameFunctions.killPlayer(target, true, user, BttDeathReasons.SNIPE_MAGIC);
         } else {
-            user.sendMessage(Text.literal("狙击落空。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.hunter.miss").withColor(colorOf(user)), true);
         }
     }
 
@@ -509,11 +506,11 @@ public final class BttGuessReceiver {
             newCharmer.setCooldown(BttRoleDefs.CD_1MIN);
             newCharmer.sync();
             // 新舞蛇人（原主犯）中毒（doc）
-            PlayerPoisonComponent.KEY.get(target).setPoisonTicks(100000, user.getUuid()); // 永久中毒（docx 2026-09-09）
-            broadcast(user, Text.literal("舞蛇人识破了主犯！两人身份互换——"
-                    + target.getName().getString() + " 成为了新的舞蛇人（且已中毒）。").withColor(colorOf(user)));
+            BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid()); BttPlayerComponent.KEY.get(target).sync(); // docx 2026-09-12：新舞蛇人永久醉酒（原永久中毒） // 永久中毒（docx 2026-09-09）
+            broadcast(user, Text.translatable("noellesroles.btt.action.snake_charmer.swap",
+                    target.getName().getString()).withColor(colorOf(user)));
         } else {
-            user.sendMessage(Text.literal("他不是主犯。").withColor(colorOf(user)), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.hunter.not_principal").withColor(colorOf(user)), true);
         }
     }
 
@@ -565,19 +562,19 @@ public final class BttGuessReceiver {
         }
         setCd(ability, GameConstants.getInTicks(1, 0)); // C-099：docx 冷却 60 秒
         if (killers.isEmpty() || !accused.equals(killers)) {
-            user.sendMessage(Text.literal("起诉未被采信。").withColor(BttRoles.LAWYER.color()), true);
+            user.sendMessage(Text.translatable("noellesroles.btt.action.lawyer.rejected").withColor(BttRoles.LAWYER.color()), true);
             return;
         }
         int executed = 0;
         for (java.util.UUID uuid : killers) {
             if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity victim)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(victim)) continue; // 已死者只入名册，不再处斩
-            victim.sendMessage(Text.literal("你被起诉了——判决即刻生效。")
+            victim.sendMessage(Text.translatable("noellesroles.btt.action.lawyer.accused")
                     .withColor(BttRoles.LAWYER.color()), true);
             GameFunctions.killPlayer(victim, true, user, BttDeathReasons.SNIPE_MAGIC);
             executed++;
         }
-        user.sendMessage(Text.literal("起诉成立：" + executed + " 名凶手同时伏法。")
+        user.sendMessage(Text.translatable("noellesroles.btt.action.lawyer.success", executed)
                 .withColor(BttRoles.LAWYER.color()), true);
     }
 

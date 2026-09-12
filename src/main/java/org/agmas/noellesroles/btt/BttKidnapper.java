@@ -50,18 +50,20 @@ public final class BttKidnapper {
         ability.cooldown = COOLDOWN_TICKS;
         ability.sync();
         enter(user, target, targetPc);
-        user.sendMessage(Text.literal("你吞下了 " + target.getName().getString() + "。")
+        user.sendMessage(Text.translatable("noellesroles.btt.action.kidnapper.swallow", target.getName().getString())
                 .withColor(BttRoles.KIDNAPPER.color()), true);
-        target.sendMessage(Text.literal("你被吞进了黑暗里——附身于饕餮身上。")
+        target.sendMessage(Text.translatable("noellesroles.btt.action.kidnapper.swallowed")
                 .withColor(BttRoles.KIDNAPPER.color()), true);
     }
 
     private static void enter(ServerPlayerEntity kidnapper, ServerPlayerEntity victim, BttPlayerComponent pc) {
+        pc.swallowedMoodOk = dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(victim).getMood() > 0.0F; // C-113
         pc.setSwallowedBy(kidnapper.getUuidAsString());
         victim.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, INVISIBILITY_TICKS, 0, false, false, false));
         victim.noClip = true; // 不再推人（碰撞链读 noClip；穿地由逐 tick 传送兜住）
         victim.setCameraEntity(kidnapper);
-        victim.requestTeleport(kidnapper.getX(), kidnapper.getY(), kidnapper.getZ());
+        // C-113：目标点**抬高 2.6 格**——否则被吞者碰撞箱与饕餮重叠、两人互推（实测"会挤压饕餮"）
+        victim.requestTeleport(kidnapper.getX(), kidnapper.getY() + 2.6, kidnapper.getZ());
         NoellesrolesVoiceChatPlugin.joinStomach(kidnapper, victim);
     }
 
@@ -71,12 +73,13 @@ public final class BttKidnapper {
         ServerPlayerEntity kidnapper = resolveKidnapper(victim, pc);
         // 释放条件：饕餮死亡/离线（tick 自愈）或 被吞者理智归零（docx「直到理智值归零」）
         if (kidnapper == null || !GameFunctions.isPlayerAliveAndSurvival(kidnapper)
-                || dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(victim).getMood() <= 0.0F) {
+                || (pc.swallowedMoodOk && dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(victim).getMood() <= 0.0F)) { // C-113：只认"腹中掉到 0"，避免一入腹即被放出
             release(victim, pc, kidnapper);
             return;
         }
         // 跟随（轻量位置包，同 wathe limitPlayerToBox）+ 相机/隐身自愈
-        victim.requestTeleport(kidnapper.getX(), kidnapper.getY(), kidnapper.getZ());
+        // C-113：目标点**抬高 2.6 格**——否则被吞者碰撞箱与饕餮重叠、两人互推（实测"会挤压饕餮"）
+        victim.requestTeleport(kidnapper.getX(), kidnapper.getY() + 2.6, kidnapper.getZ());
         if (victim.getCameraEntity() != kidnapper) victim.setCameraEntity(kidnapper);
         if (!victim.hasStatusEffect(StatusEffects.INVISIBILITY)) {
             victim.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, INVISIBILITY_TICKS, 0, false, false, false));
@@ -92,9 +95,10 @@ public final class BttKidnapper {
         victim.noClip = false;
         NoellesrolesVoiceChatPlugin.leaveStomach(victim);
         if (kidnapper != null && GameFunctions.isPlayerAliveAndSurvival(kidnapper)) {
-            victim.requestTeleport(kidnapper.getX(), kidnapper.getY(), kidnapper.getZ());
+            // C-113：目标点**抬高 2.6 格**——否则被吞者碰撞箱与饕餮重叠、两人互推（实测"会挤压饕餮"）
+        victim.requestTeleport(kidnapper.getX(), kidnapper.getY() + 2.6, kidnapper.getZ());
         }
-        victim.sendMessage(Text.literal("你被吐了出来。").withColor(BttRoles.KIDNAPPER.color()), true);
+        victim.sendMessage(Text.translatable("noellesroles.btt.action.kidnapper.released").withColor(BttRoles.KIDNAPPER.color()), true);
     }
 
     /** 回合结束兜底：释放全部被吞者（`finalizeGame` 调用） */

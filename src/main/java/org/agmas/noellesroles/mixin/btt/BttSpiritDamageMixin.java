@@ -27,7 +27,7 @@ public class BttSpiritDamageMixin {
         if (!((Object) this instanceof ServerPlayerEntity player)) return;
         if (!BttIdentity.isBttMode(player.getWorld())) return;
         if (BttPlayerComponent.KEY.get(player).isProjecting()) {
-            BttSpirit.forceReturn(player, "入梦被打断了。");
+            BttSpirit.forceReturn(player, net.minecraft.text.Text.translatable("noellesroles.btt.action.meyuubyou.interrupted"));
         }
     }
 }

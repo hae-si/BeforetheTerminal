@@ -148,9 +148,8 @@ public final class BttRoles {
     public static final Role ATTENDANT = register("attendant", 0x66FF00, Faction.CIVILIAN);
     public static final Role ARCHITECT = register("architect", 0x50C878, Faction.CIVILIAN);
     public static final Role RIGGER = register("rigger", 0x50C878, Faction.CIVILIAN);
-    /** 小女孩：可见到站倒计时（docx：小女孩/司机按身份能力可见；BT-SHOUJO-TIME——wathe `TimeRenderer` 仅以 `Role.canSeeTime()` 门控） */
-    public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN,
-            true, false, Role.MoodType.REAL, 200, true);
+    /** 小女孩：不可被凶手本能透视（docx 2026-09-12 删去"可见到站倒计时"→ 撤销 C-094 的 canSeeTime） */
+    public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN);
     public static final Role DRIVER = register("driver", 0x00FF80, Faction.CIVILIAN,
             true, false, Role.MoodType.REAL, 200, true);
     public static final Role MAID = register("maid", 0x9ACD32, Faction.CIVILIAN);
@@ -191,7 +190,7 @@ public final class BttRoles {
     public static final Role CLEANER = register("cleaner", 0x8B4513, Faction.ACCOMPLICE);
     public static final Role BANDIT = register("bandit", 0x8B4513, Faction.ACCOMPLICE);
     public static final Role ABUSER = register("abuser", 0xE34234, Faction.ACCOMPLICE);
-    public static final Role PARTYHOST = register("partyhost", 0xE34234, Faction.ACCOMPLICE);
+    public static final Role COMEDIAN = register("comedian", 0xE34234, Faction.ACCOMPLICE);
     /** 叛徒（docx 2026-09-09：狂人中立席位+凶手阵营，本能绿色，刀+商店） */
     public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.MAD,
             false, true, Role.MoodType.FAKE, -1, true);
@@ -236,7 +235,7 @@ public final class BttRoles {
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
             BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX,
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
-            IMP, TERRORIST, PARTYHOST, GARDENER, EX_UNDERCOVER, BLACKDEATH,
+            IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
             SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
             CANNIBAL, PHILOSOPHER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
@@ -266,7 +265,7 @@ public final class BttRoles {
                 // 主犯 1-10
                 {ASSASSIN, IMP}, {ACTOR, STOWAWAY}, {MAGICIAN, SMUGGLER}, {AGENT, GODFATHER}, {RIOT, VORTOX},
                 // 从犯 1-8
-                {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, PARTYHOST},
+                {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, COMEDIAN},
                 // 独行 1-4
                 {NOVELIST, JESTER}, {THIEF, ARSONIST},
                 // 外人 1-4

@@ -36,7 +36,7 @@ public final class BttDelayed {
     }
 
     public static final String ABUSER = "abuser";
-    public static final String PARTYHOST = "partyhost";
+    public static final String COMEDIAN = "comedian";
 
     public static boolean hasPending(ServerPlayerEntity caster) {
         BttPlayerComponent pc = BttPlayerComponent.KEY.get(caster);
@@ -72,12 +72,12 @@ public final class BttDelayed {
         } catch (IllegalArgumentException ignored) {
         }
         if (target == null || !GameFunctions.isPlayerAliveAndSurvival(target)) {
-            caster.sendMessage(Text.literal("标记没有生效：目标已不在。").withColor(colorOf(kind)), true);
+            caster.sendMessage(Text.translatable("noellesroles.btt.action.delayed.void").withColor(colorOf(kind)), true);
             return;
         }
         switch (kind) {
             case ABUSER -> applyAbuser(caster, target);
-            case PARTYHOST -> applyPartyhost(caster, target);
+            case COMEDIAN -> applyComedian(caster, target);
             default -> { }
         }
     }
@@ -87,30 +87,30 @@ public final class BttDelayed {
         BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
         victim.applyDrunk(GameConstants.getInTicks(0, 30));
         victim.applyMute(GameConstants.getInTicks(0, 30));
-        caster.sendMessage(Text.literal("缄默已生效：" + target.getName().getString() + "。")
+        caster.sendMessage(Text.translatable("noellesroles.btt.action.abuser.effect", target.getName().getString())
                 .withColor(colorOf(ABUSER)), true);
-        target.sendMessage(Text.literal("你被缄默了：30 秒内醉意上涌，听不见也说不出。")
+        target.sendMessage(Text.translatable("noellesroles.btt.action.abuser.victim")
                 .withColor(colorOf(ABUSER)), true);
     }
 
     /** 派对主 &lt;变声&gt;：一次 = 目标醉酒 1 分钟；两次 = 氦气自爆（docx：变声两次直接自爆） */
-    private static void applyPartyhost(ServerPlayerEntity caster, ServerPlayerEntity target) {
+    private static void applyComedian(ServerPlayerEntity caster, ServerPlayerEntity target) {
         BttPlayerComponent uc = BttPlayerComponent.KEY.get(caster);
         uc.partyUses++;
         if (uc.partyUses >= 2) {
-            caster.sendMessage(Text.literal("氦气……").withColor(colorOf(PARTYHOST)), true);
+            caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.helium").withColor(colorOf(COMEDIAN)), true);
             GameFunctions.killPlayer(caster, true, caster, BttDeathReasons.HELIUM_SELF_DESTRUCT);
             return;
         }
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
-        caster.sendMessage(Text.literal("变声已生效：" + target.getName().getString() + "。")
-                .withColor(colorOf(PARTYHOST)), true);
-        target.sendMessage(Text.literal("你的声音变高了……").withColor(colorOf(PARTYHOST)), true);
+        caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.effect", target.getName().getString())
+                .withColor(colorOf(COMEDIAN)), true);
+        target.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.victim").withColor(colorOf(COMEDIAN)), true);
     }
 
     /** C-098：延时技能的动作栏反馈用**施放者的身份色** */
     private static int colorOf(String kind) {
-        return ABUSER.equals(kind) ? BttRoles.ABUSER.color() : BttRoles.PARTYHOST.color();
+        return ABUSER.equals(kind) ? BttRoles.ABUSER.color() : BttRoles.COMEDIAN.color();
     }
 
     private static void clear(BttPlayerComponent pc) {

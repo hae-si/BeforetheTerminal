@@ -66,7 +66,7 @@ public class PoisonNeedleItem extends Item {
                 : BASE_POISON_TICKS;
         poison.setPoisonTicks(ticks, alchemist.getUuid());
         applyCooldown(alchemist);
-        alchemist.sendMessage(Text.literal("毒针已刺入 " + victim.getName().getString() + " 的皮肤。")
+        alchemist.sendMessage(Text.translatable("noellesroles.btt.action.alchemist.inject", victim.getName().getString())
                 .withColor(BttRoles.ALCHEMIST.color()), true);
         return ActionResult.SUCCESS;
     }
@@ -88,14 +88,14 @@ public class PoisonNeedleItem extends Item {
         if (!gwc.isRunning()) return ActionResult.PASS;
         if (!gwc.isRole(alchemist, BttRoles.ALCHEMIST)) return ActionResult.PASS;
         if (plate.getPoisoner() != null) {
-            alchemist.sendMessage(Text.literal("这个餐盘已经被下过毒了。")
+            alchemist.sendMessage(Text.translatable("noellesroles.btt.action.alchemist.tray_used")
                     .withColor(BttRoles.ALCHEMIST.color()), true);
             return ActionResult.SUCCESS;
         }
         if (alchemist.getItemCooldownManager().isCoolingDown(this)) return ActionResult.PASS;
         plate.setPoisoner(alchemist.getUuidAsString());
         applyCooldown(alchemist);
-        alchemist.sendMessage(Text.literal("你把毒药滴进了餐盘。")
+        alchemist.sendMessage(Text.translatable("noellesroles.btt.action.alchemist.tray_poisoned")
                 .withColor(BttRoles.ALCHEMIST.color()), true);
         return ActionResult.SUCCESS;
     }

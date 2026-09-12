@@ -138,8 +138,8 @@ public class BttPoisonGasCloudEntity extends Entity {
             dev.doctor4t.wathe.api.Role ownerRole = this.ownerUuid == null ? null
                     : dev.doctor4t.wathe.cca.GameWorldComponent.KEY.get(world).getRole(this.ownerUuid);
             player.sendMessage(ownerRole == null
-                    ? Text.literal("你吸入了毒气！").formatted(Formatting.DARK_GREEN)
-                    : Text.literal("你吸入了毒气！").withColor(ownerRole.color()), true);
+                    ? Text.translatable("noellesroles.btt.action.gas.inhaled").formatted(Formatting.DARK_GREEN)
+                    : Text.translatable("noellesroles.btt.action.gas.inhaled").withColor(ownerRole.color()), true);
         }
     }
 

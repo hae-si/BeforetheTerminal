@@ -36,13 +36,9 @@ public final class BttImp {
         ability.cooldown = COOLDOWN_TICKS;
         ability.sync();
         BttPlayerComponent.KEY.get(user).impMark = target.getUuidAsString();
-        user.sendMessage(Text.literal("你给 " + target.getName().getString() + " 留下了印记。")
+        // C-113：**不**告诉使用者印记是否"合得上"（用户文本原则：设计上不应让使用者知道结果）
+        user.sendMessage(Text.translatable("noellesroles.btt.action.imp.marked", target.getName().getString())
                 .withColor(BttRoles.IMP.color()), true);
-        Role targetRole = GameWorldComponent.KEY.get(user.getWorld()).getRole(target);
-        if (isLoneOrOutsider(targetRole)) {
-            // 只有施放者自己知道印记是否"合得上"（对玩家而言这是判断命中与否的反馈）
-            user.sendMessage(Text.literal("——他身上的气息与印记相合。").withColor(BttRoles.IMP.color()), true);
-        }
     }
 
     /** 可继承者：独行中立（小说家/小丑/窃贼/纵火犯）或外人中立（魔女/救世主/饕餮/花匠） */
@@ -66,7 +62,7 @@ public final class BttImp {
         if (!isLoneOrOutsider(role)) return; // 印记落空
         BttSecondIdentity.takeOver(successor, BttRoles.IMP); // 真替换：成为小恶魔（含 [刀] 与印记技能）
         BttPlayerComponent.KEY.get(successor).impMark = "";  // 新小恶魔从零开始印记
-        successor.sendMessage(Text.literal("印记在你身上燃起——你成了新的小恶魔。")
+        successor.sendMessage(Text.translatable("noellesroles.btt.action.imp.succession")
                 .withColor(BttRoles.IMP.color()), true);
     }
 }

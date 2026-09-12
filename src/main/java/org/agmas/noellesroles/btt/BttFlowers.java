@@ -76,11 +76,11 @@ public final class BttFlowers {
     }
 
     /** <栽培>：返回错误消息，null=成功 */
-    public static String plant(ServerPlayerEntity gardener) {
+    public static net.minecraft.text.Text plant(ServerPlayerEntity gardener) { // 失败返回 Text（lang 键），成功返回 null
         ServerWorld world = gardener.getServerWorld();
         for (Flower f : FLOWERS) {
             if (f.world == world && f.pos.getSquaredDistance(gardener.getBlockPos()) < 20 * 20) {
-                return "距离其他小花太近（需 ≥20 米）。";
+                return net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.too_close");
             }
         }
         Flower f = new Flower();
@@ -103,7 +103,7 @@ public final class BttFlowers {
                 f.stage = 1;
                 f.stageTicks = 0;
                 spawnEntity(f, new ItemStack(SPROUT_ITEM));
-                hintNearby(f, "附近传来花香……");
+                hintNearby(f, net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.nearby"));
             } else if (f.stage == 1 && f.stageTicks >= SPROUT_TICKS) {
                 f.stage = 2;
                 f.stageTicks = 0;
@@ -151,11 +151,11 @@ public final class BttFlowers {
         return best;
     }
 
-    private static void hintNearby(Flower f, String message) {
+    private static void hintNearby(Flower f, net.minecraft.text.Text message) {
         for (ServerPlayerEntity p : f.world.getPlayers()) {
             if (p.getBlockPos().getSquaredDistance(f.pos) <= HINT_RADIUS * HINT_RADIUS) {
                 // C-098：花匠技能反馈（动作栏）用身份色
-                p.sendMessage(Text.literal(message).withColor(BttRoles.GARDENER.color()), true);
+                p.sendMessage(message.copy().withColor(BttRoles.GARDENER.color()), true);
             }
         }
     }
