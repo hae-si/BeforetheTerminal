@@ -361,6 +361,8 @@
   "item.noellesroles.fake_knife": "仿真匕首",
   "item.noellesroles.dagger": "匕首",
   "item.noellesroles.dagger.tooltip": "右键身边的玩家：无声刺杀（1 分钟冷却）",
+  "item.noellesroles.walkie_talkie": "对讲机",
+  "item.noellesroles.walkie_talkie.tooltip": "手持呼叫、随身持有即可收听（凶手与卧底的频道）",
   "item.noellesroles.poison_needle": "毒针",
   "item.noellesroles.poison_needle.tooltip": "右键身边的玩家注入毒药，或右键餐盘/酒杯下毒（30 秒冷却）",
   "item.noellesroles.bomb": "炸弹",

@@ -95,6 +95,7 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     public void registerEvents(EventRegistration registration) {
         registration.registerEvent(MicrophonePacketEvent.class, this::paranoidEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::broadcastEvent);
+        registration.registerEvent(MicrophonePacketEvent.class, this::walkieTalkieEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::mutedSpeakerEvent);
         registration.registerEvent(EntitySoundPacketEvent.class, this::mutedListenerEvent);
         registration.registerEvent(LocationalSoundPacketEvent.class, this::mutedListenerEvent);
@@ -102,6 +103,33 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     }
 
     // ===== 虐待狂 <缄默>（C-086）：哑 + 聋（移植 NRS Silencer/SilencedPlayerComponent 的语音口径）=====
+
+    /**
+     * 对讲机（C-130，docx：「呼叫需要拿出对讲机，而收听不需要」；技法同 WatheSpark）：
+     * 说话者**主/副手持**对讲机 → 该段语音**额外**发给所有**物品栏持有**对讲机的存活玩家
+     * （位置取**接收者自身**、距离 8），因此不受常规近距离限制；近处玩家已有原版近距离投递 → 跳过以免双份。
+     */
+    public void walkieTalkieEvent(MicrophonePacketEvent event) {
+        ServerPlayerEntity speaker = serverPlayerOf(event.getSenderConnection());
+        if (speaker == null) return;
+        if (!BttIdentity.isBttMode(speaker.getWorld())) return;
+        if (!GameFunctions.isPlayerAliveAndSurvival(speaker)) return;
+        if (!org.agmas.noellesroles.item.WalkieTalkieItem.isHeld(speaker)) return;
+        VoicechatServerApi api = event.getVoicechat();
+        double near = api.getVoiceChatDistance();
+        for (ServerPlayerEntity listener : speaker.getServerWorld().getPlayers()) {
+            if (listener == speaker) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(listener)) continue;
+            if (!org.agmas.noellesroles.item.WalkieTalkieItem.isCarried(listener)) continue;
+            if (speaker.squaredDistanceTo(listener) <= near * near) continue; // 已在原版近距投递范围内
+            VoicechatConnection con = api.getConnectionOf(listener.getUuid());
+            if (con == null) continue;
+            api.sendLocationalSoundPacketTo(con, event.getPacket().locationalSoundPacketBuilder()
+                    .position(api.createPosition(listener.getX(), listener.getY(), listener.getZ()))
+                    .distance(8f)
+                    .build());
+        }
+    }
 
     /**
      * 乘务员 &lt;广播&gt;（C-123）：开着广播的乘务员开口 → 语音包**额外**中继给全车存活玩家

@@ -343,6 +343,8 @@
   "item.noellesroles.fake_knife": "Fake Knife",
   "item.noellesroles.dagger": "Dagger",
   "item.noellesroles.dagger.tooltip": "Right click a nearby player: silent stab (1 minute cooldown)",
+  "item.noellesroles.walkie_talkie": "Walkie-Talkie",
+  "item.noellesroles.walkie_talkie.tooltip": "Hold it to talk, carry it to listen (the murderer / undercover channel)",
   "item.noellesroles.poison_needle": "Poison Needle",
   "item.noellesroles.poison_needle.tooltip": "Right click a nearby player to inject poison, or right click a platter/tray to poison it (30 second cooldown)",
   "item.noellesroles.bomb": "Bomb Box",

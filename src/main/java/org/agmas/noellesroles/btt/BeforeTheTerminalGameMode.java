@@ -114,6 +114,15 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     .giveItemStack(new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.KEY));
         }
 
+        // C-130（docx）：[对讲机] —— **所有凶手以及卧底**初始持有（呼叫需拿出、收听不需）
+        for (ServerPlayerEntity p : players) {
+            Role r = seats.get(p.getUuid());
+            if (r == null) continue;
+            if (BttRoles.isKillerCamp(r) || r == BttRoles.UNDERCOVER) {
+                p.giveItemStack(new net.minecraft.item.ItemStack(org.agmas.noellesroles.ModItems.WALKIE_TALKIE));
+            }
+        }
+
         int killers = 0;
         int passengers = 0;
         for (Role r : seats.values()) {

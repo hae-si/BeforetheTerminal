@@ -15,6 +15,7 @@ import org.agmas.noellesroles.item.FakeKnifeItem;
 import org.agmas.noellesroles.item.PoisonGasGrenadeItem;
 import org.agmas.noellesroles.item.PoisonNeedleItem;
 import org.agmas.noellesroles.item.RoleMineItem;
+import org.agmas.noellesroles.item.WalkieTalkieItem;
 
 public class ModItems {
     public static void init() {
@@ -69,6 +70,11 @@ public class ModItems {
     public static final Item POISON_GAS_GRENADE = register(
             new PoisonGasGrenadeItem(new Item.Settings().maxCount(16)),
             "poison_gas_grenade"
+    );
+    /** 对讲机（C-130）：凶手与卧底初始持有；手持呼叫、持有收听（语音中继见 NoellesrolesVoiceChatPlugin） */
+    public static final Item WALKIE_TALKIE = register(
+            new WalkieTalkieItem(new Item.Settings().maxCount(1)),
+            "walkie_talkie"
     );
     public static Item register(Item item, String id) {
         // Create the identifier for the item.
