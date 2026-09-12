@@ -98,6 +98,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.winners = "";
         btt.sync();
         BttLocksmith.clearAll(world); // C-119：清上一局残留的门锁（jammedTime 存在方块 NBT）
+        BttGroup.assignAll(world, gameWorld); // C-121：贵族「族人」/ 飞行家「阵营代表」名单
         LOGGER.info("[BTT] round initialized: {} players seated.", players.size());
 
         // 身份宣告：wathe 原版迎新覆盖层（身份名+凶手数+乘客数）。游戏内聊天框不可见，

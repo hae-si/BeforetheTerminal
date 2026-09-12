@@ -118,6 +118,8 @@ public final class BttRoleDefs {
         });
         // ===== docx 2026-09-09 新增（C-063） =====
         def(BttRoles.POPPY_GROWER); // 罂粟农：被动天赋（本能全绿），无 kit
+        def(BttRoles.NOBLE); // 贵族：被动（注视「族人」，C-121），无 kit / 无技能键
+        def(BttRoles.BALLOONIST); // 飞行家：被动（注视「阵营代表」，C-121），无 kit / 无技能键
         def(BttRoles.RIOT).kit(knife()); // 暴乱：初始[刀]
         def(BttRoles.VORTOX).kit(knife()); // 涡流：初始[刀]
         // 涡流：存活时所有乘客持续醉酒（每 tick 施加 2t 维持量）

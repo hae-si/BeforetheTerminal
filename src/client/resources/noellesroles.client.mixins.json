@@ -8,6 +8,7 @@
     "btt.BttEndColumnsMixin",
     "btt.BttGuessScreenMixin",
     "btt.BttGodfatherHudMixin",
+    "btt.BttGroupHudMixin",
     "btt.BttMoodGateMixin",
     "btt.BttMoodFlagMixin",
     "bartender.BartenderShopMixin",

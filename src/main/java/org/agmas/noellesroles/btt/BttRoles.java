@@ -132,6 +132,10 @@ public final class BttRoles {
     public static final Role ENGINEER = register("engineer", 0xFFE5B4, Faction.CIVILIAN);
     public static final Role FOLKLORIST = register("folklorist", 0xCD7F32, Faction.CIVILIAN);
     public static final Role MEYUUBYOU = register("meyuubyou", 0xCD7F32, Faction.CIVILIAN);
+    /** 贵族（docx 2026-09-12 新增）：四个「族人」，注视可辨，其中有且只有一个是**从犯凶手**；与飞行家同色 */
+    public static final Role NOBLE = register("noble", 0xC8A2C8, Faction.CIVILIAN);
+    /** 飞行家（docx 2026-09-12 新增）：四个「阵营代表」，注视可辨，阵营依次为 乘客/独行/凶手/外人 */
+    public static final Role BALLOONIST = register("balloonist", 0xC8A2C8, Faction.CIVILIAN);
 
     // ===== 平民乘客·生死类 =====
 
@@ -242,7 +246,7 @@ public final class BttRoles {
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
             SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
-            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH);
+            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH, NOBLE, BALLOONIST);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -261,8 +265,9 @@ public final class BttRoles {
         Role[][] pairs = {
                 // 执法 1-8
                 {VIGILANTE, HUNTER}, {RAILWAY_POLICE, LAWYER}, {CABALLERO, RANGER}, {WITCH, VETERAN},
-                // 信息 1-10（贵族↔飞行家 待 BT-ROLES-0912 注册后补）
+                // 信息 1-10
                 {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
+                {NOBLE, BALLOONIST},
                 // 生死 1-8
                 {PROFESSOR, BODYGUARD}, {VIRGIN, STAR}, {SNAKE_CHARMER, CANNIBAL}, {UNDERCOVER, EX_UNDERCOVER},
                 // 辅助 1-10

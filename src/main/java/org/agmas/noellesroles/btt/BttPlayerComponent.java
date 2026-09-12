@@ -105,6 +105,10 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int guardedTicks = 0;
     /** 寄生者 <寄生>：宿主 UUID 字符串（空 = 未寄生；宿主存活时寄生者不会死亡；服务端，C-117） */
     public String parasiteHost = "";
+    /** 贵族「族人」UUID 列表（逗号分隔；客户端可见——本人注视显示「族人」；C-121） */
+    public String kins = "";
+    /** 飞行家「阵营代表」UUID 列表（逗号分隔；客户端可见；C-121） */
+    public String balloonReps = "";
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -325,6 +329,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         guardedBy = "";
         guardedTicks = 0;
         parasiteHost = "";
+        kins = "";
+        balloonReps = "";
         swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
@@ -372,6 +378,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("guardedBy", guardedBy);
         tag.putInt("guardedTicks", guardedTicks);
         tag.putString("parasiteHost", parasiteHost);
+        tag.putString("kins", kins);
+        tag.putString("balloonReps", balloonReps);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
@@ -418,6 +426,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.guardedBy = tag.contains("guardedBy") ? tag.getString("guardedBy") : "";
         this.guardedTicks = tag.getInt("guardedTicks");
         this.parasiteHost = tag.contains("parasiteHost") ? tag.getString("parasiteHost") : "";
+        this.kins = tag.contains("kins") ? tag.getString("kins") : "";
+        this.balloonReps = tag.contains("balloonReps") ? tag.getString("balloonReps") : "";
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");
