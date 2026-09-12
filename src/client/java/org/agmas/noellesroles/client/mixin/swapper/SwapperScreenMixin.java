@@ -34,6 +34,8 @@ public abstract class SwapperScreenMixin extends LimitedHandledScreen<PlayerScre
 
     @Inject(method = "render", at = @At("HEAD"))
     void renderSwapperText(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        // C-126：BTT 局内魔术师改用 BTT 多指名选人屏（E 键，与律师/绳艺师同款）→ 关掉 NR 原生两段式提示
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) return;
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.SWAPPER)) {
             int y = (height- 32) / 2;
@@ -50,6 +52,8 @@ public abstract class SwapperScreenMixin extends LimitedHandledScreen<PlayerScre
     @Inject(method = "init", at = @At("HEAD"))
     void renderSwapperHeads(CallbackInfo ci) {
         SwapperPlayerWidget.playerChoiceOne = null;
+        // C-126：BTT 局内不铺 NR 原生魔术师头像（改由 BttGuessScreenMixin 的多指名件接管）
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(player.getWorld())) return;
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
         if (gameWorldComponent.isRole(player,Noellesroles.SWAPPER)) {
             List<AbstractClientPlayerEntity> entries = MinecraftClient.getInstance().world.getPlayers();

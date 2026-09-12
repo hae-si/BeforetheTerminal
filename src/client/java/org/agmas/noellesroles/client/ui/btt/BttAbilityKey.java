@@ -94,12 +94,12 @@ public final class BttAbilityKey {
         // C-113：E 键技能（任意人：律师/小恶魔等）不出右下角提示、G 键也不开选人屏（见 isAnyRole）
     }
 
-    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/记者 + 律师/绳艺师/小恶魔（C-103/C-111/C-125） */
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/记者 + 律师/绳艺师/魔术师/小恶魔（C-103/C-111/C-125/C-126） */
     public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
                 || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
                 || role == BttRoles.ASSASSIN || role == BttRoles.JOURNALIST || role == BttRoles.RIGGER
-                || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
+                || role == BttRoles.MAGICIAN || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
     }
 
     /** 点头像即发 **NR 原生**包（演员 <易容>；`MorphC2SPacket`，NR 原生无冷却、持续 35 秒，C-106） */
@@ -107,9 +107,9 @@ public final class BttAbilityKey {
         return role == BttRoles.ACTOR;
     }
 
-    /** 多指名技能（律师 <起诉>：点 N 次凑齐后单包提交；绳艺师 <拘束>：固定 2 人 —— C-125） */
+    /** 多指名技能（律师 <起诉>：点 N 次凑齐后单包提交；绳艺师 <拘束> / 魔术师 <交换>：固定 2 人 —— C-125/C-126） */
     public static boolean isMultiPick(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.LAWYER || role == BttRoles.RIGGER;
+        return role == BttRoles.LAWYER || role == BttRoles.RIGGER || role == BttRoles.MAGICIAN;
     }
 
     /** G 键身边者技能：取**准星所指玩家**（≤6 格）直接发包；未对准他人则不施放 */

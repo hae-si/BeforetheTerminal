@@ -81,6 +81,8 @@ public final class BttGuessReceiver {
                 lawyer(user, gwc, payload.picks());
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.RIGGER)) {
                 rigger(user, gwc, payload.picks());
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.MAGICIAN)) {
+                magician(user, payload.picks());
             }
         });
         ServerPlayNetworking.registerGlobalReceiver(BttGuessC2SPacket.ID, (payload, context) -> {
@@ -382,8 +384,50 @@ public final class BttGuessReceiver {
     // ===== 绳艺师：<拘束> **任意两个人** 30 秒，CD 1 分钟（docx 2026-09-12；C-125 改为 E 键多指名） =====
 
     private static void rigger(ServerPlayerEntity user, GameWorldComponent gwc, java.util.List<java.util.UUID> picks) {
+        AbilityPlayerComponent riggerAbility = AbilityPlayerComponent.KEY.get(user);
+        if (riggerAbility.cooldown > 0) return;
+        java.util.List<ServerPlayerEntity> riggerTargets = twoAlive(user, picks);
+        if (riggerTargets.size() < 2) return;
+        setCd(riggerAbility, BttRoleDefs.CD_1MIN);
+        for (ServerPlayerEntity target : riggerTargets) {
+            target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
+                    net.minecraft.entity.effect.StatusEffects.SLOWNESS,
+                    GameConstants.getInTicks(0, 30), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子
+        }
+        user.sendMessage(Text.translatable("noellesroles.btt.action.rigger.bound",
+                        riggerTargets.get(0).getName().getString(), riggerTargets.get(1).getName().getString())
+                .withColor(colorOf(user)), true);
+    }
+
+    // ===== 魔术师：<交换> **任意两个人** 的位置，CD 1 分钟（C-126：E 键多指名，取代 NR 原生两段式 UI） =====
+
+    private static void magician(ServerPlayerEntity user, java.util.List<java.util.UUID> picks) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
+        java.util.List<ServerPlayerEntity> targets = twoAlive(user, picks);
+        if (targets.size() < 2) return;
+        ServerPlayerEntity a = targets.get(0);
+        ServerPlayerEntity b = targets.get(1);
+        var world = user.getServerWorld();
+        // 复刻 NR 口径：两人的位置都必须"有空间"，否则不交换（也不扣冷却）
+        if (!world.isSpaceEmpty(a) || !world.isSpaceEmpty(b)) {
+            user.sendMessage(Text.translatable("noellesroles.btt.action.swapper.no_space")
+                    .withColor(colorOf(user)), true);
+            return;
+        }
+        var posA = a.getPos();
+        var posB = b.getPos();
+        a.refreshPositionAfterTeleport(posB.x, posB.y, posB.z);
+        b.refreshPositionAfterTeleport(posA.x, posA.y, posA.z);
+        setCd(ability, BttRoleDefs.CD_1MIN);
+        user.sendMessage(Text.translatable("noellesroles.btt.action.swapper.swapped",
+                        a.getName().getString(), b.getName().getString())
+                .withColor(colorOf(user)), true);
+    }
+
+    /** 多指名技能通用取人：最多 2 名、去重、排除自己、必须是存活玩家 */
+    private static java.util.List<ServerPlayerEntity> twoAlive(ServerPlayerEntity user,
+                                                               java.util.List<java.util.UUID> picks) {
         java.util.List<ServerPlayerEntity> targets = new java.util.ArrayList<>(2);
         for (java.util.UUID uuid : picks) {
             if (targets.size() >= 2) break;
@@ -392,16 +436,7 @@ public final class BttGuessReceiver {
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
             if (!targets.contains(p)) targets.add(p);
         }
-        if (targets.size() < 2) return; // 必须点满两人（第三人起忽略）
-        setCd(ability, BttRoleDefs.CD_1MIN);
-        for (ServerPlayerEntity target : targets) {
-            target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
-                    net.minecraft.entity.effect.StatusEffects.SLOWNESS,
-                    GameConstants.getInTicks(0, 30), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子
-        }
-        user.sendMessage(Text.translatable("noellesroles.btt.action.rigger.bound",
-                        targets.get(0).getName().getString(), targets.get(1).getName().getString())
-                .withColor(colorOf(user)), true);
+        return targets;
     }
 
     // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====

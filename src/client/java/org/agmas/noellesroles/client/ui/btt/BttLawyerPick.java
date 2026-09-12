@@ -36,13 +36,14 @@ public final class BttLawyerPick {
     /**
      * 需要的指名数（0 = 当前无法起诉）= **在场凶手席位玩家数**（**含已死亡席位**；用户 2026-09-11 裁定
      * 「就算有的凶手（席位）已经死亡也要点出」）——与服务端同一判据（不做存活过滤）。
-     * 绳艺师 <拘束>（C-125）固定 **2 人**。
+     * 绳艺师 <拘束>（C-125）/ 魔术师 <交换>（C-126）固定 **2 人**。
      */
     public static int needed(ClientPlayerEntity self) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return 0;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.world);
         if (BttRoles.isPlayingAs(gwc, self, BttRoles.RIGGER)) return 2;
+        if (BttRoles.isPlayingAs(gwc, self, BttRoles.MAGICIAN)) return 2;
         int n = 0;
         for (AbstractClientPlayerEntity p : client.world.getPlayers()) {
             if (BttRoles.isKillerSeat(gwc.getRole(p))) n++;
