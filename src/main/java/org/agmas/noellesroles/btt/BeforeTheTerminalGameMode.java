@@ -99,6 +99,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.sync();
         BttLocksmith.clearAll(world); // C-119：清上一局残留的门锁（jammedTime 存在方块 NBT）
         BttGroup.assignAll(world, gameWorld); // C-121：贵族「族人」/ 飞行家「阵营代表」名单
+        BttDecoy.assignAll(world, gameWorld); // C-129：酒鬼/疯子 = 认知覆盖（假身份 + 酒鬼永久醉）
         LOGGER.info("[BTT] round initialized: {} players seated.", players.size());
 
         // 身份宣告：wathe 原版迎新覆盖层（身份名+凶手数+乘客数）。游戏内聊天框不可见，
@@ -121,7 +122,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
         for (ServerPlayerEntity player : players) {
             Role role = seats.get(player.getUuid());
-            int index = announcementIndex(role);
+            // C-129：开幕身份卡显示"认知覆盖"后的假身份（酒鬼=未出场平民 / 疯子=未出场主犯；真实身份/阵营不变）
+            int index = announcementIndex(BttDecoy.displayRole(player, role));
             ServerPlayNetworking.send(player, new AnnounceWelcomePayload(index, killers, passengers));
         }
     }
