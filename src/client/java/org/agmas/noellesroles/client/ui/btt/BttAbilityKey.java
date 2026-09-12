@@ -79,7 +79,7 @@ public final class BttAbilityKey {
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
                 || role == BttRoles.BARTENDER || role == BttRoles.SUCCUBUS || role == BttRoles.COMEDIAN
-                || role == BttRoles.BODYGUARD || role == BttRoles.LEECH
+                || role == BttRoles.BODYGUARD || role == BttRoles.LEECH || role == BttRoles.CULT_LEADER
                 || role == BttRoles.PROFESSOR || role == BttRoles.KIDNAPPER || role == BttRoles.IMP;
     }
 

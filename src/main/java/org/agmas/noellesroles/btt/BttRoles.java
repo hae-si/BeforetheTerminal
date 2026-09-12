@@ -214,7 +214,12 @@ public final class BttRoles {
     public static final Role THIEF = takeover(Noellesroles.VULTURE, Faction.LONE);
     public static final Role ARSONIST = register("arsonist", 0xFF4500, Faction.LONE);
     public static final Role AMNESIAC = register("amnesiac", 0xADD8E6, Faction.MAD);
-    public static final Role GOON = register("goon", 0xADD8E6, Faction.MAD);
+    /**
+     * 异教领袖（用户 2026-09-12 二次裁定：删莽夫 `goon`、复活 `cult_leader`）：乘客阵营·狂人席。
+     * [G 键]&lt;救赎&gt; 身边者 → **本人加入被救赎者的阵营**（{@link BttPlayerComponent#campOverride}）；
+     * 被枪处决免伤且计数；窗口内被处决两次 → 对立阵营全员死于「审判」（见 {@link BttCultLeader}）。
+     */
+    public static final Role CULT_LEADER = register("cult_leader", 0xADD8E6, Faction.MAD);
     public static final Role SNAKE_CHARMER = register("snake_charmer", 0x228B22, Faction.CIVILIAN);
     /** 酒鬼：狂人中立（乘客旗标、永久醉酒设计） */
     public static final Role DRUNK = register("drunk", 0xDB7093, Faction.MAD);
@@ -246,7 +251,7 @@ public final class BttRoles {
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
             SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
-            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH, NOBLE, BALLOONIST);
+            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH, NOBLE, BALLOONIST, CULT_LEADER);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -281,7 +286,7 @@ public final class BttRoles {
                 // 外人 1-4
                 {MAJO, MESSIAH}, {KIDNAPPER, GARDENER},
                 // 狂人 1-8
-                {BLACKDEATH, HERETIC}, {AMNESIAC, GOON}, {DRUNK, LUNATIC}, {TRAITOR, EX_TRAITOR},
+                {BLACKDEATH, HERETIC}, {AMNESIAC, CULT_LEADER}, {DRUNK, LUNATIC}, {TRAITOR, EX_TRAITOR},
         };
         for (Role[] pair : pairs) {
             SAME_COLOR_PARTNER.put(pair[0], pair[1]);
@@ -321,6 +326,48 @@ public final class BttRoles {
         Faction f = factionOf(role);
         return f == Faction.PRINCIPAL || f == Faction.ACCOMPLICE
                 || role == TRAITOR || role == EX_TRAITOR || role == BLACKDEATH;
+    }
+
+    // ===== 阵营覆盖（异教领袖 <救赎>，用户 2026-09-12）=====
+
+    /** 阵营覆盖取值："" = 无覆盖（按身份）/ PASSENGER / KILLER / LONE / OUTSIDER */
+    public static final String CAMP_PASSENGER = "PASSENGER";
+    public static final String CAMP_KILLER = "KILLER";
+    public static final String CAMP_LONE = "LONE";
+    public static final String CAMP_OUTSIDER = "OUTSIDER";
+
+    /** 身份本身的阵营名（用于 <救赎> 记录被救赎者的阵营） */
+    public static String campNameOf(Role role) {
+        if (role == null) return "";
+        if (isKillerCamp(role)) return CAMP_KILLER;
+        if (isPassengerCamp(role)) return CAMP_PASSENGER;
+        Faction f = factionOf(role);
+        if (f == Faction.LONE) return CAMP_LONE;
+        if (f == Faction.OUTSIDER) return CAMP_OUTSIDER;
+        return "";
+    }
+
+    /** 阵营覆盖（空 = 未覆盖）。混血规则：**阵营变换影响胜负计数与死后影响**，不影响理智/体力/倒计时。 */
+    public static String campOverride(net.minecraft.entity.player.PlayerEntity player) {
+        return BttPlayerComponent.KEY.get(player).campOverride;
+    }
+
+    /** 玩家当前是否**乘客侧**（覆盖优先）。用于胜负计数/死后影响等"随阵营"的判定。 */
+    public static boolean isPassengerCampFor(dev.doctor4t.wathe.cca.GameWorldComponent gwc,
+                                             net.minecraft.entity.player.PlayerEntity player) {
+        String override = campOverride(player);
+        if (CAMP_PASSENGER.equals(override)) return true;
+        if (!override.isEmpty()) return false;
+        return isPassengerCamp(gwc.getRole(player));
+    }
+
+    /** 玩家当前是否**凶手侧**（覆盖优先） */
+    public static boolean isKillerCampFor(dev.doctor4t.wathe.cca.GameWorldComponent gwc,
+                                          net.minecraft.entity.player.PlayerEntity player) {
+        String override = campOverride(player);
+        if (CAMP_KILLER.equals(override)) return true;
+        if (!override.isEmpty()) return false;
+        return isKillerCamp(gwc.getRole(player));
     }
 
     /**

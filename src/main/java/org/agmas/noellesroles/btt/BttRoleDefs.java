@@ -190,6 +190,8 @@ public final class BttRoleDefs {
         });
         // 失忆患者：注视尸体取回遗物（BttCorpseActionC2SPacket）；C-099 补齐 def（同因：漏登记致 G 键不可达）
         def(BttRoles.AMNESIAC);
+        // 异教领袖（C-124）：无道具；G 键 <救赎> 身边者（本人加入其阵营）；CD 1 分钟 → 初始 CD 同值
+        def(BttRoles.CULT_LEADER).kit(p -> initialAbilityCd(p, CD_1MIN));
 
         // ===== P2A-002 补全 =====
         // 女仆：赠予手持的食物/饮料（双倍取餐在 BttMaidPlatterMixin）

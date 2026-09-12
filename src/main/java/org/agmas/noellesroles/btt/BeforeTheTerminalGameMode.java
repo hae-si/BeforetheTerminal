@@ -182,11 +182,11 @@ public class BeforeTheTerminalGameMode extends GameMode {
     }
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByKiller(GameWorldComponent gwc) {
-        return p -> BttRoles.isKillerCamp(gwc.getRole(p));
+        return p -> BttRoles.isKillerCampFor(gwc, p); // C-124：阵营可被 <救赎> 覆盖
     }
 
     private static java.util.function.Predicate<ServerPlayerEntity> isWinnerByInnocent(GameWorldComponent gwc) {
-        return p -> BttRoles.isPassengerCamp(gwc.getRole(p));
+        return p -> BttRoles.isPassengerCampFor(gwc, p); // C-124：阵营可被 <救赎> 覆盖
     }
 
     static int announcementIndex(Role role) { // 包内可见：BttSecondIdentity 重新播报身份复用（C-110）
@@ -236,6 +236,15 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     continue;
                 }
                 var faction = org.agmas.noellesroles.btt.BttRoles.factionOf(role);
+                // C-124：异教领袖 <救赎> 的**阵营覆盖**优先（混血规则——胜负计数随阵营）
+                String campOverride = BttPlayerComponent.KEY.get(player).campOverride;
+                if (!campOverride.isEmpty()) {
+                    if (BttRoles.CAMP_KILLER.equals(campOverride)) aliveAccomplices++;      // 计入凶手侧（非主犯）
+                    else if (BttRoles.CAMP_PASSENGER.equals(campOverride)) alivePassengers++;
+                    else if (BttRoles.CAMP_LONE.equals(campOverride)) aliveLone++;
+                    else if (BttRoles.CAMP_OUTSIDER.equals(campOverride)) aliveOutsiderNeutrals++;
+                    continue;
+                }
                 // C-037 三分类 + docx 2026-09-07：黑死病=狂人中立席位但阵营归属**凶手**（额外的凶手，
                 // 胜负与其他凶手一致）——计入凶手侧、不计入乘客侧
                 if (role == BttRoles.BLACKDEATH) {
@@ -346,8 +355,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // C-037：按 BTT 阵营判定（接管键的 NR 原生 innocent 旗标不可靠，如 jester）——
         // 乘客侧=执法/平民/狂人（黑死病除外）；凶手侧=主犯/从犯/黑死病（docx：额外的凶手）；独行/外人中立不随主结局胜负
         java.util.function.Predicate<ServerPlayerEntity> isWinner = switch (ending) {
-            case TRIAL_COMPLETE, JOURNEY_END -> p -> BttRoles.isPassengerCamp(gameWorld.getRole(p));
-            case BLOOD_EXPRESS, NAKU_KORO -> p -> BttRoles.isKillerCamp(gameWorld.getRole(p));
+            case TRIAL_COMPLETE, JOURNEY_END -> p -> BttRoles.isPassengerCampFor(gameWorld, p);
+            case BLOOD_EXPRESS, NAKU_KORO -> p -> BttRoles.isKillerCampFor(gameWorld, p);
             case MAJO_WIN -> p -> gameWorld.getRole(p) == BttRoles.MAJO;
             case CULT_WIN -> p -> gameWorld.getRole(p) == BttRoles.MESSIAH
                     || BttPlayerComponent.KEY.get(p).isCult();

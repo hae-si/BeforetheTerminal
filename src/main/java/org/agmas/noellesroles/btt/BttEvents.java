@@ -47,6 +47,7 @@ public final class BttEvents {
         registerKitDispatch();
         registerJesterPsycho();
         registerStarImmunity();
+        registerCultLeaderShield();
         registerPharmacistPoison();
         BttGuessReceiver.register();
         BttShopGate.init();
@@ -222,6 +223,21 @@ public final class BttEvents {
     }
 
     // ===== 明星：被枪杀不死亡（全局否决） =====
+
+    // ===== 异教领袖：被枪处决不受伤 + 处决计数（C-124） =====
+
+    private static void registerCultLeaderShield() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!(victim instanceof ServerPlayerEntity serverVictim)) return true;
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            if (reason != GameConstants.DeathReasons.GUN) return true;
+            if (!GameWorldComponent.KEY.get(victim.getWorld()).isRole(victim, BttRoles.CULT_LEADER)) return true;
+            victim.getWorld().playSound(null, victim.getBlockPos(), SoundEvents.ITEM_SHIELD_BREAK,
+                    SoundCategory.PLAYERS, 1.0F, 1.0F);
+            BttCultLeader.onExecuted(serverVictim);
+            return false; // 不受伤
+        });
+    }
 
     private static void registerStarImmunity() {
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {

@@ -27,7 +27,7 @@ public abstract class BttDropOnDeathMixin {
         if (stack.isEmpty() || !BttIdentity.isBttMode(victim.getWorld())) return;
         boolean gunOrKey = stack.isOf(WatheItems.REVOLVER) || stack.isOf(WatheItems.KEY);
         if (!gunOrKey) return; // 其余物品交还原逻辑
-        Role role = GameWorldComponent.KEY.get(victim.getWorld()).getRole(victim);
-        cir.setReturnValue(BttRoles.isPassengerCamp(role)); // 乘客掉 / 凶手·独行·外人 不掉
+        // C-124：死后影响**随阵营**（混血规则）→ 用阵营覆盖优先的判定
+        cir.setReturnValue(BttRoles.isPassengerCampFor(GameWorldComponent.KEY.get(victim.getWorld()), victim));
     }
 }

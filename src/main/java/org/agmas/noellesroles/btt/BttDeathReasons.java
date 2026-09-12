@@ -27,4 +27,6 @@ public final class BttDeathReasons {
     public static final Identifier BOMB = Identifier.of("noellesroles", "bomb");
     /** 绽放：花匠成花（铃兰）吞噬第一个靠近者 */
     public static final Identifier BLOOM = Identifier.of("noellesroles", "bloom");
+    /** 审判：异教领袖在计数窗口内被处决两次 → 其阵营对立方全员（用户 2026-09-12 追加） */
+    public static final Identifier JUDGMENT = Identifier.of("noellesroles", "judgment");
 }

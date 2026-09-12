@@ -150,6 +150,8 @@ public final class BttGuessReceiver {
                 BttGuard.guard(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.LEECH)) {
                 BttGuard.parasitize(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.CULT_LEADER)) {
+                BttCultLeader.redeem(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.IMP)) {
                 BttImp.mark(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.JOURNALIST)) {

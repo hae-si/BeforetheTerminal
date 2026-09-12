@@ -111,6 +111,12 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String balloonReps = "";
     /** 乘务员 <广播> 开关（docx 2026-09-12：随时切换正常讲话 ⇄ 全车广播；C-123） */
     public boolean broadcastOn = false;
+    /** 异教领袖 <救赎>：阵营覆盖（""|PASSENGER|KILLER|LONE|OUTSIDER；本人加入被救赎者阵营；C-124） */
+    public String campOverride = "";
+    /** 异教领袖：当前计数窗口（两次救赎之间，含首轮）内被处决的次数（C-124） */
+    public int executionsInWindow = 0;
+    /** 异教领袖：审判已触发（本局只触发一次；C-124） */
+    public boolean judgmentFired = false;
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -334,6 +340,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         kins = "";
         balloonReps = "";
         broadcastOn = false;
+        campOverride = "";
+        executionsInWindow = 0;
+        judgmentFired = false;
         swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
@@ -384,6 +393,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("kins", kins);
         tag.putString("balloonReps", balloonReps);
         tag.putBoolean("broadcastOn", broadcastOn);
+        tag.putString("campOverride", campOverride);
+        tag.putInt("executionsInWindow", executionsInWindow);
+        tag.putBoolean("judgmentFired", judgmentFired);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
@@ -433,6 +445,9 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.kins = tag.contains("kins") ? tag.getString("kins") : "";
         this.balloonReps = tag.contains("balloonReps") ? tag.getString("balloonReps") : "";
         this.broadcastOn = tag.contains("broadcastOn") && tag.getBoolean("broadcastOn");
+        this.campOverride = tag.contains("campOverride") ? tag.getString("campOverride") : "";
+        this.executionsInWindow = tag.getInt("executionsInWindow");
+        this.judgmentFired = tag.contains("judgmentFired") && tag.getBoolean("judgmentFired");
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");

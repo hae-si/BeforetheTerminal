@@ -89,7 +89,7 @@ public final class BttArsonist {
             if (uuid.equals(user.getUuid())) continue;
             if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
-            if (!BttRoles.isPassengerCamp(gwc.getRole(p))) continue; // 只看乘客侧（执法/平民/狂人）
+            if (!BttRoles.isPassengerCampFor(gwc, p)) continue; // 只看乘客侧（执法/平民/狂人；C-124 阵营覆盖优先）
             if (!BttPlayerComponent.KEY.get(p).isDoused()) return false;
         }
         return true;
