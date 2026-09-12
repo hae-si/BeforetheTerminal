@@ -7,6 +7,7 @@
     "DoNotCollideWithFeatherMixin",
     "GiveCoinsOnMoodCompletionMixin",
     "btt.BttKillHookMixin",
+    "btt.BttPickupGateMixin",
     "btt.BttExecutionMixin",
     "btt.BttRoundEndRoleMixin",
     "btt.BttHornStartMixin",
