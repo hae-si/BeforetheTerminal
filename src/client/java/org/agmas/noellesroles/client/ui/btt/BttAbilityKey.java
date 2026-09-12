@@ -48,7 +48,7 @@ public final class BttAbilityKey {
         }
         // 花匠/工程师/建筑师/锁匠/纵火犯：<栽培>/<扫描>/<修复>/<上锁>/<浇汽油> 无需目标——
         // G 键直发（target=自己占位；门由服务端射线/最近者判定）
-        if (def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER
+        if (def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER || def.role == BttRoles.ATTENDANT
                 || def.role == BttRoles.ARCHITECT || def.role == BttRoles.LOCKSMITH
                 || def.role == BttRoles.ARSONIST || def.role == BttRoles.ACTOR) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
@@ -89,6 +89,7 @@ public final class BttAbilityKey {
         return isNearbyRole(role) || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.GARDENER || role == BttRoles.AMNESIAC
                 || role == BttRoles.ARCHITECT || role == BttRoles.LOCKSMITH || role == BttRoles.ENGINEER
+                || role == BttRoles.ATTENDANT
                 || role == BttRoles.ARSONIST || role == BttRoles.ACTOR || role == BttRoles.CANNIBAL;
         // C-113：E 键技能（任意人：律师/小恶魔等）不出右下角提示、G 键也不开选人屏（见 isAnyRole）
     }

@@ -94,6 +94,7 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     @Override
     public void registerEvents(EventRegistration registration) {
         registration.registerEvent(MicrophonePacketEvent.class, this::paranoidEvent);
+        registration.registerEvent(MicrophonePacketEvent.class, this::broadcastEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::mutedSpeakerEvent);
         registration.registerEvent(EntitySoundPacketEvent.class, this::mutedListenerEvent);
         registration.registerEvent(LocationalSoundPacketEvent.class, this::mutedListenerEvent);
@@ -101,6 +102,27 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     }
 
     // ===== 虐待狂 <缄默>（C-086）：哑 + 聋（移植 NRS Silencer/SilencedPlayerComponent 的语音口径）=====
+
+    /**
+     * 乘务员 &lt;广播&gt;（C-123）：开着广播的乘务员开口 → 语音包**额外**中继给全车存活玩家
+     * （复用 {@link #paranoidEvent} 同款 {@code sendLocationalSoundPacketTo}；近距离原路径不受影响）。
+     */
+    public void broadcastEvent(MicrophonePacketEvent event) {
+        ServerPlayerEntity speaker = serverPlayerOf(event.getSenderConnection());
+        if (speaker == null) return;
+        if (!org.agmas.noellesroles.btt.BttBroadcast.isBroadcasting(speaker)) return;
+        VoicechatServerApi api = event.getVoicechat();
+        for (ServerPlayerEntity listener : speaker.getServerWorld().getPlayers()) {
+            if (listener == speaker) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(listener)) continue;
+            VoicechatConnection con = api.getConnectionOf(listener.getUuid());
+            if (con == null) continue;
+            api.sendLocationalSoundPacketTo(con, event.getPacket().locationalSoundPacketBuilder()
+                    .position(api.createPosition(speaker.getX(), speaker.getY(), speaker.getZ()))
+                    .distance((float) api.getVoiceChatDistance())
+                    .build());
+        }
+    }
 
     /** 哑：被缄默者说不了（NRS：取消其 MicrophonePacket） */
     public void mutedSpeakerEvent(MicrophonePacketEvent event) {

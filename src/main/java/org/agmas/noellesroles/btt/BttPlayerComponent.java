@@ -109,6 +109,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String kins = "";
     /** 飞行家「阵营代表」UUID 列表（逗号分隔；客户端可见；C-121） */
     public String balloonReps = "";
+    /** 乘务员 <广播> 开关（docx 2026-09-12：随时切换正常讲话 ⇄ 全车广播；C-123） */
+    public boolean broadcastOn = false;
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -331,6 +333,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         parasiteHost = "";
         kins = "";
         balloonReps = "";
+        broadcastOn = false;
         swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
@@ -380,6 +383,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("parasiteHost", parasiteHost);
         tag.putString("kins", kins);
         tag.putString("balloonReps", balloonReps);
+        tag.putBoolean("broadcastOn", broadcastOn);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
@@ -428,6 +432,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.parasiteHost = tag.contains("parasiteHost") ? tag.getString("parasiteHost") : "";
         this.kins = tag.contains("kins") ? tag.getString("kins") : "";
         this.balloonReps = tag.contains("balloonReps") ? tag.getString("balloonReps") : "";
+        this.broadcastOn = tag.contains("broadcastOn") && tag.getBoolean("broadcastOn");
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");

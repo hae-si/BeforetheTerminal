@@ -111,6 +111,11 @@ public final class BttGuessReceiver {
                 BttLocksmith.toggle(user);
                 return;
             }
+            // 乘务员：<广播> 开关（G 键直发，无目标；C-123）
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.ATTENDANT)) {
+                BttBroadcast.toggle(user);
+                return;
+            }
             // 演员：<装死> 开关（G 键直发，无目标；C-106）
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.ACTOR)) {
                 BttActor.toggle(user, BttPlayerComponent.KEY.get(user));
