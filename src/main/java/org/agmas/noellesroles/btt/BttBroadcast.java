@@ -27,10 +27,6 @@ public final class BttBroadcast {
         attendant.getServerWorld().playSound(null, attendant.getBlockPos(),
                 pc.broadcastOn ? BttSounds.BROADCAST_ON : BttSounds.BROADCAST_OFF,
                 net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
-        attendant.sendMessage(Text.translatable(pc.broadcastOn
-                        ? "noellesroles.btt.action.attendant.broadcast_on"
-                        : "noellesroles.btt.action.attendant.broadcast_off")
-                .withColor(BttRoles.ATTENDANT.color()), true);
     }
 
     /** 该玩家此刻是否处于"全车广播"状态（语音中继判定；死亡即失效） */

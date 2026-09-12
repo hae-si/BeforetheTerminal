@@ -55,8 +55,6 @@ public final class BttGuard {
         t.sync();
         bodyguard.sendMessage(Text.translatable("noellesroles.btt.action.guard.give", target.getName().getString())
                 .withColor(BttRoles.BODYGUARD.color()), true);
-        target.sendMessage(Text.translatable("noellesroles.btt.action.guard.received")
-                .withColor(BttRoles.BODYGUARD.color()), true);
     }
 
     // ===== 寄生者 =====

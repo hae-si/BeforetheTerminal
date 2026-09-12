@@ -88,7 +88,6 @@ public final class BttDelayed {
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
         caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.effect", target.getName().getString())
                 .withColor(BttRoles.COMEDIAN.color()), true);
-        target.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.victim").withColor(BttRoles.COMEDIAN.color()), true);
     }
 
     private static void clear(BttPlayerComponent pc) {

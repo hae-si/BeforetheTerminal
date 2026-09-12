@@ -105,7 +105,6 @@ public final class BttFlowers {
                 spawnEntity(f, new ItemStack(SPROUT_ITEM));
                 world.playSound(null, f.pos, BttSounds.FLOWER_GROW,
                         net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.0F); // C-128：小花生长音
-                hintNearby(f, net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.nearby"));
             } else if (f.stage == 1 && f.stageTicks >= SPROUT_TICKS) {
                 f.stage = 2;
                 f.stageTicks = 0;

@@ -241,13 +241,15 @@ public final class BttGuessReceiver {
         Role guessed = gwc.getRole(target);
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
             BttPlayerComponent.KEY.get(target).setCult(true);
-            broadcast(user, Text.translatable("noellesroles.btt.action.cult.converted", target.getName().getString())
-                    .withColor(colorOf(user)));
+            // 教团是隐秘阵营：转化只让**救世主本人**知道（不向全场广播，避免暴露传教者）
+            user.sendMessage(Text.translatable("noellesroles.btt.action.cult.converted", target.getName().getString())
+                    .withColor(colorOf(user)), true);
             target.sendMessage(Text.translatable("noellesroles.btt.action.cult.joined")
                     .withColor(colorOf(user)), true);
         } else {
-            broadcast(user, Text.translatable("noellesroles.btt.action.messiah.reveal", user.getName().getString())
-                    .withColor(colorOf(user)));
+            // docx：预知错误 → 自身身份被察觉（察觉者是**被预知者**，不向全场揭示）
+            target.sendMessage(Text.translatable("noellesroles.btt.action.messiah.reveal", user.getName().getString())
+                    .withColor(colorOf(user)), true);
         }
     }
 
@@ -339,8 +341,6 @@ public final class BttGuessReceiver {
         }
         setCd(ability, GameConstants.getInTicks(2, 0)); // docx 2026-09-12：教授 CD 2 分钟
         user.sendMessage(Text.translatable("noellesroles.btt.action.professor.give", target.getName().getString())
-                .withColor(BttRoles.PROFESSOR.color()), true);
-        target.sendMessage(Text.translatable("noellesroles.btt.action.professor.received")
                 .withColor(BttRoles.PROFESSOR.color()), true);
     }
 
@@ -510,10 +510,12 @@ public final class BttGuessReceiver {
             newCharmer.sync();
             // 新舞蛇人（原主犯）中毒（doc）
             BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid()); BttPlayerComponent.KEY.get(target).sync(); // docx 2026-09-12：新舞蛇人永久醉酒（原永久中毒） // 永久中毒（docx 2026-09-09）
-            broadcast(user, Text.translatable("noellesroles.btt.action.snake_charmer.swap",
-                    target.getName().getString()).withColor(colorOf(user)));
+            // 交换结果只告知**本人**（新舞蛇人永久醉酒、不自知；不向全场广播）
+            user.sendMessage(Text.translatable("noellesroles.btt.action.snake_charmer.swap",
+                    target.getName().getString()).withColor(colorOf(user)), true);
         } else {
-            user.sendMessage(Text.translatable("noellesroles.btt.action.hunter.not_principal").withColor(colorOf(user)), true);
+            // 猜错：本能力是「指认」，只反馈指认失败，不向全场揭示
+            user.sendMessage(Text.translatable("noellesroles.btt.action.snake_charmer.wrong").withColor(colorOf(user)), true);
         }
     }
 
