@@ -77,7 +77,7 @@ public final class BttAbilityKey {
 
     /** 身边者技能（G 键对准准星所指玩家）：绳艺师/药剂师/酒保/笑匠/魅魔/保镖/寄生者/教授/饕餮/小恶魔（恐怖分子 C-084 起走物品右键） */
     public static boolean isNearbyRole(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.RIGGER || role == BttRoles.PHARMACIST
+        return role == BttRoles.PHARMACIST
                 || role == BttRoles.BARTENDER || role == BttRoles.SUCCUBUS || role == BttRoles.COMEDIAN
                 || role == BttRoles.BODYGUARD || role == BttRoles.LEECH || role == BttRoles.CULT_LEADER
                 || role == BttRoles.PROFESSOR || role == BttRoles.KIDNAPPER || role == BttRoles.IMP;
@@ -94,11 +94,11 @@ public final class BttAbilityKey {
         // C-113：E 键技能（任意人：律师/小恶魔等）不出右下角提示、G 键也不开选人屏（见 isAnyRole）
     }
 
-    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/记者 + 律师/小恶魔（C-103/C-111） */
+    /** 任意人技能（背包菜单选人）：预言家/小说家/猎人/侦探/救世主/舞蛇人/刺客/记者 + 律师/绳艺师/小恶魔（C-103/C-111/C-125） */
     public static boolean isAnyRole(dev.doctor4t.wathe.api.Role role) {
         return role == BttRoles.PROPHET || role == BttRoles.NOVELIST || role == BttRoles.HUNTER
                 || role == BttRoles.DETECTIVE || role == BttRoles.MESSIAH || role == BttRoles.SNAKE_CHARMER
-                || role == BttRoles.ASSASSIN || role == BttRoles.JOURNALIST
+                || role == BttRoles.ASSASSIN || role == BttRoles.JOURNALIST || role == BttRoles.RIGGER
                 || role == BttRoles.LAWYER || role == BttRoles.ACTOR;
     }
 
@@ -107,9 +107,9 @@ public final class BttAbilityKey {
         return role == BttRoles.ACTOR;
     }
 
-    /** 多指名技能（律师 <起诉>：点 N 次凑齐后单包提交） */
+    /** 多指名技能（律师 <起诉>：点 N 次凑齐后单包提交；绳艺师 <拘束>：固定 2 人 —— C-125） */
     public static boolean isMultiPick(dev.doctor4t.wathe.api.Role role) {
-        return role == BttRoles.LAWYER;
+        return role == BttRoles.LAWYER || role == BttRoles.RIGGER;
     }
 
     /** G 键身边者技能：取**准星所指玩家**（≤6 格）直接发包；未对准他人则不施放 */

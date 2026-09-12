@@ -116,7 +116,10 @@ public abstract class BttGuessScreenMixin extends LimitedHandledScreen<PlayerScr
         }
         // 律师 <起诉>：指名进度（C-103；色 = 身份色，C-098）
         if (def != null && BttAbilityKey.isMultiPick(def.role)) {
-            Text progress = Text.translatable("noellesroles.btt.lawyer.progress",
+            // C-125：绳艺师 <拘束> 为固定 2 人的多指名，进度文案按角色分派
+            String key = def.role == BttRoles.RIGGER
+                    ? "noellesroles.btt.rigger.progress" : "noellesroles.btt.lawyer.progress";
+            Text progress = Text.translatable(key,
                     org.agmas.noellesroles.client.ui.btt.BttLawyerPick.picks().size(),
                     org.agmas.noellesroles.client.ui.btt.BttLawyerPick.needed(player));
             context.drawTextWithShadow(textRenderer, progress,

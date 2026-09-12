@@ -76,8 +76,12 @@ public final class BttGuessReceiver {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
-            if (!BttRoles.isPlayingAs(gwc, user, BttRoles.LAWYER)) return;
-            lawyer(user, gwc, payload.picks());
+            // C-125：同一"多指名"上行包按角色分派（律师 <起诉> / 绳艺师 <拘束> 任意两人）
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.LAWYER)) {
+                lawyer(user, gwc, payload.picks());
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.RIGGER)) {
+                rigger(user, gwc, payload.picks());
+            }
         });
         ServerPlayNetworking.registerGlobalReceiver(BttGuessC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity user = context.player();
@@ -164,8 +168,6 @@ public final class BttGuessReceiver {
                 BttKidnapper.swallow(user, target, BttPlayerComponent.KEY.get(target));
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.DETECTIVE)) {
                 detective(user, target, gwc);
-            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.RIGGER)) {
-                rigger(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PHARMACIST)) {
                 pharmacist(user, target);
             }
@@ -377,18 +379,29 @@ public final class BttGuessReceiver {
                 target.getName().getString()).withColor(colorOf(user)), true);
     }
 
-    // ===== 绳艺师：<拘束> 目标 30s（docx 2026-09-12），CD 60s【待办：docx 为"任意两个人"，现为身边者单人】 =====
+    // ===== 绳艺师：<拘束> **任意两个人** 30 秒，CD 1 分钟（docx 2026-09-12；C-125 改为 E 键多指名） =====
 
-    private static void rigger(ServerPlayerEntity user, ServerPlayerEntity target) {
+    private static void rigger(ServerPlayerEntity user, GameWorldComponent gwc, java.util.List<java.util.UUID> picks) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
-            return;
+        java.util.List<ServerPlayerEntity> targets = new java.util.ArrayList<>(2);
+        for (java.util.UUID uuid : picks) {
+            if (targets.size() >= 2) break;
+            if (uuid == null || uuid.equals(user.getUuid())) continue;
+            if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p)) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+            if (!targets.contains(p)) targets.add(p);
         }
-        setCd(ability, GameConstants.getInTicks(1, 0));
-        target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
-                net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 30), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子；docx 2026-09-12：30 秒
+        if (targets.size() < 2) return; // 必须点满两人（第三人起忽略）
+        setCd(ability, BttRoleDefs.CD_1MIN);
+        for (ServerPlayerEntity target : targets) {
+            target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
+                    net.minecraft.entity.effect.StatusEffects.SLOWNESS,
+                    GameConstants.getInTicks(0, 30), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子
+        }
+        user.sendMessage(Text.translatable("noellesroles.btt.action.rigger.bound",
+                        targets.get(0).getName().getString(), targets.get(1).getName().getString())
+                .withColor(colorOf(user)), true);
     }
 
     // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====
