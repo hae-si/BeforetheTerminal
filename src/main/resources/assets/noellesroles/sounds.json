@@ -35,5 +35,95 @@
     "sounds": [
       "noellesroles:epilogue/survival"
     ]
+  },
+  "btt_pour_gasoline": {
+    "sounds": [
+      "noellesroles:btt/pour_gasoline"
+    ]
+  },
+  "btt_bomb_beep": {
+    "sounds": [
+      "noellesroles:btt/bomb_beep"
+    ]
+  },
+  "btt_novelist_correct": {
+    "sounds": [
+      "noellesroles:btt/novelist_correct"
+    ]
+  },
+  "btt_flower_grow": {
+    "sounds": [
+      "noellesroles:btt/flower_grow"
+    ]
+  },
+  "btt_flower_bloom": {
+    "sounds": [
+      "noellesroles:btt/flower_bloom"
+    ]
+  },
+  "btt_flower_shield": {
+    "sounds": [
+      "noellesroles:btt/flower_shield"
+    ]
+  },
+  "btt_swapper_swap": {
+    "sounds": [
+      "noellesroles:btt/swapper_swap"
+    ]
+  },
+  "btt_rigger_bind": {
+    "sounds": [
+      "noellesroles:btt/rigger_bind"
+    ]
+  },
+  "btt_thief_scavenge": {
+    "sounds": [
+      "noellesroles:btt/thief_scavenge"
+    ]
+  },
+  "btt_cannibal_eat": {
+    "sounds": [
+      "noellesroles:btt/cannibal_eat"
+    ]
+  },
+  "btt_judgment": {
+    "sounds": [
+      "noellesroles:btt/judgment"
+    ]
+  },
+  "btt_broadcast_on": {
+    "sounds": [
+      "noellesroles:btt/broadcast_on"
+    ]
+  },
+  "btt_broadcast_off": {
+    "sounds": [
+      "noellesroles:btt/broadcast_off"
+    ]
+  },
+  "btt_virgin_death": {
+    "sounds": [
+      "noellesroles:btt/virgin_death"
+    ]
+  },
+  "btt_star_death": {
+    "sounds": [
+      "noellesroles:btt/star_death"
+    ]
+  },
+  "btt_kidnapper_digest": {
+    "sounds": [
+      "noellesroles:btt/kidnapper_digest"
+    ]
+  },
+  "btt_ui_key_e": {
+    "sounds": [
+      "noellesroles:btt/ui_key_e"
+    ]
+  },
+  "btt_ui_key_g": {
+    "sounds": [
+      "noellesroles:btt/ui_key_g"
+    ]
   }
 }
