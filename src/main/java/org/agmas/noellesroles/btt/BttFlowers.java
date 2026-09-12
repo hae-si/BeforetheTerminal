@@ -103,11 +103,15 @@ public final class BttFlowers {
                 f.stage = 1;
                 f.stageTicks = 0;
                 spawnEntity(f, new ItemStack(SPROUT_ITEM));
+                world.playSound(null, f.pos, BttSounds.FLOWER_GROW,
+                        net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.0F); // C-128：小花生长音
                 hintNearby(f, net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.nearby"));
             } else if (f.stage == 1 && f.stageTicks >= SPROUT_TICKS) {
                 f.stage = 2;
                 f.stageTicks = 0;
                 spawnEntity(f, new ItemStack(BLOOM_ITEM));
+                world.playSound(null, f.pos, BttSounds.FLOWER_GROW,
+                        net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 0.8F); // C-128：开花音（同键，低音高）
             }
             if (f.entity != null && f.entity.isRemoved()) f.entity = null;
             if (f.entity != null && f.stageTicks > 0 && f.stageTicks % ENTITY_REFRESH == 0) {
@@ -129,6 +133,8 @@ public final class BttFlowers {
                 ServerPlayerEntity touched = nearestPlayer(f, gardener);
                 if (touched == null) continue;
                 ServerPlayerEntity owner = world.getPlayerByUuid(f.gardener) instanceof ServerPlayerEntity o ? o : null;
+                world.playSound(null, f.pos, BttSounds.FLOWER_BLOOM,
+                        net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.0F); // C-128：成花吞噬音
                 GameFunctions.killPlayer(touched, true, owner, BttDeathReasons.BLOOM);
                 discard(f);
                 FLOWERS.remove(f);

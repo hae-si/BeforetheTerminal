@@ -71,6 +71,9 @@ public final class BttEvents {
             if (!gwc0.isRole(victim, org.agmas.noellesroles.btt.BttRoles.GARDENER)) return true;
             if (BttFlowers.count(sw) <= 0) return true;
             BttFlowers.removeOne(sw);
+            // C-128：成花替死音
+            victim.getWorld().playSound(null, victim.getBlockPos(), BttSounds.FLOWER_SHIELD,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             // C-098：花匠技能反馈（动作栏）用身份色
             victim.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.shield")
                     .withColor(org.agmas.noellesroles.btt.BttRoles.GARDENER.color()), true);
@@ -318,9 +321,8 @@ public final class BttEvents {
                         }
                     } else if (bc.beepTimer > 0) {
                         if (bc.beepTimer % 6 == 0) {
-                            // C-113：改物理器件音（原为乐音 BLOCK_NOTE_BLOCK_PLING；复用本 mod 的器件 beep）
-                            world.playSound(null, p.getBlockPos(),
-                                    net.minecraft.sound.SoundEvent.of(net.minecraft.util.Identifier.of("noellesroles", "role_mine_beep")),
+                            // C-113：改物理器件音；C-128：改用炸弹专属音效键（原为 NR 矿雷音 role_mine_beep）
+                            world.playSound(null, p.getBlockPos(), BttSounds.BOMB_BEEP,
                                     net.minecraft.sound.SoundCategory.PLAYERS, 2.0F, 1.0F);
                         }
                         int sec = (bc.beepTimer + 19) / 20;

@@ -84,6 +84,9 @@ public final class BttCultLeader {
         world.getPlayers().forEach(p -> p.sendMessage(
                 Text.translatable("noellesroles.btt.action.cult_leader.judgment",
                         leader.getName().getString()).withColor(BttRoles.CULT_LEADER.color()), true));
+        // C-128：审判音（全车可闻）
+        world.playSound(null, leader.getBlockPos(), BttSounds.JUDGMENT,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         for (ServerPlayerEntity p : new java.util.ArrayList<>(world.getPlayers())) {
             if (p == leader) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;

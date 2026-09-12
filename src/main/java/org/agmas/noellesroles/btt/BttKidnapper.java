@@ -50,6 +50,9 @@ public final class BttKidnapper {
         ability.cooldown = COOLDOWN_TICKS;
         ability.sync();
         enter(user, target, targetPc);
+        // C-128：饕餮消化音
+        user.getServerWorld().playSound(null, user.getBlockPos(), BttSounds.KIDNAPPER_DIGEST,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         user.sendMessage(Text.translatable("noellesroles.btt.action.kidnapper.swallow", target.getName().getString())
                 .withColor(BttRoles.KIDNAPPER.color()), true);
         target.sendMessage(Text.translatable("noellesroles.btt.action.kidnapper.swallowed")

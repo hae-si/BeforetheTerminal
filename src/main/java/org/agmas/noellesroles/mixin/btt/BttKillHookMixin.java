@@ -66,6 +66,9 @@ public abstract class BttKillHookMixin {
 
         // === ① 全局：明星死亡通知仅乘客（doc：中立/凶手/外人不收；P2A-002） ===
         if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.STAR)) {
+            // C-128：明星死亡音（在尸体处）
+            world.playSound(null, victim.getBlockPos(), org.agmas.noellesroles.btt.BttSounds.STAR_DEATH,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             for (ServerPlayerEntity p : world.getPlayers()) {
                 if (gwc.isInnocent(p)) {
                     // C-098：身份通知（动作栏）用明星的身份色
@@ -73,6 +76,12 @@ public abstract class BttKillHookMixin {
                             .withColor(org.agmas.noellesroles.btt.BttRoles.STAR.color()), true);
                 }
             }
+        }
+
+        // === ① 全局：处子死亡音（C-128；处子死亡本就会让全体透视其尸体 1 分钟） ===
+        if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.VIRGIN)) {
+            world.playSound(null, victim.getBlockPos(), org.agmas.noellesroles.btt.BttSounds.VIRGIN_DEATH,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         }
 
         // === ① 全局：恋人殉情（C-061；doc 死因"殉情"） ===

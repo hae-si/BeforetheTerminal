@@ -120,6 +120,8 @@ public final class BttAbilityKey {
                 e -> e instanceof net.minecraft.entity.player.PlayerEntity && e != player, (float) NEARBY_RANGE);
         if (hit instanceof net.minecraft.util.hit.EntityHitResult ehr
                 && ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity target) {
+            // C-128：通用 G 键选择音（客户端本机播放，只有自己听得到）
+            player.playSound(org.agmas.noellesroles.btt.BttSounds.UI_KEY_G, 1.0F, 1.0F);
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(target.getUuid(), ""));
         }

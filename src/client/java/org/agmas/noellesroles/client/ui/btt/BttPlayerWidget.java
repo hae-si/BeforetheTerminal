@@ -18,6 +18,8 @@ public class BttPlayerWidget extends SelectPlayerWidget {
     public BttPlayerWidget(LimitedInventoryScreen screen, int x, int y, UUID targetUUID, PlayerListEntry targetPlayerEntry) {
         super(screen, x, y, targetUUID, targetPlayerEntry, a -> {
             if (AbilityPlayerComponent.KEY.get(screen.player).cooldown > 0) return;
+            // C-128：通用 E 键选择音（客户端本机播放，只有自己听得到）
+            screen.player.playSound(org.agmas.noellesroles.btt.BttSounds.UI_KEY_E, 1.0F, 1.0F);
             if (BttAbilityKey.isMultiPick(GameWorldComponent.KEY.get(screen.player.getWorld()).getRole(screen.player))) {
                 // 再点一次 = 取消该指名（点了才会满，误点可撤回；swapper 的两段式没有这个余地）
                 if (BttLawyerPick.isPicked(targetUUID)) {

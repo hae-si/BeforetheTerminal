@@ -65,6 +65,9 @@ public final class BttArsonist {
         victim.scheduleGasolineHint(BttDelayed.randomDelayTicks(user.getRandom()));
 
         setCd(ability, baseCooldownTicks(gwc.getRoles().size()));
+        // C-128：浇汽油音（在目标处播放，附近可闻）
+        target.getWorld().playSound(null, target.getBlockPos(), BttSounds.POUR_GASOLINE,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         user.sendMessage(Text.translatable("noellesroles.btt.action.arsonist.doused", target.getName().getString())
                 .withColor(BttRoles.ARSONIST.color()), true);
 

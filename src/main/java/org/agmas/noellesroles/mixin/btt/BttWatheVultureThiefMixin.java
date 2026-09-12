@@ -52,6 +52,10 @@ public abstract class BttWatheVultureThiefMixin {
         vulture.sync();
         // C-113：窃贼是**搜刮**不是"吃尸"（用户裁定，参照 NRS）——去掉 burp 音与缓慢
         death.vultured = true;
+        // C-128：搜刮音
+        user.getServerWorld().playSound(null, user.getBlockPos(),
+                org.agmas.noellesroles.btt.BttSounds.THIEF_SCAVENGE,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         // C-095：搜刮成功后短暂透视全员 10 秒（NRS vulture setHighlightTicks 同值；BTT 走本机描边，不吃 fork 的 GetInstinctHighlight）
         BttPlayerComponent.KEY.get(user).setThiefReveal(GameConstants.getInTicks(0, 10));
 

@@ -23,6 +23,10 @@ public final class BttBroadcast {
         BttPlayerComponent pc = BttPlayerComponent.KEY.get(attendant);
         pc.broadcastOn = !pc.broadcastOn;
         pc.sync();
+        // C-128：广播开/关音
+        attendant.getServerWorld().playSound(null, attendant.getBlockPos(),
+                pc.broadcastOn ? BttSounds.BROADCAST_ON : BttSounds.BROADCAST_OFF,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         attendant.sendMessage(Text.translatable(pc.broadcastOn
                         ? "noellesroles.btt.action.attendant.broadcast_on"
                         : "noellesroles.btt.action.attendant.broadcast_off")

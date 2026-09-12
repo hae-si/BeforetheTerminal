@@ -63,6 +63,9 @@ public final class BttGuessReceiver {
                 ability.cooldown = GameConstants.getInTicks(1, 0);
                 ability.sync();
                 BttSecondIdentity.borrow(user, dead, GameConstants.getInTicks(1, 0)); // 借 60 秒（与冷却同步）【待作者】
+                // C-128：食人族食用音
+                user.getServerWorld().playSound(null, user.getBlockPos(), BttSounds.CANNIBAL_EAT,
+                        net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
                 user.sendMessage(Text.translatable("noellesroles.btt.action.cannibal.learn",
                                 BttIdentity.displayName(dead).getString())
                         .withColor(BttRoles.CANNIBAL.color()), true);
@@ -202,6 +205,9 @@ public final class BttGuessReceiver {
         if (guessed != null && guessed.identifier().getPath().equalsIgnoreCase(payload.guess())) {
             BttPlayerComponent userComp = BttPlayerComponent.KEY.get(user);
             int hits = ++userComp.novelistHits;
+            // C-128：小说家猜对音（本人可闻）
+            user.getServerWorld().playSound(null, user.getBlockPos(), BttSounds.NOVELIST_CORRECT,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             // doc 口径文案（用户指定 2026-09-05）；猜错不播报
             broadcast(user, Text.translatable("noellesroles.btt.action.novelist.correct").withColor(colorOf(user)));
             // 独胜判定前移到 receiver（2026-09-07 用户指令，与窃贼 BttWatheVultureThiefMixin 同模式）：
@@ -389,6 +395,9 @@ public final class BttGuessReceiver {
         java.util.List<ServerPlayerEntity> riggerTargets = twoAlive(user, picks);
         if (riggerTargets.size() < 2) return;
         setCd(riggerAbility, BttRoleDefs.CD_1MIN);
+        // C-128：拘束音（在施法者处播放）
+        user.getServerWorld().playSound(null, user.getBlockPos(), BttSounds.RIGGER_BIND,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         for (ServerPlayerEntity target : riggerTargets) {
             target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
                     net.minecraft.entity.effect.StatusEffects.SLOWNESS,
@@ -420,6 +429,9 @@ public final class BttGuessReceiver {
         a.refreshPositionAfterTeleport(posB.x, posB.y, posB.z);
         b.refreshPositionAfterTeleport(posA.x, posA.y, posA.z);
         setCd(ability, BttRoleDefs.CD_1MIN);
+        // C-128：交换音（在施法者处播放）
+        user.getServerWorld().playSound(null, user.getBlockPos(), BttSounds.SWAPPER_SWAP,
+                net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
         user.sendMessage(Text.translatable("noellesroles.btt.action.swapper.swapped",
                         a.getName().getString(), b.getName().getString())
                 .withColor(colorOf(user)), true);
