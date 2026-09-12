@@ -105,6 +105,17 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int guardedTicks = 0;
     /** 寄生者 <寄生>：宿主 UUID 字符串（空 = 未寄生；宿主存活时寄生者不会死亡；服务端，C-117） */
     public String parasiteHost = "";
+    /**
+     * 黑死病（C-134）：本玩家是否**当前病人**（宿主躯体）。
+     * 开局 = 黑死病本人（"初始病人形态"）；被杀时病原体转移到击杀者 → 标记随转移移动。
+     * **客户端可见**（病人需要知道自己成了宿主：只有病人跳车或精神崩溃才终结黑死病，见 ROLE_DESIGN）。
+     */
+    public boolean blackdeathPatient = false;
+    /**
+     * 黑死病（C-134）：病原体形态当前附身的宿主 UUID（空 = 尚未附身／本体仍是病人）。
+     * 由黑死病玩家自己持有；非空时黑死病玩家已是旁观态（病原体），仍在**凶手对讲机频道**（见语音中继豁免）。
+     */
+    public String blackdeathHost = "";
     /** 贵族「族人」UUID 列表（逗号分隔；客户端可见——本人注视显示「族人」；C-121） */
     public String kins = "";
     /** 飞行家「阵营代表」UUID 列表（逗号分隔；客户端可见；C-121） */
@@ -335,6 +346,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         thiefRevealTicks = 0;
         professorShield = false;
         fakeDead = false;
+        blackdeathPatient = false;
+        blackdeathHost = "";
         swallowedBy = "";
         borrowedRole = "";
         borrowedTicks = 0;
@@ -391,6 +404,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("thiefRevealTicks", thiefRevealTicks);
         tag.putBoolean("professorShield", professorShield);
         tag.putBoolean("fakeDead", fakeDead);
+        tag.putBoolean("blackdeathPatient", blackdeathPatient);
+        tag.putString("blackdeathHost", blackdeathHost);
         tag.putString("swallowedBy", swallowedBy);
         tag.putString("borrowedRole", borrowedRole);
         tag.putInt("borrowedTicks", borrowedTicks);
@@ -446,6 +461,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.thiefRevealTicks = tag.getInt("thiefRevealTicks");
         this.professorShield = tag.contains("professorShield") && tag.getBoolean("professorShield");
         this.fakeDead = tag.contains("fakeDead") && tag.getBoolean("fakeDead");
+        this.blackdeathPatient = tag.contains("blackdeathPatient") && tag.getBoolean("blackdeathPatient");
+        this.blackdeathHost = tag.contains("blackdeathHost") ? tag.getString("blackdeathHost") : "";
         this.swallowedBy = tag.contains("swallowedBy") ? tag.getString("swallowedBy") : "";
         this.borrowedRole = tag.contains("borrowedRole") ? tag.getString("borrowedRole") : "";
         this.borrowedTicks = tag.getInt("borrowedTicks");

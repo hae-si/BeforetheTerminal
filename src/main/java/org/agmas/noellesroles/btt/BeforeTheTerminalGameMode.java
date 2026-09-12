@@ -101,6 +101,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         BttLocksmith.clearAll(world); // C-119：清上一局残留的门锁（jammedTime 存在方块 NBT）
         BttGroup.assignAll(world, gameWorld); // C-121：贵族「族人」/ 飞行家「阵营代表」名单
         BttDecoy.assignAll(world, gameWorld); // C-129：酒鬼/疯子 = 认知覆盖（假身份 + 酒鬼永久醉）
+        BttBlackdeath.onRoundStart(world, players); // C-134：黑死病本人 = 初始病人形态
         LOGGER.info("[BTT] round initialized: {} players seated.", players.size());
 
         // 身份宣告：wathe 原版迎新覆盖层（身份名+凶手数+乘客数）。游戏内聊天框不可见，
@@ -239,7 +240,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
             Role role = gameWorld.getRole(player);
             if (role == null) continue;
             anySeats = true;
-            if (role == BttRoles.BLACKDEATH) blackdeathPresent = true;
+            // C-134 黑死病：在场判定不看"本人是否存活"，而看**病原体是否还在某个病人身上**
+            // （本体可已被杀，病原体附身于存活病人；无击杀者死亡/病人精神崩溃 → 终结 → 此后按已死参与结算）
+            if (role == BttRoles.BLACKDEATH) {
+                blackdeathPresent = true;
+                if (BttBlackdeath.isPresent(world, player)) {
+                    blackdeathAlive = true;
+                    alivePrincipals++; // 额外的凶手（不占 N//6 名额）
+                }
+                continue; // 不再走常规存活分支（防重复计数）
+            }
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
                 // 教团成员（救世主/信徒）：阵营变为教团——从常规结局计数中移除（实现选择，待作者复核）
                 if (role == BttRoles.MESSIAH || BttPlayerComponent.KEY.get(player).isCult()) {
@@ -258,11 +268,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     continue;
                 }
                 // C-037 三分类 + docx 2026-09-07：黑死病=狂人中立席位但阵营归属**凶手**（额外的凶手，
-                // 胜负与其他凶手一致）——计入凶手侧、不计入乘客侧
-                if (role == BttRoles.BLACKDEATH) {
-                    blackdeathAlive = true;
-                    alivePrincipals++;
-                } else if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
+                // 胜负与其他凶手一致）——已在上面单独处理（C-134 起按"病原体在场"判定）
+                if (faction == BttRoles.Faction.PRINCIPAL) alivePrincipals++;
                 else if (faction == BttRoles.Faction.ACCOMPLICE) aliveAccomplices++;
                 else if (role == BttRoles.TRAITOR || role == BttRoles.EX_TRAITOR) aliveAccomplices++; // B2：叛徒系凶手阵营、非主犯
                 else if (faction == BttRoles.Faction.OUTSIDER) aliveOutsiderNeutrals++;
@@ -446,6 +453,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             }
         }
         BttFlowers.tick(world, gardener);
+        BttBlackdeath.tick(world); // C-134：病原体相机跟随宿主 + 病人精神崩溃判定
 
         if (ending != BttEndings.Ending.NONE && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE) {
             LOGGER.info("[BTT] ending decided: {} (aliveP={} alivePr={} aliveAc={} aliveON={} station={})",

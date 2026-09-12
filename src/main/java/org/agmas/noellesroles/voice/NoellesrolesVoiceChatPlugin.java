@@ -113,13 +113,16 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         ServerPlayerEntity speaker = serverPlayerOf(event.getSenderConnection());
         if (speaker == null) return;
         if (!BttIdentity.isBttMode(speaker.getWorld())) return;
-        if (!GameFunctions.isPlayerAliveAndSurvival(speaker)) return;
+        // C-134：黑死病**病原体形态**（无体，旁观态）仍在凶手对讲机频道
+        if (!GameFunctions.isPlayerAliveAndSurvival(speaker)
+                && !org.agmas.noellesroles.btt.BttBlackdeath.isBodylessPathogen(speaker)) return;
         if (!org.agmas.noellesroles.item.WalkieTalkieItem.isHeld(speaker)) return;
         VoicechatServerApi api = event.getVoicechat();
         double near = api.getVoiceChatDistance();
         for (ServerPlayerEntity listener : speaker.getServerWorld().getPlayers()) {
             if (listener == speaker) continue;
-            if (!GameFunctions.isPlayerAliveAndSurvival(listener)) continue;
+            if (!GameFunctions.isPlayerAliveAndSurvival(listener)
+                    && !org.agmas.noellesroles.btt.BttBlackdeath.isBodylessPathogen(listener)) continue;
             if (!org.agmas.noellesroles.item.WalkieTalkieItem.isCarried(listener)) continue;
             if (speaker.squaredDistanceTo(listener) <= near * near) continue; // 已在原版近距投递范围内
             VoicechatConnection con = api.getConnectionOf(listener.getUuid());

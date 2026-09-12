@@ -234,11 +234,11 @@ public final class BttRoles {
     public static final Role GARDENER = register("gardener", 0x7FFFD4, Faction.OUTSIDER);
     /**
      * 黑死病：狂人中立席位但**阵营归属凶手**（docx 2026-09-07），不作乘客侧计数；个人胜负=特殊结局【待作者：映射细节】。
-     * mood 保持 REAL（"精神崩溃"=理智归零的终结条件依赖 REAL 的理智消耗/需求；FAKE 会让 getMood 恒 1）。
-     * C-133：HUD 旗帜改挂**凶手红旗** = 客户端 `BttMoodFlagMixin` 对 renderCivilian 的特例，不改本元数据。
+     * C-134（作者 2026-09-13 澄清）：**理智 = 凶手理智** → mood {@code FAKE}（无理智/需求、HUD 挂凶手红旗）。
+     * 「精神崩溃」只可能发生在**被附身的病人**身上（病人按自己的身份跑理智，乘客病人会耗尽理智；见 {@link BttBlackdeath}）。
      */
     public static final Role BLACKDEATH = register("blackdeath", 0x800000, Faction.MAD,
-            false, false, Role.MoodType.REAL, 200, false);
+            false, false, Role.MoodType.FAKE, 200, false);
     /** 异端分子：狂人中立——乘客旗标；胜负对调为实现期逻辑（特殊结局） */
     public static final Role HERETIC = register("heretic", 0x800000, Faction.MAD);
 

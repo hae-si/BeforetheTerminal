@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * **独行中立蓝旗 hud/mood_ghost**、**外人中立品红旗 hud/mood_jester**（本 mixin 在 renderKiller 拦截改绘）。
  * 狂人中立已改 REAL（BttRoles）→ 自动走乘客绿旗。与 NR JesterMoodRenderer 对小丑的处理互不冲突
  * （双方对 BTT 小丑都画 mood_ghost，先到先 cancel，结果一致）。
+ * <p>
+ * C-134：黑死病元数据已改 {@code MoodType.FAKE}（凶手理智）→ **原生走 renderKiller 红**，无需本 mixin 特例。
  */
 @Mixin(MoodRenderer.class)
 public abstract class BttMoodFlagMixin {
@@ -33,32 +35,6 @@ public abstract class BttMoodFlagMixin {
 
     private static final Identifier GHOST = Identifier.of(Noellesroles.MOD_ID, "hud/mood_ghost");
     private static final Identifier JESTER = Identifier.of(Noellesroles.MOD_ID, "hud/mood_jester");
-
-    /**
-     * 黑死病（C-133，用户 2026-09-13"旗帜应该是红色"）：身份属狂人（REAL → 原生走 renderCivilian 绿旗），
-     * 但阵营归属凶手 → 改绘凶手红旗（mood 仍 REAL，理智消耗/需求/崩溃不变）。★不是 FAKE：FAKE 会让
-     * {@code PlayerMoodComponent.getMood()} 恒 1，直接抹掉"精神崩溃"这一终结条件。
-     * 绘制参数与 wathe {@code renderKiller} 一致（用公开的 {@code MoodRenderer.MOOD_KILLER}，不改 shadow）。
-     */
-    @Inject(method = "renderCivilian", at = @At("HEAD"), cancellable = true)
-    private static void bttBlackdeathFlag(TextRenderer textRenderer, DrawContext context, float prevMood, CallbackInfo ci) {
-        var viewer = MinecraftClient.getInstance().player;
-        if (viewer == null || !BttIdentity.isBttMode(viewer.getWorld())) return;
-        GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
-        if (gwc.getRole(viewer) != BttRoles.BLACKDEATH) return;
-        context.getMatrices().push();
-        context.getMatrices().translate(0.0F, 3.0F * moodOffset, 0.0F);
-        context.drawGuiTexture(MoodRenderer.MOOD_KILLER, 5, 6, 14, 17);
-        context.getMatrices().pop();
-        context.getMatrices().push();
-        context.getMatrices().translate(0.0F, 10.0F * moodOffset, 0.0F);
-        context.getMatrices().translate(26.0F, 8 + 9, 0.0F);
-        context.getMatrices().scale((moodTextWidth - 8.0F) * moodRender, 1.0F, 1.0F);
-        context.fill(0, 0, 1, 1, net.minecraft.util.math.MathHelper.hsvToRgb(0F, 1.0F, 0.6F)
-                | (int) (moodAlpha * 255.0F) << 24);
-        context.getMatrices().pop();
-        ci.cancel();
-    }
 
     @Inject(method = "renderKiller", at = @At("HEAD"), cancellable = true)
     private static void bttFactionFlag(TextRenderer textRenderer, DrawContext context, CallbackInfo ci) {

@@ -491,5 +491,9 @@
   "noellesroles.btt.action.inherit.kit": "你继承了不在场的%s（%s）的行头。",
   "noellesroles.btt.action.rel.lover": "你的恋人是 %s。",
   "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。",
-  "noellesroles.btt.action.gardener.nearby": "附近传来花香……"
+  "noellesroles.btt.action.gardener.nearby": "附近传来花香……",
+  "noellesroles.btt.action.blackdeath.possess": "你附身于 %s 体内……",
+  "noellesroles.btt.action.blackdeath.patient": "一阵恶寒爬上脊背——你成了黑死病的病人。",
+  "noellesroles.btt.action.blackdeath.ended": "病原体消散了。",
+  "death_reason.noellesroles.collapse": "崩溃"
 }
