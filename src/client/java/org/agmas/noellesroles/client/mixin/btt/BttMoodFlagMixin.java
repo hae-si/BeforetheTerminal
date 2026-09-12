@@ -30,7 +30,6 @@ public abstract class BttMoodFlagMixin {
     @Shadow public static float moodTextWidth;
     @Shadow public static float moodRender;
     @Shadow public static float moodAlpha;
-    @Shadow private static void renderKiller(TextRenderer textRenderer, DrawContext context) {}
 
     private static final Identifier GHOST = Identifier.of(Noellesroles.MOD_ID, "hud/mood_ghost");
     private static final Identifier JESTER = Identifier.of(Noellesroles.MOD_ID, "hud/mood_jester");
@@ -39,6 +38,7 @@ public abstract class BttMoodFlagMixin {
      * 黑死病（C-133，用户 2026-09-13"旗帜应该是红色"）：身份属狂人（REAL → 原生走 renderCivilian 绿旗），
      * 但阵营归属凶手 → 改绘凶手红旗（mood 仍 REAL，理智消耗/需求/崩溃不变）。★不是 FAKE：FAKE 会让
      * {@code PlayerMoodComponent.getMood()} 恒 1，直接抹掉"精神崩溃"这一终结条件。
+     * 绘制参数与 wathe {@code renderKiller} 一致（用公开的 {@code MoodRenderer.MOOD_KILLER}，不改 shadow）。
      */
     @Inject(method = "renderCivilian", at = @At("HEAD"), cancellable = true)
     private static void bttBlackdeathFlag(TextRenderer textRenderer, DrawContext context, float prevMood, CallbackInfo ci) {
@@ -46,7 +46,17 @@ public abstract class BttMoodFlagMixin {
         if (viewer == null || !BttIdentity.isBttMode(viewer.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
         if (gwc.getRole(viewer) != BttRoles.BLACKDEATH) return;
-        renderKiller(textRenderer, context);
+        context.getMatrices().push();
+        context.getMatrices().translate(0.0F, 3.0F * moodOffset, 0.0F);
+        context.drawGuiTexture(MoodRenderer.MOOD_KILLER, 5, 6, 14, 17);
+        context.getMatrices().pop();
+        context.getMatrices().push();
+        context.getMatrices().translate(0.0F, 10.0F * moodOffset, 0.0F);
+        context.getMatrices().translate(26.0F, 8 + 9, 0.0F);
+        context.getMatrices().scale((moodTextWidth - 8.0F) * moodRender, 1.0F, 1.0F);
+        context.fill(0, 0, 1, 1, net.minecraft.util.math.MathHelper.hsvToRgb(0F, 1.0F, 0.6F)
+                | (int) (moodAlpha * 255.0F) << 24);
+        context.getMatrices().pop();
         ci.cancel();
     }
 
