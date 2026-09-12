@@ -493,7 +493,5 @@
   "noellesroles.btt.action.snake_charmer.wrong": "他不是主犯。",
   "noellesroles.btt.action.inherit.kit": "你继承了不在场的%s（%s）的行头。",
   "noellesroles.btt.action.rel.lover": "你的恋人是 %s。",
-  "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。",
-  "announcement.win.noellesroles.godfather": "凶手胜利！",
-  "announcement.win.noellesroles.vigilante": "乘客胜利！"
+  "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。"
 }
