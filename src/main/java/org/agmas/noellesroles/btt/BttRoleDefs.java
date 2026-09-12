@@ -148,10 +148,10 @@ public final class BttRoleDefs {
         def(BttRoles.MEYUUBYOU)
                 .kit(p -> initialAbilityCd(p, CD_1MIN))
                 .onTick((player, world, gwc) -> BttSpirit.tick(player, gwc));
-        // 窃贼：初始[万能钥匙]；<搜刮> docx 未给冷却 → C-099 按统一值 1 分钟（初始 CD 同值）
+        // 窃贼：初始[万能钥匙]；<搜刮> docx 2026-09-12 = 10 秒（初始 CD 按 C-099 与自身冷却等长）
         def(BttRoles.THIEF).kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.KEY));
-            initialAbilityCd(p, CD_1MIN);
+            initialAbilityCd(p, GameConstants.getInTicks(0, 10));
         });
         // 纵火犯：初始[万能钥匙] + <浇汽油> G 键直发（C-092 抄 NRS 病原体；初始 CD 10s，动态冷却见 BttArsonist）
         def(BttRoles.ARSONIST).kit(p -> {

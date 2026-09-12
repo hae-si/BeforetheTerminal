@@ -436,7 +436,7 @@ public final class BttGuessReceiver {
                 target.getName().getString()).withColor(colorOf(user)), true);
     }
 
-    // ===== 绳艺师：<拘束> 目标 15s，CD 60s =====
+    // ===== 绳艺师：<拘束> 目标 30s（docx 2026-09-12），CD 60s【待办：docx 为"任意两个人"，现为身边者单人】 =====
 
     private static void rigger(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
@@ -447,7 +447,7 @@ public final class BttGuessReceiver {
         }
         setCd(ability, GameConstants.getInTicks(1, 0));
         target.addStatusEffect(new net.minecraft.entity.effect.StatusEffectInstance(
-                net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 15), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子
+                net.minecraft.entity.effect.StatusEffects.SLOWNESS, GameConstants.getInTicks(0, 30), 250, false, false)); // C-113：绑缚的缓慢隐藏粒子；docx 2026-09-12：30 秒
     }
 
     // ===== 药剂师：<喂药> 解毒；健康人回满理智（docx 2026-09-07），CD 60s =====

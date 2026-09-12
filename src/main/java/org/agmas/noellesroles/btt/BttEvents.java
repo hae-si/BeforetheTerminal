@@ -18,6 +18,8 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import org.agmas.harpymodloader.events.ModdedRoleAssigned;
 
@@ -220,6 +222,9 @@ public final class BttEvents {
             for (PlayerEntity p : victim.getWorld().getPlayers()) {
                 if (gwc.isRole(p, BttRoles.RIOT) && GameFunctions.isPlayerAliveAndSurvival(p)) return true;
             }
+            // docx 2026-09-12：被处决时**发出失去护盾的声音**，不受伤
+            victim.getWorld().playSound(null, victim.getBlockPos(), SoundEvents.ITEM_SHIELD_BREAK,
+                    SoundCategory.PLAYERS, 1.0F, 1.0F);
             return false; // 明星枪免
         });
     }
