@@ -68,6 +68,25 @@ public final class BttDecoy {
         return byId(BttPlayerComponent.KEY.get(player).decoyRole) != null;
     }
 
+    /**
+     * 疯子：把**真正主犯**的狂气镜像到本人的余额字段（每 tick；C-129b）。
+     * 这样凶手商店 UI 里疯子看到的数字与主犯一致（含负数）。主犯已死/离线时不动（此时疯子也买不了）。
+     */
+    public static void tickBalance(ServerPlayerEntity player, BttPlayerComponent pc, GameWorldComponent gwc) {
+        if (gwc.getRole(player) != BttRoles.LUNATIC) return;
+        for (ServerPlayerEntity p : player.getServerWorld().getPlayers()) {
+            if (BttRoles.factionOf(gwc.getRole(p)) != BttRoles.Faction.PRINCIPAL) continue;
+            if (!dev.doctor4t.wathe.game.GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+            int principalBalance = dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(p).balance;
+            var own = dev.doctor4t.wathe.cca.PlayerShopComponent.KEY.get(player);
+            if (own.balance != principalBalance) {
+                own.balance = principalBalance;
+                own.sync();
+            }
+            return;
+        }
+    }
+
     // ===== 内部 =====
 
     /** 平民乘客池（排除带道具者与当局已出场者由 {@link #pickUnplayed} 处理） */

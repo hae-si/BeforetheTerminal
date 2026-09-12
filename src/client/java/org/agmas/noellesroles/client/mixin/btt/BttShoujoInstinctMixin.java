@@ -70,6 +70,21 @@ public abstract class BttShoujoInstinctMixin {
         }
         if (!WatheClient.isInstinctEnabled()) return;
         if (!gwc.canUseKillerFeatures(viewer)) return;
+        // ⑦ 疯子（C-129b，docx）：疯子透视**真正的主犯凶手**为绿色；主犯凶手透视**疯子**为黄色
+        Role viewerRole = gwc.getRole(viewer);
+        Role targetRole = gwc.getRole(p);
+        if (viewerRole == BttRoles.LUNATIC && targetRole != null
+                && BttRoles.factionOf(targetRole) == BttRoles.Faction.PRINCIPAL) {
+            cir.setReturnValue(INSTINCT_GREEN);
+            cir.cancel();
+            return;
+        }
+        if (targetRole == BttRoles.LUNATIC && viewerRole != null
+                && BttRoles.factionOf(viewerRole) == BttRoles.Faction.PRINCIPAL) {
+            cir.setReturnValue(0xFFFF00);
+            cir.cancel();
+            return;
+        }
         // ④ 罂粟农（C-063）：存活时凶手本能看所有人都是绿——覆盖下方全部配色
         for (var op : viewer.getWorld().getPlayers()) {
             if (op == viewer || !op.isAlive()) continue;

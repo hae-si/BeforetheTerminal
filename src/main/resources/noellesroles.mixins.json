@@ -8,6 +8,7 @@
     "GiveCoinsOnMoodCompletionMixin",
     "btt.BttKillHookMixin",
     "btt.BttPickupGateMixin",
+    "btt.BttLunaticFeaturesMixin",
     "btt.BttExecutionMixin",
     "btt.BttRoundEndRoleMixin",
     "btt.BttHornStartMixin",
