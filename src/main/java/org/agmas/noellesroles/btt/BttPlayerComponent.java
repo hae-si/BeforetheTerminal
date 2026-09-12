@@ -57,7 +57,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int muteTicks = 0;
     /** 派对主已变声次数（2 次 → 氦气自爆） */
     public int partyUses = 0;
-    /** C-093 延时技能：待生效标记的类型（abuser/partyhost，空 = 无） */
+    /** C-093 延时技能：待生效标记的类型（comedian，空 = 无） */
     public String delayedKind = "";
     /** C-093 延时技能：待生效标记的目标 UUID 字符串 */
     public String delayedTarget = "";
@@ -93,12 +93,18 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public String borrowedRole = "";
     /** 借来的技能剩余 tick（服务端；0 = 永久到本局结束） */
     public int borrowedTicks = 0;
-    /** 第二身份（C-110）：仅限一次的「夺取身份」是否已用掉（哲人；服务端） */
-    public boolean identitySpent = false;
     /** 饕餮：入腹时被吞者理智是否 >0（决定"理智归零"能否作为释放条件；服务端，C-113） */
     public boolean swallowedMoodOk = false;
     /** 小恶魔 <印记> 的目标 UUID 字符串（空 = 未印记；服务端回合状态，C-111） */
     public String impMark = "";
+    /** 保镖 <守护>：被守护者 UUID 字符串（空 = 未守护；服务端，C-117） */
+    public String guardTarget = "";
+    /** 保镖 <守护>：守护者 UUID 字符串（空 = 未被守护；服务端，C-117） */
+    public String guardedBy = "";
+    /** 保镖 <守护>：守护剩余 tick（>0 时"只有守护者死亡才会死亡"；服务端，C-117） */
+    public int guardedTicks = 0;
+    /** 寄生者 <寄生>：宿主 UUID 字符串（空 = 未寄生；宿主存活时寄生者不会死亡；服务端，C-117） */
+    public String parasiteHost = "";
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -314,8 +320,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         swallowedBy = "";
         borrowedRole = "";
         borrowedTicks = 0;
-        identitySpent = false;
         impMark = "";
+        guardTarget = "";
+        guardedBy = "";
+        guardedTicks = 0;
+        parasiteHost = "";
         swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
@@ -358,8 +367,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("swallowedBy", swallowedBy);
         tag.putString("borrowedRole", borrowedRole);
         tag.putInt("borrowedTicks", borrowedTicks);
-        tag.putBoolean("identitySpent", identitySpent);
         tag.putString("impMark", impMark);
+        tag.putString("guardTarget", guardTarget);
+        tag.putString("guardedBy", guardedBy);
+        tag.putInt("guardedTicks", guardedTicks);
+        tag.putString("parasiteHost", parasiteHost);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
@@ -401,8 +413,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.swallowedBy = tag.contains("swallowedBy") ? tag.getString("swallowedBy") : "";
         this.borrowedRole = tag.contains("borrowedRole") ? tag.getString("borrowedRole") : "";
         this.borrowedTicks = tag.getInt("borrowedTicks");
-        this.identitySpent = tag.contains("identitySpent") && tag.getBoolean("identitySpent");
         this.impMark = tag.contains("impMark") ? tag.getString("impMark") : "";
+        this.guardTarget = tag.contains("guardTarget") ? tag.getString("guardTarget") : "";
+        this.guardedBy = tag.contains("guardedBy") ? tag.getString("guardedBy") : "";
+        this.guardedTicks = tag.getInt("guardedTicks");
+        this.parasiteHost = tag.contains("parasiteHost") ? tag.getString("parasiteHost") : "";
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");

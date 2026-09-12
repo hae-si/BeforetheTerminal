@@ -7,6 +7,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.btt.BttDeathReasons;
+import org.agmas.noellesroles.btt.BttGuard;
 import org.agmas.noellesroles.btt.BttIdentity;
 import java.util.ArrayList;
 import org.agmas.noellesroles.btt.BttPlayerComponent;
@@ -52,12 +53,9 @@ public abstract class BttKillHookMixin {
         // === ① 全局：杀人历史（任何击杀均记录） ===
         BttPlayerComponent.KEY.get(shooter).hasKilled = 1;
 
-        // === ① 全局：永久醉酒解除（走私犯死亡 → 其目标解除，D8） ===
-        if (gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.SMUGGLER)) {
-            for (ServerPlayerEntity p : world.getPlayers()) {
-                BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
-                if (victim.getUuid().toString().equals(c.drunkSource)) c.clearDrunk();
-            }
+        // === ① 全局：保镖死亡带走被守护者 / 宿主死亡解除寄生（C-117） ===
+        if (victim instanceof ServerPlayerEntity serverVictim) {
+            BttGuard.onDeath(serverVictim, world, gwc);
         }
 
         // === ① 全局：独行中立被杀加钱（2026-09-06 策划修订：+100 狂气，同乘客口径） ===

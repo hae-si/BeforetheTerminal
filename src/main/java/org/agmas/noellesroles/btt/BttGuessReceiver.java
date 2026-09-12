@@ -87,11 +87,6 @@ public final class BttGuessReceiver {
             // C-113：炸弹相关不再走 G 键（用户裁定）——传递只保留物品右键
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
-            // 吟游诗人/花匠：<歌唱>/<栽培> 无需目标（G 键直发）
-            if (BttRoles.isPlayingAs(gwc, user, BttRoles.MINSTREL)) {
-                minstrel(user);
-                return;
-            }
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.GARDENER)) {
                 gardener(user);
                 return;
@@ -99,11 +94,6 @@ public final class BttGuessReceiver {
             // 纵火犯：<浇汽油> 最近的未浇湿者（G 键直发；C-092 抄 NRS 病原体，3 格 + 视线）
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.ARSONIST)) {
                 BttArsonist.douse(user, gwc);
-                return;
-            }
-            // 特工：<查看> 本局身份列表（G 键直发）
-            if (BttRoles.isPlayingAs(gwc, user, BttRoles.AGENT)) {
-                agent(user, gwc);
                 return;
             }
             // 工程师：<扫描> 透视全车 10 秒（G 键直发）
@@ -144,23 +134,22 @@ public final class BttGuessReceiver {
                 snakeCharmer(user, target, gwc);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.ASSASSIN)) {
                 assassin(user, target, gwc, payload, guessed);
-            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.SMUGGLER)) {
-                smuggler(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.SUCCUBUS)) {
+                succubus(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.BODYGUARD)) {
+                BttGuard.guard(user, target);
+            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.LEECH)) {
+                BttGuard.parasitize(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.IMP)) {
                 BttImp.mark(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.JOURNALIST)) {
                 journalist(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.COMEDIAN)) {
                 comedian(user, target);
-            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.ABUSER)) {
-                abuser(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PROFESSOR)) {
                 professor(user, target);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.KIDNAPPER)) {
                 BttKidnapper.swallow(user, target, BttPlayerComponent.KEY.get(target));
-            } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.PHILOSOPHER)) {
-                philosopher(user, target, gwc);
-
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.DETECTIVE)) {
                 detective(user, target, gwc);
             } else if (BttRoles.isPlayingAs(gwc, user, BttRoles.RIGGER)) {
@@ -238,24 +227,6 @@ public final class BttGuessReceiver {
         }
     }
 
-    // ===== 特工：<查看> 本局身份列表（G 键直发，无冷却） =====
-
-    private static void agent(ServerPlayerEntity user, GameWorldComponent gwc) {
-        var seen = new java.util.LinkedHashMap<String, java.util.UUID>();
-        for (var p : user.getServerWorld().getPlayers()) {
-            Role r = gwc.getRole(p);
-            if (r == null || seen.containsValue(p.getUuid())) continue;
-            seen.putIfAbsent(BttIdentity.displayName(r).getString(), p.getUuid());
-        }
-        var unique = new java.util.LinkedHashSet<String>();
-        for (var p : user.getServerWorld().getPlayers()) {
-            Role r = gwc.getRole(p);
-            if (r != null) unique.add(BttIdentity.displayName(r).getString());
-        }
-        user.sendMessage(Text.translatable("noellesroles.btt.action.agent.header").withColor(colorOf(user)), true);
-        user.sendMessage(Text.translatable("noellesroles.btt.action.agent.entries", String.join(Text.translatable("noellesroles.btt.action.agent.separator").getString(), unique)).withColor(colorOf(user)), true);
-    }
-
     // ===== 酒保：<灌酒> 身边者醉酒 1 分钟，CD 1 分钟（docx 2026-09-07） =====
 
     private static void bartender(ServerPlayerEntity user, ServerPlayerEntity target) {
@@ -270,26 +241,19 @@ public final class BttGuessReceiver {
         user.sendMessage(Text.translatable("noellesroles.btt.action.common.pour_done").withColor(colorOf(user)), true);
     }
 
-    // ===== 吟游诗人：<歌唱> 全场醉酒 1 分钟，CD 1 分钟（docx 2026-09-11：原 2 分钟） =====
+    // ===== 魅魔（原走私犯改键）：<魅惑> 身边者 → 醉酒 1 分钟；CD 1 分钟（docx 2026-09-12） =====
 
-    private static void minstrel(ServerPlayerEntity user) {
+    private static void succubus(ServerPlayerEntity user, ServerPlayerEntity target) {
         AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
         if (ability.cooldown > 0) return;
-        setCd(ability, BttRoleDefs.CD_1MIN); // C-099
-        for (ServerPlayerEntity p : user.getServerWorld().getPlayers()) {
-            BttPlayerComponent.KEY.get(p).applyDrunk(GameConstants.getInTicks(1, 0));
+        if (user.distanceTo(target) > 6) {
+            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
+            return;
         }
-        user.sendMessage(Text.translatable("noellesroles.btt.action.minstrel.sing").withColor(colorOf(user)), true);
-    }
-
-    // ===== 走私犯：<灌酒> 任何人永久醉酒，CD 30 秒（施加者死亡后解除，D11/D8） =====
-
-    private static void smuggler(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        setCd(ability, GameConstants.getInTicks(0, 30));
-        BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
-        user.sendMessage(Text.translatable("noellesroles.btt.action.common.pour_done").withColor(colorOf(user)), true);
+        setCd(ability, BttRoleDefs.CD_1MIN);
+        BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
+        user.sendMessage(Text.translatable("noellesroles.btt.action.succubus.charm", target.getName().getString())
+                .withColor(colorOf(user)), true);
     }
 
     // ===== 记者：<跟踪> 任意玩家持续透视（**只**描边显式标记；已删「未标记时透视最远者」，C-089）CD 1 分钟（docx 2026-09-11：原 30 秒） =====
@@ -336,26 +300,6 @@ public final class BttGuessReceiver {
     }
 
 
-    // ===== 哲人（C-110）：选择一名在场**平民乘客** → 得到他的能力，他醉酒直到你死亡（docx；仅限一次） =====
-
-    private static void philosopher(ServerPlayerEntity user, ServerPlayerEntity target, GameWorldComponent gwc) {
-        BttPlayerComponent uc = BttPlayerComponent.KEY.get(user);
-        if (uc.identitySpent) return; // 仅限一次（错选也算用掉）
-        uc.identitySpent = true;
-        Role targetRole = gwc.getRole(target);
-        if (targetRole == null || BttRoles.factionOf(targetRole) != BttRoles.Faction.CIVILIAN) {
-            user.sendMessage(Text.translatable("noellesroles.btt.action.philosopher.miss")
-                    .withColor(BttRoles.PHILOSOPHER.color()), true);
-            return;
-        }
-        BttSecondIdentity.takeOver(user, targetRole);
-        // 「他醉酒直到你死亡」：永久醉 + 施加者死亡解除（D8 既有口径）
-        BttPlayerComponent.KEY.get(target).applyPermanentDrunk(user.getUuid());
-        target.sendMessage(Text.translatable("noellesroles.btt.action.philosopher.victim")
-                .withColor(BttRoles.PHILOSOPHER.color()), true);
-        user.sendMessage(BttSecondIdentity.tookOverText(targetRole), true);
-    }
-
     // ===== 教授：<使用药剂> 身边者——目标获得 1 层护盾（免疫下一次致命伤），CD 1 分钟（C-104） =====
 
     private static void professor(ServerPlayerEntity user, ServerPlayerEntity target) {
@@ -374,21 +318,6 @@ public final class BttGuessReceiver {
                 .withColor(BttRoles.PROFESSOR.color()), true);
         target.sendMessage(Text.translatable("noellesroles.btt.action.professor.received")
                 .withColor(BttRoles.PROFESSOR.color()), true);
-    }
-
-    // ===== 虐待狂：<缄默> 身边者——按键标记，10–30 秒后自动生效（醉酒 + 聋哑 30 秒）；CD 30 秒（C-093/C-097） =====
-
-    private static void abuser(ServerPlayerEntity user, ServerPlayerEntity target) {
-        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(user);
-        if (ability.cooldown > 0) return;
-        if (user.distanceTo(target) > 6) {
-            user.sendMessage(Text.translatable("noellesroles.btt.action.common.not_nearby").withColor(colorOf(user)), true);
-            return;
-        }
-        if (!BttDelayed.schedule(user, BttDelayed.ABUSER, target)) return; // 已有待生效标记 → 不扣 CD
-        setCd(ability, GameConstants.getInTicks(0, 30));
-        user.sendMessage(Text.translatable("noellesroles.btt.action.abuser.marked", target.getName().getString())
-                .withColor(colorOf(user)), true);
     }
 
     // ===== 舞蛇人 =====

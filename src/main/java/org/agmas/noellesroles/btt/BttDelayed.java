@@ -8,11 +8,10 @@ import net.minecraft.text.Text;
 import java.util.UUID;
 
 /**
- * 延时技能槽（C-093）：虐待狂 &lt;缄默&gt; / 派对主 &lt;变声&gt; 的「标记 → 生效」。
+ * 延时技能槽（C-093）：笑匠（原派对主）&lt;变声&gt; 的「标记 → 生效」。
  * <p>
- * 用户 2026-09-11 裁定「虐待狂和派对客既然不标记，就改成延时生效」：NRS 是**标记 + 二次按键即时释放**
- * （`SilencerPlayerComponent.MARK_DURATION_TICKS` = 30 秒窗口，第二次按下才沉默），BTT 简化掉了二次按键，
- * 故按键即标记（对目标不可见），{@link #randomDelayTicks} 决定的**10–30 秒随机延迟后自动释放**。
+ * 用户 2026-09-11 裁定「不标记，改成延时生效」：按键即标记（对目标不可见），
+ * {@link #randomDelayTicks} 决定的**10–30 秒随机延迟后自动释放**（虐待狂已随 docx 2026-09-12 删除，本槽现只剩笑匠）。
  * <p>
  * 用户 2026-09-11 二次裁定（bug_report §1）：纵火犯的「闻到汽油味」提示与这两个延时技能的延迟**统一为
  * 200–600 ticks（10–30 秒）随机**——{@link #DELAY_MIN_TICKS} / {@link #DELAY_SPREAD_TICKS} 为唯一事实源，
@@ -35,7 +34,6 @@ public final class BttDelayed {
         return DELAY_MIN_TICKS + random.nextInt(DELAY_SPREAD_TICKS);
     }
 
-    public static final String ABUSER = "abuser";
     public static final String COMEDIAN = "comedian";
 
     public static boolean hasPending(ServerPlayerEntity caster) {
@@ -72,25 +70,10 @@ public final class BttDelayed {
         } catch (IllegalArgumentException ignored) {
         }
         if (target == null || !GameFunctions.isPlayerAliveAndSurvival(target)) {
-            caster.sendMessage(Text.translatable("noellesroles.btt.action.delayed.void").withColor(colorOf(kind)), true);
+            caster.sendMessage(Text.translatable("noellesroles.btt.action.delayed.void").withColor(BttRoles.COMEDIAN.color()), true);
             return;
         }
-        switch (kind) {
-            case ABUSER -> applyAbuser(caster, target);
-            case COMEDIAN -> applyComedian(caster, target);
-            default -> { }
-        }
-    }
-
-    /** 虐待狂 &lt;缄默&gt;：目标醉酒 30 秒 + 聋哑 30 秒（语音层由 NoellesrolesVoiceChatPlugin 读取 muteTicks） */
-    private static void applyAbuser(ServerPlayerEntity caster, ServerPlayerEntity target) {
-        BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
-        victim.applyDrunk(GameConstants.getInTicks(0, 30));
-        victim.applyMute(GameConstants.getInTicks(0, 30));
-        caster.sendMessage(Text.translatable("noellesroles.btt.action.abuser.effect", target.getName().getString())
-                .withColor(colorOf(ABUSER)), true);
-        target.sendMessage(Text.translatable("noellesroles.btt.action.abuser.victim")
-                .withColor(colorOf(ABUSER)), true);
+        if (COMEDIAN.equals(kind)) applyComedian(caster, target);
     }
 
     /** 派对主 &lt;变声&gt;：一次 = 目标醉酒 1 分钟；两次 = 氦气自爆（docx：变声两次直接自爆） */
@@ -98,19 +81,14 @@ public final class BttDelayed {
         BttPlayerComponent uc = BttPlayerComponent.KEY.get(caster);
         uc.partyUses++;
         if (uc.partyUses >= 2) {
-            caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.helium").withColor(colorOf(COMEDIAN)), true);
+            caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.helium").withColor(BttRoles.COMEDIAN.color()), true);
             GameFunctions.killPlayer(caster, true, caster, BttDeathReasons.HELIUM_SELF_DESTRUCT);
             return;
         }
         BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
         caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.effect", target.getName().getString())
-                .withColor(colorOf(COMEDIAN)), true);
-        target.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.victim").withColor(colorOf(COMEDIAN)), true);
-    }
-
-    /** C-098：延时技能的动作栏反馈用**施放者的身份色** */
-    private static int colorOf(String kind) {
-        return ABUSER.equals(kind) ? BttRoles.ABUSER.color() : BttRoles.COMEDIAN.color();
+                .withColor(BttRoles.COMEDIAN.color()), true);
+        target.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.victim").withColor(BttRoles.COMEDIAN.color()), true);
     }
 
     private static void clear(BttPlayerComponent pc) {

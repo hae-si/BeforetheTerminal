@@ -42,8 +42,6 @@ public final class BttRoleDefs {
         def(BttRoles.GODFATHER).kit(knife());
         // 食人族：无道具；<习得技能>（平民尸体）CD 1 分钟（docx）→ 初始 CD 同值（C-110）
         def(BttRoles.CANNIBAL).kit(p -> initialAbilityCd(p, CD_1MIN));
-        // 哲人：无道具；<领悟> 仅限一次（docx），初始 CD 按 C-099 统一 1 分钟（C-110）
-        def(BttRoles.PHILOSOPHER).kit(p -> initialAbilityCd(p, CD_1MIN));
         // 饕餮：初始[撬棍]（docx）+ <绑架> 身边者（C-109）；冷却 1 分钟（docx）→ 初始 CD 同值
         def(BttRoles.KIDNAPPER).kit(p -> {
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
@@ -94,7 +92,6 @@ public final class BttRoleDefs {
         // ===== 醉酒投放者（BT-SYS-DRUNK，C-060） =====
         def(BttRoles.BARTENDER).kit(p -> initialAbilityCd(p, CD_1MIN)); // 酒保：<灌酒> 1 分钟（docx）
         def(BttRoles.JOURNALIST).kit(p -> initialAbilityCd(p, CD_1MIN)); // 记者：<跟踪> 1 分钟（docx 2026-09-11：30s→1min）
-        def(BttRoles.MINSTREL).kit(p -> initialAbilityCd(p, CD_1MIN));  // 吟游诗人：<歌唱> 1 分钟（docx 2026-09-11：2min→1min）
         // 教授：<使用药剂> 身边者（给予 1 层护盾，免疫下一次致命伤；C-104）；无道具；CD 1 分钟（C-099：docx 未特别说明）
         def(BttRoles.PROFESSOR).kit(p -> initialAbilityCd(p, GameConstants.getInTicks(2, 0)));
         // 花匠：初始[撬棍]（docx）+ <栽培> G 键直发（C-090）；冷却 30 秒（docx）
@@ -103,13 +100,16 @@ public final class BttRoleDefs {
             p.giveItemStack(new ItemStack(WatheItems.CROWBAR));
             initialAbilityCd(p, CD_30S);
         });
-        def(BttRoles.SMUGGLER).kit(p -> { // 走私犯：初始[刀]（<灌酒> 直接灌）；CD 30 秒（docx）
+        def(BttRoles.SUCCUBUS).kit(p -> { // 魅魔（原走私犯改键）：初始[刀] + G 键 <魅惑> 身边者醉酒 1 分钟；CD 1 分钟（docx 2026-09-12）
             knife().give(p);
-            initialAbilityCd(p, CD_30S);
+            initialAbilityCd(p, CD_1MIN);
         });
-        def(BttRoles.ABUSER).kit(p -> { // 虐待狂：初始[刀]（<缄默> 身边者，C-086）；CD 30 秒（docx）
+        // 保镖（docx 2026-09-12）：无道具；G 键 <守护> 身边者 30 秒；CD 2 分钟 → 初始 CD 同值
+        def(BttRoles.BODYGUARD).kit(p -> initialAbilityCd(p, BttGuard.GUARD_CD));
+        // 寄生者（docx 2026-09-12）：初始[刀]；仅限一次 G 键 <寄生> 身边者；初始 CD 按 C-099 = 1 分钟
+        def(BttRoles.LEECH).kit(p -> {
             knife().give(p);
-            initialAbilityCd(p, CD_30S);
+            initialAbilityCd(p, CD_1MIN);
         });
         // 派对主：C-099 补齐 def（此前整条漏登记 → 与 C-090 花匠同因，`def == null` 静默吞掉但技能）；初始[刀] + CD 30 秒
         def(BttRoles.COMEDIAN).kit(p -> {
@@ -118,7 +118,6 @@ public final class BttRoleDefs {
         });
         // ===== docx 2026-09-09 新增（C-063） =====
         def(BttRoles.POPPY_GROWER); // 罂粟农：被动天赋（本能全绿），无 kit
-        def(BttRoles.AGENT).kit(knife()); // 特工：初始[刀]（<查看> G 键直发）
         def(BttRoles.RIOT).kit(knife()); // 暴乱：初始[刀]
         def(BttRoles.VORTOX).kit(knife()); // 涡流：初始[刀]
         // 涡流：存活时所有乘客持续醉酒（每 tick 施加 2t 维持量）
@@ -226,8 +225,8 @@ public final class BttRoleDefs {
         def(BttRoles.VIGILANTE).onTick((player, world, gwc) ->
                 PlayerMoodComponent.KEY.get(player).setMood(1.0f));
 
-        // 司机：存活 → 倒计时额外 -1 tick/tick（×2 速率；审计修复后挂 DRIVER）
-        def(BttRoles.DRIVER).onTick((player, world, gwc) -> {
+        // 列车长：存活 → 倒计时额外 -1 tick/tick（×2 速率；docx 2026-09-12 由已删除的司机移交）
+        def(BttRoles.CONDUCTOR).onTick((player, world, gwc) -> {
             if (GameFunctions.isPlayerAliveAndSurvival(player)) {
                 dev.doctor4t.wathe.cca.GameTimeComponent.KEY.get(world).addTime(-1);
             }

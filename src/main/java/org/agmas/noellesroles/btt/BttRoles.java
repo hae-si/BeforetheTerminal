@@ -136,10 +136,10 @@ public final class BttRoles {
     // ===== 平民乘客·生死类 =====
 
     public static final Role PROFESSOR = register("professor", 0xCCFF00, Faction.CIVILIAN);
+    /** 保镖（docx 2026-09-12 新增）：<守护> 身边者 30 秒内"只有你死亡他才会死亡"；与教授同色 */
+    public static final Role BODYGUARD = register("bodyguard", 0xCCFF00, Faction.CIVILIAN);
     public static final Role PHARMACIST = register("pharmacist", 0xCCFF00, Faction.CIVILIAN);
     public static final Role STAR = register("star", 0xFFC0CB, Faction.CIVILIAN);
-        /** 吟游诗人（2026-09-06 替换水手——策划案修订；<歌唱>=群体醉酒 1min，依赖 BT-SYS-DRUNK） */
-    public static final Role MINSTREL = register("minstrel", 0xF400A1, Faction.CIVILIAN);
     /** 罂粟农（docx 2026-09-09 新增）：凶手本能透视全员绿（醉/死后恢复） */
     public static final Role POPPY_GROWER = register("poppy_grower", 0x228B22, Faction.CIVILIAN);
 
@@ -150,12 +150,9 @@ public final class BttRoles {
     public static final Role RIGGER = register("rigger", 0x50C878, Faction.CIVILIAN);
     /** 小女孩：不可被凶手本能透视（docx 2026-09-12 删去"可见到站倒计时"→ 撤销 C-094 的 canSeeTime） */
     public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN);
-    public static final Role DRIVER = register("driver", 0x00FF80, Faction.CIVILIAN,
-            true, false, Role.MoodType.REAL, 200, true);
     public static final Role MAID = register("maid", 0x9ACD32, Faction.CIVILIAN);
     public static final Role POSTMAN = register("postman", 0x9ACD32, Faction.CIVILIAN);
     public static final Role CANNIBAL = register("cannibal", 0x6B8E23, Faction.CIVILIAN);
-    public static final Role PHILOSOPHER = register("philosopher", 0x6B8E23, Faction.CIVILIAN);
     /** 卧底：接管 NR mimic 键（KillerSidedTextsMixin 原生=凶手视角显示凶手阵营；显示名 lang→卧底） */
     public static final Role UNDERCOVER = takeover(Noellesroles.MIMIC, Faction.CIVILIAN);
     public static final Role EX_UNDERCOVER = register("ex_undercover", 0x40E0D0, Faction.CIVILIAN);
@@ -166,15 +163,19 @@ public final class BttRoles {
     public static final Role ASSASSIN = takeover(Noellesroles.GUESSER_ROLE, Faction.PRINCIPAL);
     /** 小恶魔（用户 2026-09-11 新增，取代冒牌货；与刺客同色 = 同阵营同色对）：[刀] + <印记>，被印记的独行/外人中立在其死亡后成为小恶魔 */
     public static final Role IMP = register("imp", ASSASSIN.color(), Faction.PRINCIPAL);
+    /** 寄生者（docx 2026-09-12 新增）：仅限一次 <寄生> 身边者——只有他死亡你才会死亡；与小恶魔同色 */
+    public static final Role LEECH = register("leech", ASSASSIN.color(), Faction.PRINCIPAL);
     /** 演员：接管 NR morphling 键（MorphlingRendererMixin 易容原生；显示名 lang→演员） */
     public static final Role ACTOR = takeover(Noellesroles.MORPHLING, Faction.PRINCIPAL);
     /** 偷渡客：接管 NR phantom 键（隐身能力原生=NR 幽灵 G 键；stowaway 键删除——用户指令 2026-09-05；假人/指纹延后） */
     public static final Role STOWAWAY = takeover(Noellesroles.PHANTOM, Faction.PRINCIPAL);
     /** 魔术师：接管 NR swapper（换位 UI/能力原生；2026-09-06 用户指令，magician 键删） */
     public static final Role MAGICIAN = takeover(Noellesroles.SWAPPER, Faction.PRINCIPAL);
-    public static final Role SMUGGLER = register("smuggler", 0x556B2F, Faction.PRINCIPAL);
-    /** 特工（docx 2026-09-09 新增）：<查看> 本局身份列表 */
-    public static final Role AGENT = register("agent", 0x8B008B, Faction.PRINCIPAL);
+    /**
+     * 魅魔 Succubus（用户 2026-09-12：原「走私犯 `smuggler`」改键名与显示名即为魅魔）：
+     * 从犯凶手席位、与[笑匠]同色；[刀] + G 键 &lt;魅惑&gt; 身边者 → 醉酒 1 分钟，冷却 1 分钟（docx 2026-09-12）。
+     */
+    public static final Role SUCCUBUS = register("succubus", 0xE34234, Faction.ACCOMPLICE);
     /** 暴乱（docx 2026-09-09 新增）：存活时乘客误杀自裁/非误杀全凶 +100 */
     public static final Role RIOT = register("riot", 0xB8860B, Faction.PRINCIPAL);
     /** 涡流（docx 2026-09-09 新增）：存活时所有乘客持续醉酒 */
@@ -189,7 +190,6 @@ public final class BttRoles {
     public static final Role TERRORIST = register("terrorist", 0x8B008B, Faction.ACCOMPLICE);
     public static final Role CLEANER = register("cleaner", 0x8B4513, Faction.ACCOMPLICE);
     public static final Role BANDIT = register("bandit", 0x8B4513, Faction.ACCOMPLICE);
-    public static final Role ABUSER = register("abuser", 0xE34234, Faction.ACCOMPLICE);
     public static final Role COMEDIAN = register("comedian", 0xE34234, Faction.ACCOMPLICE);
     /** 叛徒（docx 2026-09-09：狂人中立席位+凶手阵营，本能绿色，刀+商店） */
     public static final Role TRAITOR = register("traitor", 0x2F4F4F, Faction.MAD,
@@ -230,14 +230,14 @@ public final class BttRoles {
     private static final java.util.Set<Role> IMPLEMENTED = java.util.Set.of(
             GODFATHER, VIGILANTE, DOCTOR, VIRGIN, JESTER, CONDUCTOR,
             ACTOR, UNDERCOVER, WITCH, RAILWAY_POLICE, VETERAN, HUNTER,
-            BANDIT, PSYCHOPATH, CLEANER, STAR, DRIVER, DETECTIVE,
+            BANDIT, PSYCHOPATH, CLEANER, STAR, DETECTIVE,
             PHARMACIST, RIGGER, AMNESIAC, THIEF, MAID, SWORDSMAN, STOWAWAY,
             PROPHET, ASSASSIN, MAGICIAN, NOVELIST, SNAKE_CHARMER, MAJO, MESSIAH,
-            BARTENDER, MINSTREL, SMUGGLER, POPPY_GROWER, AGENT, RIOT, VORTOX,
+            BARTENDER, SUCCUBUS, POPPY_GROWER, RIOT, VORTOX,
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
-            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, ABUSER, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
-            CANNIBAL, PHILOSOPHER);
+            SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
+            CANNIBAL, BODYGUARD, LEECH);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -252,20 +252,20 @@ public final class BttRoles {
      */
     private static final Map<Role, Role> SAME_COLOR_PARTNER = new HashMap<>();
     static {
+        // docx 2026-09-12 编号（35 对）：随目录删/增重排；尚未注册的 4 对见下方注释
         Role[][] pairs = {
                 // 执法 1-8
                 {VIGILANTE, HUNTER}, {RAILWAY_POLICE, LAWYER}, {CABALLERO, RANGER}, {WITCH, VETERAN},
-                // 信息 1-8
+                // 信息 1-10（贵族↔飞行家 待 BT-ROLES-0912 注册后补）
                 {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
                 // 生死 1-8
-                {PROFESSOR, PHARMACIST}, {VIRGIN, STAR}, {BARTENDER, MINSTREL}, {SNAKE_CHARMER, POPPY_GROWER},
-                // 辅助 1-12
-                {CONDUCTOR, ATTENDANT}, {ARCHITECT, RIGGER}, {SHOUJO, DRIVER}, {MAID, POSTMAN},
-                {CANNIBAL, PHILOSOPHER}, {UNDERCOVER, EX_UNDERCOVER},
+                {PROFESSOR, BODYGUARD}, {VIRGIN, STAR}, {SNAKE_CHARMER, CANNIBAL}, {UNDERCOVER, EX_UNDERCOVER},
+                // 辅助 1-10（建筑师↔锁匠 待 BT-ROLES-0912 注册后补）
+                {CONDUCTOR, ATTENDANT}, {PHARMACIST, BARTENDER}, {SHOUJO, POPPY_GROWER}, {MAID, POSTMAN},
                 // 主犯 1-10
-                {ASSASSIN, IMP}, {ACTOR, STOWAWAY}, {MAGICIAN, SMUGGLER}, {AGENT, GODFATHER}, {RIOT, VORTOX},
+                {ASSASSIN, GODFATHER}, {ACTOR, STOWAWAY}, {MAGICIAN, RIGGER}, {IMP, LEECH}, {RIOT, VORTOX},
                 // 从犯 1-8
-                {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {ABUSER, COMEDIAN},
+                {SWORDSMAN, PSYCHOPATH}, {ALCHEMIST, TERRORIST}, {CLEANER, BANDIT}, {COMEDIAN, SUCCUBUS},
                 // 独行 1-4
                 {NOVELIST, JESTER}, {THIEF, ARSONIST},
                 // 外人 1-4

@@ -53,6 +53,7 @@ public final class BttEvents {
         registerMaidGive();
         registerPsychopathShield();
         registerProfessorShield();
+        registerGuardImmunity();
         registerKidnapperImmunity();
         registerImpSuccession();
         guardHmlPool();
@@ -188,6 +189,16 @@ public final class BttEvents {
         });
     }
 
+    // ===== 保镖 <守护> / 寄生者 <寄生>（C-117）：被守护者与寄生者免死 =====
+
+    private static void registerGuardImmunity() {
+        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
+            if (!(victim instanceof ServerPlayerEntity serverVictim)) return true;
+            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
+            return !BttGuard.vetoDeath(serverVictim);
+        });
+    }
+
     // ===== 小恶魔：死亡时印记目标继位（C-111；注册在最后 → 其它免死否决优先，被免死时不会继位） =====
 
     private static void registerImpSuccession() {
@@ -264,6 +275,7 @@ public final class BttEvents {
                     BttActor.tick(player, pc); // 演员：装死读秒（C-106）
                     BttKidnapper.tick(player, pc); // 饕餮：被吞者跟随/释放（C-109）
                     BttSecondIdentity.tick(player, pc); // 第二身份：借来的技能到期归还（C-110）
+                    BttGuard.tick(player, pc); // 保镖 <守护> 倒计时（C-117）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }
