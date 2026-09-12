@@ -56,6 +56,7 @@ public final class BttArsonist {
             nearest = distance;
             target = p;
         }
+
         if (target == null) return; // 无目标：静默失败、不扣冷却（无雷达提示，用户 2026-09-11 裁定）
 
         BttPlayerComponent victim = BttPlayerComponent.KEY.get(target);
@@ -67,7 +68,8 @@ public final class BttArsonist {
         user.sendMessage(Text.translatable("noellesroles.btt.action.arsonist.doused", target.getName().getString())
                 .withColor(BttRoles.ARSONIST.color()), true);
 
-        if (allOthersDoused(user, gwc)) {
+        // 用户 2026-09-12：**不需要点燃**——浇湿所有存活乘客即直接独胜
+        if (allPassengersDoused(user, gwc)) {
             win(user, gwc);
         }
     }
@@ -81,12 +83,13 @@ public final class BttArsonist {
         player.sendMessage(Text.translatable("noellesroles.btt.action.arsonist.smell").withColor(BttRoles.ARSONIST.color()), true);
     }
 
-    /** 除自己外的全部**存活**玩家都已被浇湿（死亡者不计，同 NRS 病原体胜利判定） */
-    private static boolean allOthersDoused(ServerPlayerEntity user, GameWorldComponent gwc) {
+    /** docx 2026-09-12：胜利条件 = **所有存活的乘客**都被浇湿（不再"除自己外全部存活者"；凶手/独行/外人不计） */
+    private static boolean allPassengersDoused(ServerPlayerEntity user, GameWorldComponent gwc) {
         for (UUID uuid : gwc.getRoles().keySet()) {
             if (uuid.equals(user.getUuid())) continue;
             if (!(user.getServerWorld().getPlayerByUuid(uuid) instanceof ServerPlayerEntity p)) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+            if (!BttRoles.isPassengerCamp(gwc.getRole(p))) continue; // 只看乘客侧（执法/平民/狂人）
             if (!BttPlayerComponent.KEY.get(p).isDoused()) return false;
         }
         return true;
