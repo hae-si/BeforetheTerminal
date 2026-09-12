@@ -99,8 +99,8 @@ public final class BttArchitect {
         door.sync();
     }
 
-    /** 准星命中的方块本体/上下半格找门方块实体（小门 BE 挂在下半格） */
-    private static DoorBlockEntity doorAt(ServerWorld world, BlockPos pos) {
+    /** 准星命中的方块本体/上下半格找门方块实体（小门 BE 挂在下半格）；锁匠复用（C-119） */
+    public static DoorBlockEntity doorAt(ServerWorld world, BlockPos pos) {
         if (world.getBlockEntity(pos) instanceof DoorBlockEntity door) return door;
         if (world.getBlockEntity(pos.up()) instanceof DoorBlockEntity door) return door;
         if (world.getBlockEntity(pos.down()) instanceof DoorBlockEntity door) return door;

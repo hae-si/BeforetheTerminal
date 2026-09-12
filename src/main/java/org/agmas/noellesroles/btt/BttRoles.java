@@ -145,9 +145,14 @@ public final class BttRoles {
 
     // ===== 平民乘客·辅助类 =====
 
-    public static final Role ATTENDANT = register("attendant", 0x66FF00, Faction.CIVILIAN);
+    /** 乘务员：docx 2026-09-12 = 可见到站倒计时 + 全车 <广播>（广播【待办】；可见倒计时=canSeeTime） */
+    public static final Role ATTENDANT = register("attendant", 0x66FF00, Faction.CIVILIAN,
+            true, false, Role.MoodType.REAL, 200, true);
     public static final Role ARCHITECT = register("architect", 0x50C878, Faction.CIVILIAN);
-    public static final Role RIGGER = register("rigger", 0x50C878, Faction.CIVILIAN);
+    /** 锁匠（docx 2026-09-12 新增）：<上锁> 一扇门 → 坚不可摧直到本人开锁；与建筑师同色 */
+    public static final Role LOCKSMITH = register("locksmith", 0x50C878, Faction.CIVILIAN);
+    /** 绳艺师（docx 2026-09-12：**由辅助类移入主犯类**，色值对齐同色搭档魔术师） */
+    public static final Role RIGGER = register("rigger", 0x8B008B, Faction.PRINCIPAL);
     /** 小女孩：不可被凶手本能透视（docx 2026-09-12 删去"可见到站倒计时"→ 撤销 C-094 的 canSeeTime） */
     public static final Role SHOUJO = register("shoujo", 0x00FF80, Faction.CIVILIAN);
     public static final Role MAID = register("maid", 0x9ACD32, Faction.CIVILIAN);
@@ -237,7 +242,7 @@ public final class BttRoles {
             LAWYER, JOURNALIST, ENGINEER, CABALLERO, RANGER, TRAITOR, EX_TRAITOR,
             IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
             SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
-            CANNIBAL, BODYGUARD, LEECH);
+            CANNIBAL, BODYGUARD, LEECH, LOCKSMITH);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
@@ -260,8 +265,8 @@ public final class BttRoles {
                 {DETECTIVE, PROPHET}, {DOCTOR, MORTICIAN}, {JOURNALIST, ENGINEER}, {FOLKLORIST, MEYUUBYOU},
                 // 生死 1-8
                 {PROFESSOR, BODYGUARD}, {VIRGIN, STAR}, {SNAKE_CHARMER, CANNIBAL}, {UNDERCOVER, EX_UNDERCOVER},
-                // 辅助 1-10（建筑师↔锁匠 待 BT-ROLES-0912 注册后补）
-                {CONDUCTOR, ATTENDANT}, {PHARMACIST, BARTENDER}, {SHOUJO, POPPY_GROWER}, {MAID, POSTMAN},
+                // 辅助 1-10
+                {CONDUCTOR, ATTENDANT}, {ARCHITECT, LOCKSMITH}, {PHARMACIST, BARTENDER}, {SHOUJO, POPPY_GROWER}, {MAID, POSTMAN},
                 // 主犯 1-10
                 {ASSASSIN, GODFATHER}, {ACTOR, STOWAWAY}, {MAGICIAN, RIGGER}, {IMP, LEECH}, {RIOT, VORTOX},
                 // 从犯 1-8

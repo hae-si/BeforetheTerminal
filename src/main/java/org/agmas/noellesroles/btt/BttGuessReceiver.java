@@ -106,6 +106,11 @@ public final class BttGuessReceiver {
                 architect(user);
                 return;
             }
+            // 锁匠：<上锁> / 开锁 准星所指的门（G 键直发；C-119）
+            if (BttRoles.isPlayingAs(gwc, user, BttRoles.LOCKSMITH)) {
+                BttLocksmith.toggle(user);
+                return;
+            }
             // 演员：<装死> 开关（G 键直发，无目标；C-106）
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.ACTOR)) {
                 BttActor.toggle(user, BttPlayerComponent.KEY.get(user));

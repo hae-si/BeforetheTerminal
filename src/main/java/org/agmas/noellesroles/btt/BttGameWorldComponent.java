@@ -32,6 +32,11 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
      * fork（TrainMurderMystery）把 isWinner 在服务端算好下发，wathe 的 RoundEndData 无此槽位 → 用本字段承载。
      */
     public String winners = "";
+    /**
+     * 锁匠 &lt;上锁&gt; 的门锁记录（C-119）：`维度;pos.asLong()` → 锁匠 UUID（服务端回合状态）。
+     * 开局由 {@code BttLocksmith.clearAll} 清空并把门恢复为未卡（`jammedTime` 在方块 NBT，需显式清理）。
+     */
+    public java.util.Map<String, String> doorLocks = new java.util.HashMap<>();
 
     public BttGameWorldComponent(World world) {
         this.world = world;
@@ -52,6 +57,9 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         tag.putString("winners", this.winners);
         tag.putString("epilogueType", this.epilogueType);
         tag.putInt("misfireCount", this.misfireCount);
+        NbtCompound locks = new NbtCompound();
+        this.doorLocks.forEach(locks::putString);
+        tag.put("doorLocks", locks);
 
     }
 
@@ -61,6 +69,9 @@ public class BttGameWorldComponent implements AutoSyncedComponent {
         if (tag.contains("winners")) this.winners = tag.getString("winners");
         if (tag.contains("epilogueType")) this.epilogueType = tag.getString("epilogueType");
         if (tag.contains("misfireCount")) this.misfireCount = tag.getInt("misfireCount");
+        this.doorLocks.clear();
+        NbtCompound locks = tag.getCompound("doorLocks");
+        for (String k : locks.getKeys()) this.doorLocks.put(k, locks.getString(k));
 
     }
 }

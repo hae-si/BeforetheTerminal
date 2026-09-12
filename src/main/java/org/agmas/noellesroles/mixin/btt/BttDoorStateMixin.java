@@ -24,4 +24,14 @@ public abstract class BttDoorStateMixin {
     private void bttOnDoorBlasted(CallbackInfo ci) {
         BttArchitect.onDoorTampered((DoorBlockEntity) (Object) this);
     }
+
+    /** C-119 锁匠：被上锁的门**拦下撬棍**（docx："坚不可摧直到你开锁"；建筑师 <修复> 仍可解锁） */
+    @Inject(method = "blast", at = @At("HEAD"), cancellable = true)
+    private void bttLockedDoorBlocksCrowbar(CallbackInfo ci) {
+        DoorBlockEntity door = (DoorBlockEntity) (Object) this;
+        if (door.getWorld() instanceof net.minecraft.server.world.ServerWorld sw
+                && org.agmas.noellesroles.btt.BttLocksmith.isLocked(sw, door.getPos())) {
+            ci.cancel();
+        }
+    }
 }

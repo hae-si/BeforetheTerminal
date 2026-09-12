@@ -46,10 +46,11 @@ public final class BttAbilityKey {
                     new org.agmas.noellesroles.btt.BttCorpseActionC2SPacket(body.getUuid(), 1));
             return;
         }
-        // 花匠/工程师/建筑师/纵火犯：<栽培>/<扫描>/<修复>/<浇汽油> 无需目标——
+        // 花匠/工程师/建筑师/锁匠/纵火犯：<栽培>/<扫描>/<修复>/<上锁>/<浇汽油> 无需目标——
         // G 键直发（target=自己占位；门由服务端射线/最近者判定）
         if (def.role == BttRoles.GARDENER || def.role == BttRoles.ENGINEER
-                || def.role == BttRoles.ARCHITECT || def.role == BttRoles.ARSONIST || def.role == BttRoles.ACTOR) {
+                || def.role == BttRoles.ARCHITECT || def.role == BttRoles.LOCKSMITH
+                || def.role == BttRoles.ARSONIST || def.role == BttRoles.ACTOR) {
             net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(
                     new org.agmas.noellesroles.btt.BttGuessC2SPacket(client.player.getUuid(), ""));
             return;
@@ -87,7 +88,7 @@ public final class BttAbilityKey {
         // C-113：恐怖分子的炸弹已改纯物品右键（无 G 键技能）→ 不再出提示；E 键技能亦不出提示（见下）
         return isNearbyRole(role) || role == BttRoles.MEYUUBYOU
                 || role == BttRoles.GARDENER || role == BttRoles.AMNESIAC
-                || role == BttRoles.ARCHITECT || role == BttRoles.ENGINEER
+                || role == BttRoles.ARCHITECT || role == BttRoles.LOCKSMITH || role == BttRoles.ENGINEER
                 || role == BttRoles.ARSONIST || role == BttRoles.ACTOR || role == BttRoles.CANNIBAL;
         // C-113：E 键技能（任意人：律师/小恶魔等）不出右下角提示、G 键也不开选人屏（见 isAnyRole）
     }

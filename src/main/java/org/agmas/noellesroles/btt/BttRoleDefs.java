@@ -139,7 +139,13 @@ public final class BttRoleDefs {
         def(BttRoles.RANGER).kit(p -> p.giveItemStack(new ItemStack(WatheItems.REVOLVER)));
         def(BttRoles.PSYCHOPATH).kit(p -> p.giveItemStack(new ItemStack(WatheItems.BAT)));
         def(BttRoles.DETECTIVE).kit(p -> initialAbilityCd(p, CD_1MIN)); // <调查> 1 分钟
-        def(BttRoles.RIGGER).kit(p -> initialAbilityCd(p, CD_1MIN)); // <拘束> 1 分钟
+        // 绳艺师（docx 2026-09-12：主犯类 + 初始[刀]）；【待办：docx 为"任意两个人 30 秒"，现为身边者单人】
+        def(BttRoles.RIGGER).kit(p -> {
+            knife().give(p);
+            initialAbilityCd(p, CD_1MIN);
+        });
+        // 锁匠（docx 2026-09-12）：无道具；G 键 <上锁> 准星所指的门（坚不可摧直到本人开锁）；CD 1 分钟
+        def(BttRoles.LOCKSMITH).kit(p -> initialAbilityCd(p, CD_1MIN));
         def(BttRoles.PHARMACIST).kit(p -> initialAbilityCd(p, CD_1MIN)); // <喂药> 1 分钟
         def(BttRoles.ENGINEER).kit(p -> initialAbilityCd(p, CD_1MIN)); // <扫描> 1 分钟
         def(BttRoles.ARCHITECT).kit(p -> initialAbilityCd(p, CD_1MIN)); // <修复> G 键直发；1 分钟（docx 2026-09-11：2min→1min）

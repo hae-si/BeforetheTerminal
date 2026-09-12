@@ -97,6 +97,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         btt.lastEnding = "NONE"; // 跨局残留清理（参照 SRE finalizeGame“回合状态全清”原则）
         btt.winners = "";
         btt.sync();
+        BttLocksmith.clearAll(world); // C-119：清上一局残留的门锁（jammedTime 存在方块 NBT）
         LOGGER.info("[BTT] round initialized: {} players seated.", players.size());
 
         // 身份宣告：wathe 原版迎新覆盖层（身份名+凶手数+乘客数）。游戏内聊天框不可见，
