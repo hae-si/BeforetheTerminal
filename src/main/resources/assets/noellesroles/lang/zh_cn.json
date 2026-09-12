@@ -476,6 +476,8 @@
   "noellesroles.btt.action.architect.blasted": "一扇门被撬开了！",
   "noellesroles.btt.action.architect.jammed": "一扇门被卡住了！",
   "noellesroles.btt.action.maid.give": "你赠予了 %s 一份食物。",
+  "noellesroles.btt.action.postman.sent": "你把一件道具交给了 %s。",
+  "noellesroles.btt.action.postman.received": "%s 交给了你一件道具。",
   "noellesroles.btt.action.bomb.already": "目标身上已有炸弹。",
   "noellesroles.btt.action.bomb.countdown": "炸弹将在%s 秒后爆炸！快传出去！",
   "noellesroles.btt.action.shop.drunk": "你被一阵眩晕打断……",

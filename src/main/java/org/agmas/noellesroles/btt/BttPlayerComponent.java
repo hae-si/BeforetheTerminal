@@ -119,6 +119,10 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public boolean judgmentFired = false;
     /** 认知覆盖（酒鬼/疯子，C-129）：向本人展示的**假身份** identifier（空 = 不覆盖；真实身份/阵营/胜负不变） */
     public String decoyRole = "";
+    /** 民俗学家「透视使用者」目标 UUID（空 = 无；C-131） */
+    public String folkTarget = "";
+    /** 民俗学家「透视使用者」剩余 tick（>0 时客户端本机自绘描边；C-131） */
+    public int folkTicks = 0;
     /** 梦游病 <入梦>：灵魂出窍中（客户端据此切换假相机，C-087） */
     public boolean projecting = false;
     /** 纵火犯：被浇后「闻到汽油味」延迟提示剩余 tick（服务端；C-092，C-097 与延时技能统一 10–30 秒随机） */
@@ -346,6 +350,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         executionsInWindow = 0;
         judgmentFired = false;
         decoyRole = "";
+        folkTarget = "";
+        folkTicks = 0;
         swallowedMoodOk = false;
         projecting = false;
         gasolineHintTicks = 0;
@@ -400,6 +406,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putInt("executionsInWindow", executionsInWindow);
         tag.putBoolean("judgmentFired", judgmentFired);
         tag.putString("decoyRole", decoyRole);
+        tag.putString("folkTarget", folkTarget);
+        tag.putInt("folkTicks", folkTicks);
         tag.putBoolean("swallowedMoodOk", swallowedMoodOk);
         tag.putBoolean("projecting", projecting);
         tag.putInt("gasolineHintTicks", gasolineHintTicks);
@@ -453,6 +461,8 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.executionsInWindow = tag.getInt("executionsInWindow");
         this.judgmentFired = tag.contains("judgmentFired") && tag.getBoolean("judgmentFired");
         this.decoyRole = tag.contains("decoyRole") ? tag.getString("decoyRole") : "";
+        this.folkTarget = tag.contains("folkTarget") ? tag.getString("folkTarget") : "";
+        this.folkTicks = tag.getInt("folkTicks");
         this.swallowedMoodOk = tag.contains("swallowedMoodOk") && tag.getBoolean("swallowedMoodOk");
         this.projecting = tag.contains("projecting") && tag.getBoolean("projecting");
         this.gasolineHintTicks = tag.getInt("gasolineHintTicks");

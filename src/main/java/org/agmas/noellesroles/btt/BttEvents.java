@@ -52,6 +52,7 @@ public final class BttEvents {
         BttGuessReceiver.register();
         BttShopGate.init();
         registerMaidGive();
+        registerPostmanGive();
         registerPsychopathShield();
         registerProfessorShield();
         registerGuardImmunity();
@@ -139,6 +140,39 @@ public final class BttEvents {
         return stack.isOf(WatheItems.OLD_FASHIONED) || stack.isOf(WatheItems.MARTINI)
                 || stack.isOf(WatheItems.MOJITO) || stack.isOf(WatheItems.COSMOPOLITAN)
                 || stack.isOf(WatheItems.CHAMPAGNE);
+    }
+
+    // ===== 邮差（C-131）：手持道具右键他人＝赠予；他人手持道具右键邮差＝接收 =====
+
+    private static void registerPostmanGive() {
+        UseEntityCallback.EVENT.register((player, world, hand, entity, hit) -> {
+            if (world.isClient() || hand != Hand.MAIN_HAND) return ActionResult.PASS;
+            if (!(player instanceof ServerPlayerEntity user)) return ActionResult.PASS;
+            if (!BttIdentity.isBttMode(world)) return ActionResult.PASS;
+            GameWorldComponent gwc = GameWorldComponent.KEY.get(world);
+            if (!gwc.isRunning()) return ActionResult.PASS;
+            if (entity == null || entity == user) return ActionResult.PASS;
+            if (!(entity instanceof ServerPlayerEntity target)) return ActionResult.PASS;
+            if (!GameFunctions.isPlayerAliveAndSurvival(user)
+                    || !GameFunctions.isPlayerAliveAndSurvival(target)) return ActionResult.PASS;
+            // 至少要有一方是邮差：邮差→任何人（赠予）/ 任何人→邮差（接收）
+            boolean targetIsPostman = gwc.isRole(target, BttRoles.POSTMAN);
+            if (!gwc.isRole(user, BttRoles.POSTMAN) && !targetIsPostman) return ActionResult.PASS;
+            ItemStack held = user.getMainHandStack();
+            if (held.isEmpty()) return ActionResult.PASS;
+            if (!target.getInventory().insertStack(held.copyWithCount(1))) return ActionResult.PASS;
+            held.decrement(1);
+            // C-098：技能反馈（动作栏）用邮差身份色
+            user.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.postman.sent",
+                            target.getName().getString())
+                    .withColor(BttRoles.POSTMAN.color()), true);
+            if (targetIsPostman) {
+                target.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.postman.received",
+                                user.getName().getString())
+                        .withColor(BttRoles.POSTMAN.color()), true);
+            }
+            return ActionResult.SUCCESS;
+        });
     }
 
     // ===== kit 派发（身份初始物品/状态 → BttRoleDefs） =====
@@ -295,6 +329,7 @@ public final class BttEvents {
                     BttKidnapper.tick(player, pc); // 饕餮：被吞者跟随/释放（C-109）
                     BttSecondIdentity.tick(player, pc); // 第二身份：借来的技能到期归还（C-110）
                     BttGuard.tick(player, pc); // 保镖 <守护> 倒计时（C-117）
+                    BttFolklorist.tick(player, pc); // 民俗学家：透视使用者 10 秒倒计时（C-131）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }

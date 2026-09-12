@@ -491,6 +491,8 @@
   "noellesroles.btt.action.architect.intact": "That door is neither forced nor jammed.",
   "noellesroles.btt.action.architect.repaired": "Door repaired!",
   "noellesroles.btt.action.maid.give": "You give %s some food.",
+  "noellesroles.btt.action.postman.sent": "You handed an item to %s.",
+  "noellesroles.btt.action.postman.received": "%s handed you an item.",
   "noellesroles.btt.action.bomb.already": "They already carry a bomb.",
   "noellesroles.btt.action.bomb.placed": "Bomb planted.",
   "noellesroles.btt.action.bomb.placed_target": "You hear a soft click...",

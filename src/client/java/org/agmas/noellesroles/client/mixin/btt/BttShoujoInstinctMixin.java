@@ -42,6 +42,7 @@ public abstract class BttShoujoInstinctMixin {
         // 尸体（窃贼）/花（花匠）都是非玩家目标，必须在"非玩家即早退"之前判断
         if (!(target instanceof PlayerEntity p) || p.isSpectator()) {
             if (btt$thiefCorpses(target, cir)) return;
+            if (btt$morticianSight(target, cir)) return;
             btt$gardenerFlowers(target, cir);
             return;
         }
@@ -136,6 +137,26 @@ public abstract class BttShoujoInstinctMixin {
     }
 
     /** C-091：花匠被动透视全部小花（金描边）；非花实体一律 skip，返回 true = 已接管本次判定 */
+    /**
+     * 入殓师（C-131，docx：可以透视尸体、掉落的道具和贴的便条）——**被动、无需按键**：
+     * 对尸体（{@code PlayerBodyEntity}）、掉落物（{@code ItemEntity}）、贴出的便条（{@code NoteEntity}）
+     * 返回入殓师职业色；其余非玩家实体 skip（-1），避免顺带泄漏别的配色。
+     */
+    private static boolean btt$morticianSight(Entity target, CallbackInfoReturnable<Integer> cir) {
+        var viewer = MinecraftClient.getInstance().player;
+        if (viewer == null) return false;
+        if (!BttIdentity.isBttMode(viewer.getWorld())) return false;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
+        if (gwc.getRole(viewer) != BttRoles.MORTICIAN) return false;
+        if (!GameFunctions.isPlayerAliveAndSurvival(viewer)) return false;
+        boolean sight = target instanceof dev.doctor4t.wathe.entity.PlayerBodyEntity
+                || target instanceof ItemEntity
+                || target instanceof dev.doctor4t.wathe.entity.NoteEntity;
+        cir.setReturnValue(sight ? BttRoles.MORTICIAN.color() : -1);
+        cir.cancel();
+        return true;
+    }
+
     private static boolean btt$gardenerFlowers(Entity target, CallbackInfoReturnable<Integer> cir) {
         var viewer = MinecraftClient.getInstance().player;
         if (viewer == null) return false;

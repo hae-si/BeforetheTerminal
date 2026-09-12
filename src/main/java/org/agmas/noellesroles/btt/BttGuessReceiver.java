@@ -79,6 +79,7 @@ public final class BttGuessReceiver {
             GameWorldComponent gwc = GameWorldComponent.KEY.get(user.getWorld());
             if (!gwc.isRunning()) return;
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
+            BttFolklorist.onAnyoneAbility(user, gwc); // C-131：民俗学家被动透视「任何人」类技能的使用者
             // C-125：同一"多指名"上行包按角色分派（律师 <起诉> / 绳艺师 <拘束> 任意两人）
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.LAWYER)) {
                 lawyer(user, gwc, payload.picks());
@@ -96,6 +97,7 @@ public final class BttGuessReceiver {
             // C-113：炸弹相关不再走 G 键（用户裁定）——传递只保留物品右键
             // 醉酒：技能失效——无效果、不提示（不自知，BT-SYS-DRUNK）
             if (BttPlayerComponent.KEY.get(user).isDrunk()) return;
+            BttFolklorist.onAnyoneAbility(user, gwc); // C-131：民俗学家被动透视「任何人」类技能的使用者
             if (BttRoles.isPlayingAs(gwc, user, BttRoles.GARDENER)) {
                 gardener(user);
                 return;

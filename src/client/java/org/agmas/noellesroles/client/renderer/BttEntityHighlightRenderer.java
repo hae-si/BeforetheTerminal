@@ -49,6 +49,8 @@ public final class BttEntityHighlightRenderer {
     private static final float[] ENGINEER_RGB = {0.29F, 0.82F, 0.94F};
     /** 窃贼 <搜刮> 后全员透视色 = 窃贼职业色（与 C-092 尸体透视同口径） */
     private static final float[] THIEF_RGB = rgb(BttRoles.THIEF.color());
+    /** 民俗学家「透视使用者」描边色 = 民俗学家职业色（C-131） */
+    private static final float[] FOLKLORIST_RGB = rgb(BttRoles.FOLKLORIST.color());
 
     public static void register() {
         WorldRenderEvents.AFTER_TRANSLUCENT.register(BttEntityHighlightRenderer::render);
@@ -96,6 +98,14 @@ public final class BttEntityHighlightRenderer {
             }
             if (added > 0) rgb = THIEF_RGB;
         }
+        // 民俗学家（C-131）：被动透视「任何人」类技能的**使用者** 10 秒（只描该人）
+        if (own.folkTicks > 0 && !own.folkTarget.isEmpty()) {
+            Entity target = playerByUuid(client, own.folkTarget);
+            if (target != null && !targets.contains(target)) {
+                targets.add(target);
+                rgb = FOLKLORIST_RGB;
+            }
+        }
         if (targets.isEmpty() || rgb == null) return;
 
         Vec3d camera = context.camera().getPos();
@@ -124,6 +134,18 @@ public final class BttEntityHighlightRenderer {
     }
 
     /** 记者 &lt;跟踪&gt; 的目标 = 自己标记且仍存活的玩家；无有效标记返回 null */
+    /** 按 UUID 找存活玩家（民俗学家「透视使用者」用；C-131） */
+    private static Entity playerByUuid(MinecraftClient client, String uuid) {
+        try {
+            UUID id = UUID.fromString(uuid);
+            for (AbstractClientPlayerEntity o : client.world.getPlayers()) {
+                if (o.getUuid().equals(id) && GameFunctions.isPlayerAliveAndSurvival(o)) return o;
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+        return null;
+    }
+
     private static Entity markedTarget(MinecraftClient client, BttPlayerComponent own) {
         if (own.markedTarget.isEmpty()) return null;
         try {
