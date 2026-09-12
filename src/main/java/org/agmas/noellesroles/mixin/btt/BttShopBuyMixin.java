@@ -52,41 +52,32 @@ public abstract class BttShopBuyMixin {
         }
         if (index < 0 || index >= BttShopGate.BTT_ENTRIES.size()) return;
         ShopEntry entry = BttShopGate.BTT_ENTRIES.get(index);
-        // C-129b 疯子：消费者为 LUNATIC 时**改由真正的主犯凶手付账**（可扣到负数）；
-        // 主犯已死/离线 → 直接不允许购买（作者 2026-09-12 裁定）。
-        PlayerShopComponent payer = null;
-        PlayerEntity principalPlayer = null;
-        if (GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.LUNATIC)) {
-            for (PlayerEntity p : player.getWorld().getPlayers()) {
-                if (BttRoles.factionOf(GameWorldComponent.KEY.get(player.getWorld()).getRole(p))
-                        == BttRoles.Faction.PRINCIPAL && GameFunctions.isPlayerAliveAndSurvival(p)) {
-                    principalPlayer = p;
-                    break;
-                }
-            }
-            if (principalPlayer == null) {
-                player.sendMessage(Text.translatable("noellesroles.btt.action.shop.failed").formatted(Formatting.DARK_RED), true);
-                return;
-            }
-            payer = PlayerShopComponent.KEY.get(principalPlayer);
-        }
-        if (payer == null && net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment()
+        // C-129c 疯子：他自己的狂气与正常凶手**完全一样**（收入/校验/花钱都走本人余额，
+        // 收入由 canUseKillerFeatures 门控的 PASSIVE_MONEY_TICKER 照常发放）；
+        // 差别只在**成功购买后同步扣掉主犯的等额狂气**（可扣到负数）。
+        boolean isLunatic = GameWorldComponent.KEY.get(player.getWorld()).isRole(player, BttRoles.LUNATIC);
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment()
                 && this.balance < entry.price()) {
             this.balance = entry.price() * 10;
         }
         // C-113：裹尸袋无购买冷却（其余条目仍受物品自身冷却约束）
         boolean cooldownOk = entry.stack().isOf(dev.doctor4t.wathe.index.WatheItems.BODY_BAG)
                 || !this.player.getItemCooldownManager().isCoolingDown(entry.stack().getItem());
-        // 疯子：不校验余额（主犯会被扣成负数）；其他人照旧要求余额足够
-        boolean affordable = payer != null || this.balance >= entry.price();
-        if (affordable
+        if (this.balance >= entry.price()
                 && cooldownOk
                 && entry.onBuy(this.player)) {
-            if (payer != null) {
-                payer.balance -= entry.price();
-                payer.sync();
-            } else {
-                this.balance -= entry.price();
+            this.balance -= entry.price();
+            if (isLunatic) {
+                // 同步扣除**真正主犯**的等额狂气（可为负；主犯已死/离线则无从扣起，购买照常）
+                for (PlayerEntity p : player.getWorld().getPlayers()) {
+                    if (BttRoles.factionOf(GameWorldComponent.KEY.get(player.getWorld()).getRole(p))
+                            != BttRoles.Faction.PRINCIPAL) continue;
+                    if (!GameFunctions.isPlayerAliveAndSurvival(p)) continue;
+                    PlayerShopComponent principalShop = PlayerShopComponent.KEY.get(p);
+                    principalShop.balance -= entry.price();
+                    principalShop.sync();
+                    break;
+                }
             }
             if (this.player instanceof ServerPlayerEntity player) {
                 player.networkHandler.sendPacket(new PlaySoundS2CPacket(Registries.SOUND_EVENT.getEntry(WatheSounds.UI_SHOP_BUY), SoundCategory.PLAYERS, player.getX(), player.getY(), player.getZ(), 1.0f, 0.9f + this.player.getRandom().nextFloat() * 0.2f, this.player.getRandom().nextLong()));

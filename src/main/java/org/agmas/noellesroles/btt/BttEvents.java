@@ -295,7 +295,6 @@ public final class BttEvents {
                     BttKidnapper.tick(player, pc); // 饕餮：被吞者跟随/释放（C-109）
                     BttSecondIdentity.tick(player, pc); // 第二身份：借来的技能到期归还（C-110）
                     BttGuard.tick(player, pc); // 保镖 <守护> 倒计时（C-117）
-                    BttDecoy.tickBalance(player, pc, gwc); // 疯子：把主犯狂气镜像到本人余额（C-129b）
                     BttRoleDef d = BttRoleDefs.get(gwc.getRole(player));
                     if (d != null) d.dispatchTick(player, serverWorld, gwc);
                 }
