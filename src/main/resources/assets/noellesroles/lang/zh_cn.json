@@ -417,7 +417,7 @@
   "announcement.goal.noellesroles.balloonist": "你有四个「阵营代表」，注视可以看出，他们的阵营依次为乘客、独行、凶手、外人。",
   "announcement.goals.noellesroles.balloonist": "你有四个「阵营代表」，注视可以看出，他们的阵营依次为乘客、独行、凶手、外人。",
   "noellesroles.btt.hud.balloon_rep": "阵营代表",
-  "noellesroles.btt.hud.group_tag": "【%s】",
+  "noellesroles.btt.hud.group_tag": "%s",
   "announcement.role.noellesroles.locksmith": "锁匠",
   "announcement.goal.noellesroles.locksmith": "<上锁> 一扇门：这扇门坚不可摧，直到你开锁。",
   "announcement.goals.noellesroles.locksmith": "<上锁> 一扇门：这扇门坚不可摧，直到你开锁。",
@@ -437,8 +437,6 @@
   "noellesroles.btt.tip.leech": "按 %s 寄生准星所指的玩家（仅限一次）：只有他死亡你才会死亡",
   "noellesroles.btt.action.leech.bond": "你寄生了 %s。",
   "noellesroles.btt.action.succubus.charm": "你魅惑了 %s。",
-  "noellesroles.btt.action.gardener.planted": "你种下了一粒种子……",
-  "noellesroles.btt.action.gardener.shield": "一株小花替你枯萎了。",
   "noellesroles.btt.action.gardener.too_close": "距离其他小花太近。",
   "noellesroles.btt.action.assassin.hit": "识破成功。",
   "noellesroles.btt.action.assassin.miss": "你察觉到 %s 曾试图识破你。",
@@ -471,7 +469,6 @@
   "noellesroles.btt.action.common.pour_done": "你灌醉了他。",
   "noellesroles.btt.action.actor.down": "你躺下装死。",
   "noellesroles.btt.action.actor.up": "你起身了。",
-  "noellesroles.btt.action.alchemist.inject": "你把毒针刺入了 %s 的体内。",
   "noellesroles.btt.action.alchemist.tray_poisoned": "你在餐盘里下了毒。",
   "noellesroles.btt.action.alchemist.tray_used": "这份餐盘已经下过毒了。",
   "noellesroles.btt.action.architect.intact": "这扇门完好无损。",
@@ -493,5 +490,6 @@
   "noellesroles.btt.action.snake_charmer.wrong": "他不是主犯。",
   "noellesroles.btt.action.inherit.kit": "你继承了不在场的%s（%s）的行头。",
   "noellesroles.btt.action.rel.lover": "你的恋人是 %s。",
-  "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。"
+  "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。",
+  "noellesroles.btt.action.gardener.nearby": "附近传来花香……"
 }

@@ -96,6 +96,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         BttGameWorldComponent btt = BttGameWorldComponent.KEY.get(world);
         btt.lastEnding = "NONE"; // 跨局残留清理（参照 SRE finalizeGame“回合状态全清”原则）
         btt.winners = "";
+        btt.epilogueType = ""; // C-133：跨局残留清理（上一局尾声主持人翁不得泄漏到本局）
         btt.sync();
         BttLocksmith.clearAll(world); // C-119：清上一局残留的门锁（jammedTime 存在方块 NBT）
         BttGroup.assignAll(world, gameWorld); // C-121：贵族「族人」/ 飞行家「阵营代表」名单
@@ -111,7 +112,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         }
         if (!enforcers.isEmpty()) {
             enforcers.get(world.getRandom().nextInt(enforcers.size()))
-                    .giveItemStack(new net.minecraft.item.ItemStack(dev.doctor4t.wathe.index.WatheItems.KEY));
+                    .giveItemStack(new net.minecraft.item.ItemStack(org.agmas.noellesroles.ModItems.MASTER_KEY));
         }
 
         // C-130（docx）：[对讲机] —— **所有凶手以及卧底**初始持有（呼叫需拿出、收听不需）
@@ -281,7 +282,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // ===== 独胜即时判定（docx 胜利条件，C-059）：杀光所有人=魔女立即胜利；只剩教团=教团立即胜利 =====
         // （与"无外人时乘客团灭/凶手团灭直接赢"同构；尾声存活胜利（v3）为其补充路径，见下）
         boolean majoWin = majoAlive && alivePrincipals == 0 && aliveAccomplices == 0
-                && alivePassengers == 0 && aliveOutsiderNeutrals == 1; // 场上仅剩魔女（独行可不杀）
+                && alivePassengers == 0 && aliveCult == 0 && aliveOutsiderNeutrals == 1; // 场上仅剩魔女（独行可不杀）
         boolean cultWin = aliveCult > 0 && alivePrincipals == 0 && aliveAccomplices == 0
                 && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0; // 只剩教团阵营
 
@@ -297,6 +298,8 @@ public class BeforeTheTerminalGameMode extends GameMode {
         // 两分钟 = 2*60*20 = 2400 ticks（此前误用 1200 = 1 分钟）
         final int epilogueTicks = dev.doctor4t.wathe.game.GameConstants.getInTicks(2, 0);
         if (gameTime.getTime() > epilogueTicks && murderers + outsidersTotal > alivePassengers) {
+            LOGGER.info("[BTT] epilogue compressed: time {} -> {} (killers={} outsiders={} > passengers={})",
+                    gameTime.getTime(), epilogueTicks, murderers, outsidersTotal, alivePassengers);
             gameTime.setTime(epilogueTicks); // 倒计时减至两分钟
         }
         // ===== 黑死病重写（D15，C-080） =====
@@ -329,6 +332,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     : kidnapperAlive ? "KIDNAPPER" : gardenerAlive ? "GARDENER" : "SURVIVAL";
             if (!desired.equals(bttState.epilogueType)) {
                 bttState.epilogueType = desired;
+                LOGGER.info("[BTT] epilogue host: {} (time={} alivePassengers={} alivePrincipals={} "
+                                + "aliveAccomplices={} aliveOutsiders={} aliveLone={} aliveCult={})",
+                        desired, gameTime.getTime(), alivePassengers, alivePrincipals, aliveAccomplices,
+                        aliveOutsiderNeutrals, aliveLone, aliveCult);
                 startEpilogueBroadcast(desired, players);
             }
             if (gameTime.getTime() <= 0) {
@@ -379,8 +386,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 UUID partner = BttRelationships.partnerOf(p);
                 if (partner == null) return false;
                 ServerPlayerEntity pp = (ServerPlayerEntity) world.getPlayerByUuid(partner);
-                return pp != null && GameFunctions.isPlayerAliveAndSurvival(pp)
-                        && BttRoles.factionOf(gameWorld.getRole(p)) != BttRoles.factionOf(gameWorld.getRole(pp));
+                return pp != null && GameFunctions.isPlayerAliveAndSurvival(pp); // C-133：不分阵营，共同存活即并胜
             };
             case ARCHENEMY_WIN -> p -> false; // kill hook 已直接设 winners
             default -> p -> false;
@@ -401,16 +407,16 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     ? BttEndings.Ending.HERETIC_KILLER
                     : BttEndings.Ending.HERETIC_PASSENGER;
         }
-        // 恋人（C-064 v3）：异阵营双存活到结局 → LOVERS_WIN 独立标题（宣告恋人胜利）
+        // 恋人（C-064 v3；C-133 用户 2026-09-13 改写）：**只要恋人一起活到尾声**（双存活，不分阵营）
+        // → LOVERS_WIN「恋人幸存结局」独立标题，二人并入胜者组。
         java.util.List<UUID> loverWinners = new java.util.ArrayList<>();
         for (ServerPlayerEntity p : players) {
             if (!BttRelationships.isLover(p) || !GameFunctions.isPlayerAliveAndSurvival(p)) continue;
             UUID partner = BttRelationships.partnerOf(p);
             ServerPlayerEntity partnerPlayer = partner == null ? null : (ServerPlayerEntity) world.getPlayerByUuid(partner);
             if (partnerPlayer == null || !GameFunctions.isPlayerAliveAndSurvival(partnerPlayer)) continue;
-            var f1 = BttRoles.factionOf(gameWorld.getRole(p));
-            var f2 = BttRoles.factionOf(gameWorld.getRole(partnerPlayer));
-            if (f1 != f2) loverWinners.add(p.getUuid());
+            if (!loverWinners.contains(p.getUuid())) loverWinners.add(p.getUuid());
+            if (!loverWinners.contains(partnerPlayer.getUuid())) loverWinners.add(partnerPlayer.getUuid());
         }
         // 仅在本局已进入终局（ending != NONE）时才把标题改写为恋人胜利；
         // 否则会在开局（异阵营恋人双存活）即每 tick 触发 stopGame（BUG）。

@@ -46,7 +46,6 @@ public final class BttEvents {
         ensureWatheClientConfig();
         registerKitDispatch();
         registerJesterPsycho();
-        registerStarImmunity();
         registerCultLeaderShield();
         registerPharmacistPoison();
         BttGuessReceiver.register();
@@ -64,20 +63,18 @@ public final class BttEvents {
     // ===== 精神病人护盾（doc：拿出球棒获得护盾，直到杀死一个人——球棒冷却期间无盾） =====
 
     private static void registerPsychopathShield() {
-        // 花匠护盾（C-062）：花匠存活且场上有花 → 否决死亡并移除一株花
+        // 花匠护盾（C-062；C-133 收口）：花匠存活且场上有**成花** → 否决死亡并消耗一株成花
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
             if (!(victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw)) return true;
             if (!BttIdentity.isBttMode(sw)) return true;
             GameWorldComponent gwc0 = GameWorldComponent.KEY.get(sw);
             if (!gwc0.isRole(victim, org.agmas.noellesroles.btt.BttRoles.GARDENER)) return true;
-            if (BttFlowers.count(sw) <= 0) return true;
-            BttFlowers.removeOne(sw);
+            if (!BttFlowers.hasBloom(sw)) return true;
+            BttFlowers.removeOneBloom(sw);
             // C-128：成花替死音
             victim.getWorld().playSound(null, victim.getBlockPos(), BttSounds.FLOWER_SHIELD,
                     net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
-            // C-098：花匠技能反馈（动作栏）用身份色
-            victim.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.shield")
-                    .withColor(org.agmas.noellesroles.btt.BttRoles.GARDENER.color()), true);
+            // C-133：替死不给动作栏反馈（音效即提示）
             return false;
         });
         AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
@@ -259,8 +256,6 @@ public final class BttEvents {
         });
     }
 
-    // ===== 明星：被枪杀不死亡（全局否决） =====
-
     // ===== 异教领袖：被枪处决不受伤 + 处决计数（C-124） =====
 
     private static void registerCultLeaderShield() {
@@ -273,23 +268,6 @@ public final class BttEvents {
                     SoundCategory.PLAYERS, 1.0F, 1.0F);
             BttCultLeader.onExecuted(serverVictim);
             return false; // 不受伤
-        });
-    }
-
-    private static void registerStarImmunity() {
-        AllowPlayerDeath.EVENT.register((victim, killer, reason) -> {
-            if (!BttIdentity.isBttMode(victim.getWorld())) return true;
-            if (reason != GameConstants.DeathReasons.GUN) return true;
-            GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
-            if (!gwc.isRole(victim, BttRoles.STAR)) return true;
-            // 暴乱存活 → 明星枪免失效（处决明星也应死亡）
-            for (PlayerEntity p : victim.getWorld().getPlayers()) {
-                if (gwc.isRole(p, BttRoles.RIOT) && GameFunctions.isPlayerAliveAndSurvival(p)) return true;
-            }
-            // docx 2026-09-12：被处决时**发出失去护盾的声音**，不受伤
-            victim.getWorld().playSound(null, victim.getBlockPos(), SoundEvents.ITEM_SHIELD_BREAK,
-                    SoundCategory.PLAYERS, 1.0F, 1.0F);
-            return false; // 明星枪免
         });
     }
 
@@ -433,6 +411,17 @@ public final class BttEvents {
         for (Identifier id : BttRoles.newRoleIds()) {
             if (!org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.contains(id.toString())) {
                 org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabled.add(id.toString());
+                changed = true;
+            }
+        }
+        // C-133：关系修饰词（恋人/宿敌/双子）**只由 BTT 分配**。禁入 HML 的 modifier 池，
+        // 否则 HML 局（`ModdedMurderGameMode#assignModifiers` 遍历全局 MODIFIERS）会凭空发关系：
+        // 12 人局按 N//6 配额每种各发若干人 → 表现为"关系对数量不对 / 一人身兼数种关系"（用户 2026-09-13 报告）。
+        for (org.agmas.harpymodloader.modifiers.Modifier mod : java.util.List.of(
+                BttRelationships.MOD_LOVERS, BttRelationships.MOD_ARCHENEMY, BttRelationships.MOD_TWINS)) {
+            String key = mod.identifier().toString();
+            if (!org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabledModifiers.contains(key)) {
+                org.agmas.harpymodloader.config.HarpyModLoaderConfig.HANDLER.instance().disabledModifiers.add(key);
                 changed = true;
             }
         }

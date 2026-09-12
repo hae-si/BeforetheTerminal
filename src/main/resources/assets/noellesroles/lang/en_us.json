@@ -415,7 +415,7 @@
   "announcement.goal.noellesroles.balloonist": "You have four \"camp representatives\" - you can tell them apart by looking; their camps are, in order, passenger, lone, murderer, outsider.",
   "announcement.goals.noellesroles.balloonist": "You have four \"camp representatives\" - you can tell them apart by looking; their camps are, in order, passenger, lone, murderer, outsider.",
   "noellesroles.btt.hud.balloon_rep": "Camp Rep",
-  "noellesroles.btt.hud.group_tag": "[%s]",
+  "noellesroles.btt.hud.group_tag": "%s",
   "announcement.role.noellesroles.locksmith": "Locksmith",
   "announcement.goal.noellesroles.locksmith": "<Lock> a door: it stays unbreakable until you unlock it.",
   "announcement.goals.noellesroles.locksmith": "<Lock> a door: it stays unbreakable until you unlock it.",
@@ -436,8 +436,6 @@
   "noellesroles.btt.action.leech.bond": "You parasitized %s.",
   "noellesroles.btt.action.succubus.charm": "You charmed %s.",
   "noellesroles.btt.action.professor.shield": "The vial absorbed the blow.",
-  "noellesroles.btt.action.gardener.planted": "You plant a seed.",
-  "noellesroles.btt.action.gardener.shield": "A flower withers in your place...",
   "noellesroles.btt.action.gardener.too_close": "Too close to another flower (at least 20m apart).",
   "noellesroles.btt.action.assassin.hit": "Unmasked.",
   "noellesroles.btt.action.assassin.miss": "You notice %s tried to unmask you.",
@@ -458,7 +456,6 @@
   "noellesroles.btt.action.kidnapper.swallow": "You swallow %s.",
   "noellesroles.btt.action.kidnapper.swallowed": "You are swallowed...",
   "noellesroles.btt.action.kidnapper.released": "You are spat back out.",
-  "noellesroles.btt.action.alchemist.inject": "You sink the needle into %s.",
   "noellesroles.btt.action.alchemist.tray_used": "That plate is already poisoned.",
   "noellesroles.btt.action.alchemist.tray_poisoned": "You poison the plate.",
   "noellesroles.btt.action.architect.blasted": "A door was forced open!",
@@ -493,5 +490,6 @@
   "announcement.modifier.noellesroles.lovers": "Lovers",
   "announcement.modifier.noellesroles.archenemy": "Archenemy",
   "announcement.modifier.noellesroles.twins": "Twins",
-  "noellesroles.btt.action.snake_charmer.wrong": "They are not the principal."
+  "noellesroles.btt.action.snake_charmer.wrong": "They are not the principal.",
+  "noellesroles.btt.action.gardener.nearby": "A scent of flowers drifts nearby..."
 }

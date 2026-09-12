@@ -357,7 +357,7 @@ public final class BttGuessReceiver {
             return;
         }
         setCd(ability, GameConstants.getInTicks(0, 30));
-        user.sendMessage(Text.translatable("noellesroles.btt.action.gardener.planted").withColor(colorOf(user)), true);
+        // C-133：种种子不给动作栏反馈（用户 2026-09-13；附近花香提示见 BttFlowers 幼苗期）
     }
 
     // ===== 刺客：<识破> 猜身份；对=杀（识破魔法），错=仅被猜者收到通知（D3）；CD 60s =====

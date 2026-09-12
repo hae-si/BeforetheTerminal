@@ -30,9 +30,25 @@ public abstract class BttMoodFlagMixin {
     @Shadow public static float moodTextWidth;
     @Shadow public static float moodRender;
     @Shadow public static float moodAlpha;
+    @Shadow private static void renderKiller(TextRenderer textRenderer, DrawContext context) {}
 
     private static final Identifier GHOST = Identifier.of(Noellesroles.MOD_ID, "hud/mood_ghost");
     private static final Identifier JESTER = Identifier.of(Noellesroles.MOD_ID, "hud/mood_jester");
+
+    /**
+     * 黑死病（C-133，用户 2026-09-13"旗帜应该是红色"）：身份属狂人（REAL → 原生走 renderCivilian 绿旗），
+     * 但阵营归属凶手 → 改绘凶手红旗（mood 仍 REAL，理智消耗/需求/崩溃不变）。★不是 FAKE：FAKE 会让
+     * {@code PlayerMoodComponent.getMood()} 恒 1，直接抹掉"精神崩溃"这一终结条件。
+     */
+    @Inject(method = "renderCivilian", at = @At("HEAD"), cancellable = true)
+    private static void bttBlackdeathFlag(TextRenderer textRenderer, DrawContext context, float prevMood, CallbackInfo ci) {
+        var viewer = MinecraftClient.getInstance().player;
+        if (viewer == null || !BttIdentity.isBttMode(viewer.getWorld())) return;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
+        if (gwc.getRole(viewer) != BttRoles.BLACKDEATH) return;
+        renderKiller(textRenderer, context);
+        ci.cancel();
+    }
 
     @Inject(method = "renderKiller", at = @At("HEAD"), cancellable = true)
     private static void bttFactionFlag(TextRenderer textRenderer, DrawContext context, CallbackInfo ci) {

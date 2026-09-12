@@ -25,7 +25,8 @@ public abstract class BttDropOnDeathMixin {
     @Inject(method = "shouldDropOnDeath", at = @At("HEAD"), cancellable = true)
     private static void bttDropOnDeath(ItemStack stack, PlayerEntity victim, CallbackInfoReturnable<Boolean> cir) {
         if (stack.isEmpty() || !BttIdentity.isBttMode(victim.getWorld())) return;
-        boolean gunOrKey = stack.isOf(WatheItems.REVOLVER) || stack.isOf(WatheItems.KEY);
+        // C-133：万能钥匙 = BTT 的 ModItems.MASTER_KEY；wathe 的 WatheItems.KEY 是**房间钥匙**，不在本口径内。
+        boolean gunOrKey = stack.isOf(WatheItems.REVOLVER) || stack.isOf(org.agmas.noellesroles.ModItems.MASTER_KEY);
         if (!gunOrKey) return; // 其余物品交还原逻辑
         // C-124：死后影响**随阵营**（混血规则）→ 用阵营覆盖优先的判定
         cir.setReturnValue(BttRoles.isPassengerCampFor(GameWorldComponent.KEY.get(victim.getWorld()), victim));

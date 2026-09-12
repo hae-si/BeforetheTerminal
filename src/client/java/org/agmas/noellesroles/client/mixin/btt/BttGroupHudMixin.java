@@ -8,7 +8,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import org.agmas.noellesroles.btt.BeforeTheTerminalGameMode;
 import org.agmas.noellesroles.btt.BttGroup;
 import org.agmas.noellesroles.btt.BttPlayerComponent;
@@ -46,18 +45,22 @@ public abstract class BttGroupHudMixin {
                 || !(ehr.getEntity() instanceof net.minecraft.entity.player.PlayerEntity target)) return;
 
         Text label = null;
+        int color = 0xFFFFFF;
         if (noble && BttGroup.inGroup(own.kins, target.getUuid())) {
             label = Text.translatable("noellesroles.btt.hud.kins");
+            color = BttRoles.NOBLE.color(); // C-133：标签用本人身份色（原恒黄）
         } else if (balloonist && BttGroup.inGroup(own.balloonReps, target.getUuid())) {
             label = Text.translatable("noellesroles.btt.hud.balloon_rep");
+            color = BttRoles.BALLOONIST.color();
         }
         if (label == null) return;
 
-        Text line = Text.translatable("noellesroles.btt.hud.group_tag", label).formatted(Formatting.YELLOW);
+        // C-133：去掉【】包裹（lang 键改纯 "%s"），颜色取身份色
+        Text line = Text.translatable("noellesroles.btt.hud.group_tag", label).withColor(color);
         context.getMatrices().push();
         context.getMatrices().translate(context.getScaledWindowWidth() / 2.0F, context.getScaledWindowHeight() / 2.0F + 6.0F, 0.0F);
         context.getMatrices().scale(0.6F, 0.6F, 1.0F);
-        context.drawTextWithShadow(renderer, line, -renderer.getWidth(line) / 2, 34, 0xFFFFFF);
+        context.drawTextWithShadow(renderer, line, -renderer.getWidth(line) / 2, 34, color);
         context.getMatrices().pop();
     }
 }

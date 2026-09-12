@@ -97,13 +97,16 @@ public final class BttRelationships {
             pool.remove(b);
 
             if ("TWINS".equals(chosen)) {
-                // 统一身份为其中一人（addRole 前改 seats → 两人 kit/宣告一致）
-                Role unified = world.getRandom().nextBoolean() ? seats.get(a) : seats.get(b);
+                // doc（GAME_DESIGN §7；C-133 勘误）：**先抽到的那名平民**为基准，后者的身份作废、变为前者
+                Role unified = seats.get(a);
                 seats.put(a, unified);
                 seats.put(b, unified);
             }
             result.add(new Pair(a, b, chosen));
         }
+        // C-133：分配结果落服务端日志（对数 = N//8；便于实测核对"12 人 1 对 / 13 人 1 对"）
+        BeforeTheTerminalGameMode.LOGGER.info("[BTT] relationships: N={} pairs={} -> {}",
+                seats.size(), result.size(), result);
         return result;
     }
 
@@ -111,7 +114,18 @@ public final class BttRelationships {
     public static void apply(ServerWorld world, Map<UUID, Role> seats, List<Pair> pairs,
                              java.util.function.BiConsumer<UUID, Text> notify) {
         WorldModifierComponent modifiers = WorldModifierComponent.KEY.get(world);
+        // C-133：本局关系由 BTT 独占——先清空 HML 修饰词表，防跨局/外部（HML murder 局）残留造成
+        // "一人身兼数种关系"或凭空多出的关系对。
+        modifiers.getModifiers().clear();
+        java.util.Set<UUID> paired = new java.util.HashSet<>();
         for (Pair pair : pairs) {
+            // 防御：每人至多一对（GAME_DESIGN §3）
+            if (paired.contains(pair.a()) || paired.contains(pair.b())) {
+                BeforeTheTerminalGameMode.LOGGER.warn("[BTT] relationship pair skipped (member already paired): {}", pair);
+                continue;
+            }
+            paired.add(pair.a());
+            paired.add(pair.b());
             Modifier mod = switch (pair.type()) {
                 case "ARCHENEMY" -> MOD_ARCHENEMY;
                 case "TWINS" -> MOD_TWINS;

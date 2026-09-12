@@ -29,6 +29,41 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameFunctions.class)
 public abstract class BttKillHookMixin {
 
+    /**
+     * 明星枪免（C-133 从 {@code AllowPlayerDeath} 迁到 killPlayer HEAD）：
+     * <p>① **顺序无关**——HEAD 先于所有死亡监听，不会被其它免死/否决监听抢先吞掉；
+     * ② **碎盾声必定可闻**——开枪距离 65 格 > 原版声音衰减 16 格，原实现只在尸体处 `playSound`，
+     * 远处开枪者听不到（用户 2026-09-13"明星：被处决没有碎盾声"）。改为**定向**播放：
+     * 明星本人 + 开枪者 + 16 格内旁观者各听一次（无重复播放）。
+     */
+    @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
+            at = @At("HEAD"), cancellable = true)
+    private static void bttStarShield(PlayerEntity victim, boolean spawnBody, PlayerEntity killer,
+                                      Identifier reason, CallbackInfo ci) {
+        if (!BttIdentity.isBttMode(victim.getWorld())) return;
+        if (reason != GameConstants.DeathReasons.GUN) return;
+        if (!(victim instanceof ServerPlayerEntity star)) return;
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(victim.getWorld());
+        if (!gwc.isRole(victim, org.agmas.noellesroles.btt.BttRoles.STAR)) return;
+        // 暴乱存活 → 明星枪免失效（处决明星也应死亡；docx 2026-09-10）
+        for (PlayerEntity p : victim.getWorld().getPlayers()) {
+            if (gwc.isRole(p, org.agmas.noellesroles.btt.BttRoles.RIOT)
+                    && GameFunctions.isPlayerAliveAndSurvival(p)) return;
+        }
+        net.minecraft.sound.SoundEvent sfx = net.minecraft.sound.SoundEvents.ITEM_SHIELD_BREAK;
+        star.playSoundToPlayer(sfx, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+        if (killer != null && killer != star) {
+            killer.playSoundToPlayer(sfx, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+        }
+        for (ServerPlayerEntity bystander : star.getServerWorld().getPlayers()) {
+            if (bystander == star || bystander == killer) continue;
+            if (bystander.getBlockPos().getSquaredDistance(star.getBlockPos()) <= 256) {
+                bystander.playSoundToPlayer(sfx, net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
+            }
+        }
+        ci.cancel(); // 不受伤
+    }
+
     @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
             at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/entity/PlayerBodyEntity;setHeadYaw(F)V"))
     private static void bttKillHook(PlayerEntity victim, boolean spawnBody, PlayerEntity killer, Identifier identifier, CallbackInfo ci) {

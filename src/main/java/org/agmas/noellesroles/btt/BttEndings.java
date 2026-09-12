@@ -32,7 +32,7 @@ public final class BttEndings {
         KIDNAPPER_WIN,
         /** 花匠独胜：坚持到花匠尾声结束（尾声占位，技能未实装） */
         GARDENER_WIN,
-        /** 恋人胜利：异阵营恋人共同存活到最后（C-064） */
+        /** 恋人胜利：恋人共同活到尾声（不分阵营；C-064 立，C-133 用户裁定取消"异阵营"限定） */
         LOVERS_WIN,
         /** 宿敌凶手单独胜利：宿敌乘客被处决（C-064） */
         ARCHENEMY_WIN,

@@ -157,12 +157,12 @@ public final class BttRoleDefs {
                 .onTick((player, world, gwc) -> BttSpirit.tick(player, gwc));
         // 窃贼：初始[万能钥匙]；<搜刮> docx 2026-09-12 = 10 秒（初始 CD 按 C-099 与自身冷却等长）
         def(BttRoles.THIEF).kit(p -> {
-            p.giveItemStack(new ItemStack(WatheItems.KEY));
+            p.giveItemStack(new ItemStack(org.agmas.noellesroles.ModItems.MASTER_KEY));
             initialAbilityCd(p, GameConstants.getInTicks(0, 10));
         });
         // 纵火犯：初始[万能钥匙] + <浇汽油> G 键直发（C-092 抄 NRS 病原体；初始 CD 10s，动态冷却见 BttArsonist）
         def(BttRoles.ARSONIST).kit(p -> {
-            p.giveItemStack(new ItemStack(WatheItems.KEY));
+            p.giveItemStack(new ItemStack(org.agmas.noellesroles.ModItems.MASTER_KEY));
             initialAbilityCd(p, BttArsonist.INITIAL_CD_TICKS);
         });
 

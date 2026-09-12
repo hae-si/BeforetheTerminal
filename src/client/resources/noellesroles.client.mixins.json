@@ -11,6 +11,7 @@
     "btt.BttGroupHudMixin",
     "btt.BttMoodGateMixin",
     "btt.BttMoodFlagMixin",
+    "btt.BttMoodTaskTextMixin",
     "bartender.BartenderShopMixin",
     "bartender.DefenseVialHandMixin",
     "chameleon.ChameleonCapeMixin",

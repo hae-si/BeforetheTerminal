@@ -30,7 +30,8 @@ public abstract class BttPickupGateMixin {
     private void bttPickupGate(PlayerEntity player, CallbackInfo ci) {
         ItemStack stack = ((ItemEntity) (Object) this).getStack();
         if (stack.isEmpty()) return;
-        if (!stack.isOf(WatheItems.REVOLVER) && !stack.isOf(WatheItems.KEY)) return;
+        // C-133：万能钥匙 = BTT 的 ModItems.MASTER_KEY；wathe 的 WatheItems.KEY 是**房间钥匙**，不受门控。
+        if (!stack.isOf(WatheItems.REVOLVER) && !stack.isOf(org.agmas.noellesroles.ModItems.MASTER_KEY)) return;
         if (!BttIdentity.isBttMode(player.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(player.getWorld());
         if (!gwc.isRunning()) return;

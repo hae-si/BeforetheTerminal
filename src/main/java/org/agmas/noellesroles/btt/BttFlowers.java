@@ -18,10 +18,10 @@ import java.util.UUID;
  * 花匠小花（C-062，掉落物方案）：三种掉落物=三生长阶段。
  * 种子期 20s：虚拟（无实体，隐形）；幼苗期 40s：**红树胎生苗**掉落物（走近=拔除清除，20m 范围玩家收到提示）；
  * 成花期：**铃兰**掉落物（非花匠走近=被吞噬，死因 `noellesroles:bloom`"绽放"；花随后死亡）。
- * 花匠自己捡不了（pickupDelay=MAX + 距离判定豁免）；实体每 100t 重建防 5 分钟消失。
+ * 花匠自己捡不了（pickupDelay=MAX + 距离判定豁免）；实体**不再定时重建**（C-133：5 分钟掉落物寿命对局内足够）。
  * 相邻小花 ≥20m（"不能露天"已按用户裁定删除：该限制原为"小花数量≈胜利条件"而设，现已无关）；
  * 花匠可**被动透视**全部小花（C-091，走本能高亮通道、免按键）。
- * 每株小花=花匠 1 层护盾（挡一次致命伤后花谢，见 BttEvents）。
+ * **只有成花**可替死（C-133）：挡一次致命伤并消耗**一株成花**，见 {@code BttEvents} 花匠护盾。
  */
 public final class BttFlowers {
     private BttFlowers() {}
@@ -30,7 +30,6 @@ public final class BttFlowers {
     public static final int SPROUT_TICKS = 800;  // 40s
     public static final double PICK_RADIUS = 1.2;
     public static final double HINT_RADIUS = 20.0;
-    private static final int ENTITY_REFRESH = 100;
 
     /** 幼苗期掉落物：红树胎生苗（C-091 用户指定） */
     public static final Item SPROUT_ITEM = Items.MANGROVE_PROPAGULE;
@@ -59,10 +58,16 @@ public final class BttFlowers {
         return n;
     }
 
-    /** 移除一株花（花匠护盾消耗） */
-    public static void removeOne(ServerWorld world) {
+    /** 场上是否有**成花**（C-133：只有成花能替死） */
+    public static boolean hasBloom(ServerWorld world) {
+        for (Flower f : FLOWERS) if (f.world == world && f.stage == 2) return true;
+        return false;
+    }
+
+    /** 移除一株**成花**（花匠护盾消耗；无成花则不动幼苗/种子） */
+    public static void removeOneBloom(ServerWorld world) {
         for (Flower f : FLOWERS) {
-            if (f.world == world) {
+            if (f.world == world && f.stage == 2) {
                 discard(f);
                 FLOWERS.remove(f);
                 return;
@@ -105,6 +110,8 @@ public final class BttFlowers {
                 spawnEntity(f, new ItemStack(SPROUT_ITEM));
                 world.playSound(null, f.pos, BttSounds.FLOWER_GROW,
                         net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 1.0F); // C-128：小花生长音
+                // C-133：恢复"附近传来花香"（花匠自己的 planted/shield 反馈已删；此处是给附近者的**环境提示**）
+                hintNearby(f, net.minecraft.text.Text.translatable("noellesroles.btt.action.gardener.nearby"));
             } else if (f.stage == 1 && f.stageTicks >= SPROUT_TICKS) {
                 f.stage = 2;
                 f.stageTicks = 0;
@@ -113,11 +120,6 @@ public final class BttFlowers {
                         net.minecraft.sound.SoundCategory.BLOCKS, 1.0F, 0.8F); // C-128：开花音（同键，低音高）
             }
             if (f.entity != null && f.entity.isRemoved()) f.entity = null;
-            if (f.entity != null && f.stageTicks > 0 && f.stageTicks % ENTITY_REFRESH == 0) {
-                ItemStack stack = f.entity.getStack();
-                f.entity.discard();
-                spawnEntity(f, stack); // 重建防 5 分钟消失（age 归零）
-            }
 
             // 幼苗期：非花匠玩家走近 → 拔除
             if (f.stage == 1) {

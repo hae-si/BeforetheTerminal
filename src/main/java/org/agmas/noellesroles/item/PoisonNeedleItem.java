@@ -66,8 +66,7 @@ public class PoisonNeedleItem extends Item {
                 : BASE_POISON_TICKS;
         poison.setPoisonTicks(ticks, alchemist.getUuid());
         applyCooldown(alchemist);
-        alchemist.sendMessage(Text.translatable("noellesroles.btt.action.alchemist.inject", victim.getName().getString())
-                .withColor(BttRoles.ALCHEMIST.color()), true);
+        // C-133：扎针不给动作栏反馈（用户 2026-09-13；餐盘的 tray_poisoned/tray_used 保留）
         return ActionResult.SUCCESS;
     }
 
