@@ -256,7 +256,10 @@ public final class BttRoles {
             IMP, TERRORIST, COMEDIAN, GARDENER, EX_UNDERCOVER, BLACKDEATH,
             SHOUJO, HERETIC, ARCHITECT, ALCHEMIST, MEYUUBYOU, ARSONIST, PROFESSOR, KIDNAPPER,
             CANNIBAL, BODYGUARD, LEECH, LOCKSMITH, NOBLE, BALLOONIST, CULT_LEADER,
-            DRUNK, LUNATIC, MORTICIAN, FOLKLORIST, POSTMAN);
+            DRUNK, LUNATIC, MORTICIAN, FOLKLORIST, POSTMAN,
+            // C-135：乘务员此前漏登记（能力早已实装：C-119 可见倒计时 + C-123 全车广播），
+            // 缺登记会让它落进"元数据层"→ 席位抽取优先级错误
+            ATTENDANT);
     /** 独行中立（2026-09-06 策划修订）：被杀加钱、活着不影响凶手胜利 */
     public static final java.util.Set<Role> LONE_NEUTRALS = java.util.Set.of(NOVELIST, JESTER, THIEF, ARSONIST);
 
