@@ -63,7 +63,8 @@ public final class BttRoleDefs {
         def(BttRoles.ALCHEMIST).kit(item(ModItems.POISON_NEEDLE));
         // 恐怖分子：初始[炸弹箱]（C-084；安放从 G 键技能改为物品右键，物品 30 秒冷却）
         def(BttRoles.TERRORIST).kit(item(ModItems.BOMB));
-        def(BttRoles.SWORDSMAN).kit(knife()); // 剑客（docx 改名）：[剑] 飞剑 GAP，暂以刀代
+        // 剑客（C-136）：初始 [剑] = 飞剑（右键射线贯穿一行人，1 分钟冷却；物品自带冷却）
+        def(BttRoles.SWORDSMAN).kit(p -> p.giveItemStack(new ItemStack(org.agmas.noellesroles.ModItems.SWORD)));
         def(BttRoles.VETERAN).kit(p -> {
             knife().give(p);
             BttPlayerComponent.KEY.get(p).veteranUses = VETERAN_KNIFE_USES;

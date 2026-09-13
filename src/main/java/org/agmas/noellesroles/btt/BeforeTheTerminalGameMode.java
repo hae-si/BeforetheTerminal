@@ -292,6 +292,12 @@ public class BeforeTheTerminalGameMode extends GameMode {
                 && alivePassengers == 0 && aliveCult == 0 && aliveOutsiderNeutrals == 1; // 场上仅剩魔女（独行可不杀）
         boolean cultWin = aliveCult > 0 && alivePrincipals == 0 && aliveAccomplices == 0
                 && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0; // 只剩教团阵营
+        // C-137（用户 2026-09-13）：**只剩一个阵营 → 立即结算**。此前饕餮/花匠要等尾声倒计时走完
+        // （"让剩下那个人在车里看两分钟风景"）；其"尾声存活"路径仍保留为与他人共存时的补充路径。
+        boolean soleOutsiderConditions = alivePrincipals == 0 && aliveAccomplices == 0
+                && alivePassengers == 0 && aliveCult == 0 && aliveOutsiderNeutrals == 1;
+        boolean kidnapperWin = kidnapperAlive && soleOutsiderConditions;
+        boolean gardenerWin = gardenerAlive && soleOutsiderConditions;
 
         // ===== 尾声（BT-SYS-EPILOGUE v3，C-058：作者澄清） =====
         // ①凶手数>乘客数 → 倒计时**减至两分钟**；②倒计时 ≤2min → **必然进入尾声**（期间 BGM【GAP】）。
@@ -314,6 +320,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
         boolean blackdeathForcedPassenger = blackdeathPresent && !blackdeathAlive;
         boolean onlyBlackdeathLeft = blackdeathAlive && alivePrincipals == 1 && aliveAccomplices == 0
                 && alivePassengers == 0 && aliveOutsiderNeutrals == 0 && aliveLone == 0 && aliveCult == 0;
+        // C-137 根因修复：原判定写成 `!onlyBlackdeathLeft`，在**无黑死病的局**里 onlyBlackdeathLeft=false
+        // → 凶手的团灭胜利（血染/鸣泣）被无条件否决 → "只剩凶手却无法触发结局"（且倒计时归零后同样被否决 → 卡死）。
+        // 正确语义 = **黑死病在场且不是唯一幸存者时才拦**凶手胜利。
+        boolean killerWinBlocked = blackdeathPresent && !onlyBlackdeathLeft;
 
         BttEndings.Ending ending = BttEndings.Ending.NONE;
         if (blackdeathForcedPassenger) {
@@ -321,6 +331,10 @@ public class BeforeTheTerminalGameMode extends GameMode {
             ending = BttEndings.Ending.TRIAL_COMPLETE;
         } else if (majoWin) {
             ending = BttEndings.Ending.MAJO_WIN;
+        } else if (kidnapperWin) {
+            ending = BttEndings.Ending.KIDNAPPER_WIN;
+        } else if (gardenerWin) {
+            ending = BttEndings.Ending.GARDENER_WIN;
         } else if (cultWin) {
             ending = BttEndings.Ending.CULT_WIN;
         } else if (gameTime.getTime() <= epilogueTicks) {
@@ -328,7 +342,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
             // 原实现把常规判定整体挂起 → 尾声里已把对面杀光却要等倒计时走完，与 docx 胜负逻辑不符。
             BttEndings.Ending wipe = BttEndings.decide(alivePrincipals, aliveAccomplices,
                     alivePassengers, aliveOutsiderNeutrals, false);
-            if ((wipe == BttEndings.Ending.BLOOD_EXPRESS || wipe == BttEndings.Ending.NAKU_KORO) && !onlyBlackdeathLeft) {
+            if ((wipe == BttEndings.Ending.BLOOD_EXPRESS || wipe == BttEndings.Ending.NAKU_KORO) && killerWinBlocked) {
                 wipe = BttEndings.Ending.NONE; // 黑死病在场且存活：凶手胜利需全灭
             }
             if (wipe != BttEndings.Ending.NONE) {
@@ -356,7 +370,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                         BttEndings.Ending d = BttEndings.decide(alivePrincipals, aliveAccomplices,
                                 alivePassengers, aliveOutsiderNeutrals, true);
                         // 黑死病在场且存活：凶手胜利需全灭（仅剩黑死病）
-                        if ((d == BttEndings.Ending.BLOOD_EXPRESS || d == BttEndings.Ending.NAKU_KORO) && !onlyBlackdeathLeft) {
+                        if ((d == BttEndings.Ending.BLOOD_EXPRESS || d == BttEndings.Ending.NAKU_KORO) && killerWinBlocked) {
                             d = BttEndings.Ending.NONE;
                         }
                         yield d;
@@ -370,7 +384,7 @@ public class BeforeTheTerminalGameMode extends GameMode {
                     alivePassengers, aliveOutsiderNeutrals, false);
             // 黑死病在场且存活：凶手胜利需**全灭**（仅剩黑死病），否则游戏继续
             if ((decided == BttEndings.Ending.BLOOD_EXPRESS || decided == BttEndings.Ending.NAKU_KORO)
-                    && !onlyBlackdeathLeft) {
+                    && killerWinBlocked) {
                 decided = BttEndings.Ending.NONE;
             }
             ending = decided;

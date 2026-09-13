@@ -23,6 +23,7 @@ import java.util.UUID;
  *       "精神崩溃"只可能发生在**被附身的病人**身上（病人按自己的身份跑理智——乘客病人会耗尽理智）。</li>
  *   <li><b>病原体形态</b> = 黑死病玩家变为旁观态（无躯体、不可被枪杀），**仍在凶手对讲机频道**
  *       （语音中继对"无体病原体"豁免存活判定，见 {@code NoellesrolesVoiceChatPlugin}）。</li>
+ *   <li><b>病人不知情</b>（C-138 作者裁定）：转移/感染不给病人任何提示——承受者不觉察。</li>
  *   <li><b>转移</b>：病人被"有击杀者"地杀死 → 击杀者成为新病人（链式传染）；病人**无击杀者**死亡
  *       （跳车/环境/崩溃）→ 黑死病**终结**（病原体消散，此后按"黑死病已死"参与结算）。</li>
  *   <li><b>在场</b>：{@link #isPresent} —— 本体存活，或病原体附身于存活病人。结算里黑死病按在场计入凶手侧
@@ -96,9 +97,10 @@ public final class BttBlackdeath {
             bdState.sync();
             BttPlayerComponent.KEY.get(newHost).sync();
             // 附带：病原体不再渲染躯体（黑死病本体死亡走 wathe 原生 → 旁观）
-            blackdeath.setCameraEntity(newHost); // 病原体"附身"= 用病人的眼睛看（沿用 C-109 饕餮同款原版 API）
+            // 病原体 = 旁观态（黑死病本体已死），**强制附身**：相机钉在病人身上（每 tick 刷新，见 tick()）
+            blackdeath.setCameraEntity(newHost);
             notify(blackdeath, "noellesroles.btt.action.blackdeath.possess", nameOf(newHost));
-            notify(newHost, "noellesroles.btt.action.blackdeath.patient", nameOf(patient));
+            // C-138（作者 2026-09-13）：**病人不知情**——不给病人任何提示（承受者不觉察）
             return true;
         }
         // 无击杀者 → 终结

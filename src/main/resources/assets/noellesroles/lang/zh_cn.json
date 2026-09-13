@@ -493,7 +493,9 @@
   "noellesroles.btt.action.rel.archenemy": "你的宿敌是 %s（%s）。",
   "noellesroles.btt.action.gardener.nearby": "附近传来花香……",
   "noellesroles.btt.action.blackdeath.possess": "你附身于 %s 体内……",
-  "noellesroles.btt.action.blackdeath.patient": "一阵恶寒爬上脊背——你成了黑死病的病人。",
   "noellesroles.btt.action.blackdeath.ended": "病原体消散了。",
-  "death_reason.noellesroles.collapse": "崩溃"
+  "death_reason.noellesroles.collapse": "崩溃",
+  "item.noellesroles.sword": "剑",
+  "item.noellesroles.sword.tooltip": "右键：扔出飞剑贯穿视线上的所有玩家（1 分钟冷却）",
+  "death_reason.noellesroles.flying_sword": "飞剑"
 }

@@ -15,6 +15,7 @@ import org.agmas.noellesroles.item.FakeKnifeItem;
 import org.agmas.noellesroles.item.PoisonGasGrenadeItem;
 import org.agmas.noellesroles.item.PoisonNeedleItem;
 import org.agmas.noellesroles.item.RoleMineItem;
+import org.agmas.noellesroles.item.SwordItem;
 import org.agmas.noellesroles.item.WalkieTalkieItem;
 
 public class ModItems {
@@ -24,6 +25,7 @@ public class ModItems {
         GameConstants.ITEM_COOLDOWNS.put(DAGGER, GameConstants.getInTicks(1, 0));            // 清道夫匕首 1 分钟
         GameConstants.ITEM_COOLDOWNS.put(POISON_NEEDLE, GameConstants.getInTicks(0, 30));    // 毒针 30 秒
         GameConstants.ITEM_COOLDOWNS.put(BOMB, GameConstants.getInTicks(0, 30));             // 炸弹箱安放 30 秒
+        GameConstants.ITEM_COOLDOWNS.put(SWORD, GameConstants.getInTicks(1, 0));             // 飞剑 1 分钟（C-136）
     }
 
     public static final Item FAKE_KNIFE = register(
@@ -75,6 +77,11 @@ public class ModItems {
     public static final Item WALKIE_TALKIE = register(
             new WalkieTalkieItem(new Item.Settings().maxCount(1)),
             "walkie_talkie"
+    );
+    /** 飞剑（C-136）：剑客初始 [剑]；右键射线贯穿一行人，1 分钟冷却（纹理=铁剑占位） */
+    public static final Item SWORD = register(
+            new SwordItem(new Item.Settings().maxCount(1)),
+            "sword"
     );
     public static Item register(Item item, String id) {
         // Create the identifier for the item.

@@ -493,7 +493,9 @@
   "noellesroles.btt.action.snake_charmer.wrong": "They are not the principal.",
   "noellesroles.btt.action.gardener.nearby": "A scent of flowers drifts nearby...",
   "noellesroles.btt.action.blackdeath.possess": "You take root inside %s...",
-  "noellesroles.btt.action.blackdeath.patient": "A chill crawls up your spine - you are the plague's patient now.",
   "noellesroles.btt.action.blackdeath.ended": "The pathogen dissolves.",
-  "death_reason.noellesroles.collapse": "Collapse"
+  "death_reason.noellesroles.collapse": "Collapse",
+  "item.noellesroles.sword": "Sword",
+  "item.noellesroles.sword.tooltip": "Right-click: throw a flying sword that pierces everyone in your line of sight (1 minute cooldown)",
+  "death_reason.noellesroles.flying_sword": "Flying Sword"
 }

@@ -64,24 +64,17 @@ public abstract class BttKillHookMixin {
         ci.cancel(); // 不受伤
     }
 
-    /**
-     * 黑死病附身链（C-134）：病人（宿主）被杀 → 病原体转移到击杀者；无击杀者死亡（跳车/环境/崩溃）→ 黑死病终结。
-     * 病人本体照常死亡（不 cancel）——附身的躯体只是承载物。
-     */
-    @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
-            at = @At("HEAD"))
-    private static void bttBlackdeathPatient(PlayerEntity victim, boolean spawnBody, PlayerEntity killer,
-                                             Identifier reason, CallbackInfo ci) {
-        if (!BttIdentity.isBttMode(victim.getWorld())) return;
-        if (!(victim instanceof ServerPlayerEntity patient)) return;
-        if (!org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(patient).blackdeathPatient) return;
-        org.agmas.noellesroles.btt.BttBlackdeath.onPatientDeath(patient, killer);
-    }
-
     @Inject(method = "killPlayer(Lnet/minecraft/entity/player/PlayerEntity;ZLnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Identifier;)V",
             at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/entity/PlayerBodyEntity;setHeadYaw(F)V"))
     private static void bttKillHook(PlayerEntity victim, boolean spawnBody, PlayerEntity killer, Identifier identifier, CallbackInfo ci) {
         if (!BttIdentity.isBttMode(victim.getWorld())) return;
+        // === ① 全局：黑死病附身链（C-134，C-138 挪到**死亡已生效**之后） ===
+        // 放在这里而不是杀前 HEAD：被别的免死（明星/护盾/保镖等）拦下的击杀不该发生附身；
+        // 黑死病本人此时已是旁观态（"技术上这时黑死病已经死了"），病原体强制附身于病人（相机跟随，见 BttBlackdeath.tick）。
+        if (victim instanceof ServerPlayerEntity patient
+                && BttPlayerComponent.KEY.get(patient).blackdeathPatient) {
+            org.agmas.noellesroles.btt.BttBlackdeath.onPatientDeath(patient, killer);
+        }
         // === ① 全局：救世主死亡 → 信徒集体殉教（docx 死因"殉教"；任意死因触发，先于 killer 判空） ===
         if (victim.getWorld() instanceof net.minecraft.server.world.ServerWorld sw0) {
             GameWorldComponent gwc0 = GameWorldComponent.KEY.get(sw0);

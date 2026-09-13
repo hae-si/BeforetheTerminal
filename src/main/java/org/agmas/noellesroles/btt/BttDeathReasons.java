@@ -31,4 +31,6 @@ public final class BttDeathReasons {
     public static final Identifier JUDGMENT = Identifier.of("noellesroles", "judgment");
     /** 崩溃：理智归零死亡（docx 死因表第 1 项；C-134 起用于黑死病病人耗尽理智的"精神崩溃"） */
     public static final Identifier COLLAPSE = Identifier.of("noellesroles", "collapse");
+    /** 飞剑：剑客 <剑> 射线贯穿（docx 死因表"飞剑"；C-136） */
+    public static final Identifier FLYING_SWORD = Identifier.of("noellesroles", "flying_sword");
 }
