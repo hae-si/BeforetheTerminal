@@ -27,6 +27,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * ⑤ 纵火犯（C-092）：按本能键 → 透视全部**已被浇汽油者**（职业色）；
  * ⑥ 窃贼（C-092）：按本能键 → 透视全部**尸体**（职业色）。
  *    ⑤⑥ 都直读原始键位——官方 1.3.2 的 `isInstinctEnabled()` 要求凶手阵营/旁观，中立身份过不了该门。
+ * ⑧ **C-143（作者 2026-09-11 §7）**：记者/工程师/窃贼搜刮后/民俗学家这四类**本机标记透视**
+ *    也从"自绘方框"改走**本通道**（原版发光：`hasOutline` + `WorldRenderer` 的 `getTeamColorValue` 改写）——
+ *    纯本机、穿墙、无需按键；`BttEntityHighlightRenderer`（方框自绘）随之删除。
  * 其余配色一律沿用原版（2026-09-06 裁定：勿自造配色）。魔女尾声"活人雷达"为过时设定，已移除（2026-09-07）。
  */
 @Mixin(WatheClient.class)
@@ -36,6 +39,10 @@ public abstract class BttShoujoInstinctMixin {
     private static final int INSTINCT_GREEN = 0x4EDD35;
     /** 原版掉落物高亮金（WatheClient 对 ItemEntity 返回的 14392576 = 0xDB9D00） */
     private static final int INSTINCT_ITEM_GOLD = 0xDB9D00;
+    /** 记者描边色（金，同 C-089 方框口径） */
+    private static final int JOURNALIST_GOLD = 0xFFD945;
+    /** 工程师描边色（青，同 C-089 方框口径） */
+    private static final int ENGINEER_CYAN = 0x4AD1F0;
 
     @Inject(method = "getInstinctHighlight", at = @At("HEAD"), cancellable = true)
     private static void btt$instinctOverrides(Entity target, CallbackInfoReturnable<Integer> cir) {
@@ -50,6 +57,8 @@ public abstract class BttShoujoInstinctMixin {
         if (viewer == null || viewer == p) return;
         if (!BttIdentity.isBttMode(viewer.getWorld())) return;
         GameWorldComponent gwc = GameWorldComponent.KEY.get(viewer.getWorld());
+        // ⑧ C-143：本机标记透视（被动、无需本能键）——记者/工程师/窃贼搜刮后/民俗学家
+        if (btt$markerGlow(viewer, p, gwc, cir)) return;
         // ① 教团互相透视（被动，无需按键、无凶手门控——救世主/信徒均非 canUseKiller）：观察者与目标均为教团
         boolean viewerCult = gwc.getRole(viewer) == BttRoles.MESSIAH
                 || org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(viewer).isCult();
@@ -134,6 +143,43 @@ public abstract class BttShoujoInstinctMixin {
     /** 本能键原始按下状态（1.3.2 的 isInstinctEnabled() 含凶手阵营门控，中立身份只能直读键位） */
     private static boolean btt$instinctKeyPressed() {
         return WatheClient.instinctKeybind != null && WatheClient.instinctKeybind.isPressed();
+    }
+
+    /**
+     * C-143：本机标记透视（原 `BttEntityHighlightRenderer` 的方框自绘改为**原版发光通道**）。
+     * 覆盖四类：记者 &lt;跟踪&gt; 的目标、工程师 &lt;扫描&gt; 的全员、窃贼 &lt;搜刮&gt; 后的全员、民俗学家看到的"使用者"。
+     * 全部**被动**（不按本能键）且只对**本机**生效（服务端不写旗标 → 不会有 C-089 那种"所有人共享发光"的泄漏）。
+     */
+    private static boolean btt$markerGlow(PlayerEntity viewer, PlayerEntity target, GameWorldComponent gwc,
+                                          CallbackInfoReturnable<Integer> cir) {
+        if (!GameFunctions.isPlayerAliveAndSurvival(viewer)) return false;
+        org.agmas.noellesroles.btt.BttPlayerComponent own =
+                org.agmas.noellesroles.btt.BttPlayerComponent.KEY.get(viewer);
+        String uuid = target.getUuidAsString();
+        // 记者：只描自己显式标记的那名玩家（无标记 / 标记失效 → 不描；策划已删"自动盯最远者"）
+        if (gwc.isRole(viewer, BttRoles.JOURNALIST) && !own.markedTarget.isEmpty()
+                && own.markedTarget.equals(uuid)) {
+            return btt$set(cir, JOURNALIST_GOLD);
+        }
+        // 民俗学家：被动透视刚才使用「任何人」类技能的人（C-131）
+        if (own.folkTicks > 0 && !own.folkTarget.isEmpty() && own.folkTarget.equals(uuid)) {
+            return btt$set(cir, BttRoles.FOLKLORIST.color());
+        }
+        // 工程师 <扫描> / 窃贼 <搜刮> 后：短时全车透视
+        if (own.engineerScanTicks > 0) {
+            return btt$set(cir, ENGINEER_CYAN);
+        }
+        if (own.thiefRevealTicks > 0) {
+            return btt$set(cir, BttRoles.THIEF.color());
+        }
+        return false;
+    }
+
+    /** 统一"接管本次高亮"：写色 + cancel，返回 true */
+    private static boolean btt$set(CallbackInfoReturnable<Integer> cir, int color) {
+        cir.setReturnValue(color);
+        cir.cancel();
+        return true;
     }
 
     /** C-091：花匠被动透视全部小花（金描边）；非花实体一律 skip，返回 true = 已接管本次判定 */

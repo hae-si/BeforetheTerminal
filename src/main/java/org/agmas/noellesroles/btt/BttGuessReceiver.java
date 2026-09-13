@@ -309,7 +309,7 @@ public final class BttGuessReceiver {
         setCd(ability, BttRoleDefs.CD_1MIN); // C-099：docx 2026-09-11（原 30 秒）
         BttPlayerComponent c = BttPlayerComponent.KEY.get(user);
         c.markedTarget = target.getUuid().toString();
-        c.sync(); // C-089：客户端 BttEntityHighlightRenderer 按本机组件描边，必须即时同步
+        c.sync(); // C-089/C-143：客户端按本机组件走原版发光通道，必须即时同步
         user.sendMessage(Text.translatable("noellesroles.btt.action.journalist.track", target.getName().getString()).withColor(colorOf(user)), true);
     }
 

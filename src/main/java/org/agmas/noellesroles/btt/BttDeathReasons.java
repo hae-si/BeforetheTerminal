@@ -33,4 +33,6 @@ public final class BttDeathReasons {
     public static final Identifier COLLAPSE = Identifier.of("noellesroles", "collapse");
     /** 飞剑：剑客 <剑> 射线贯穿（docx 死因表"飞剑"；C-136） */
     public static final Identifier FLYING_SWORD = Identifier.of("noellesroles", "flying_sword");
+    /** 小丑谢幕：**小丑死亡**即记此死因（作者 2026-09-13 明确口径；C-142） */
+    public static final Identifier JESTER_CURTAIN = Identifier.of("noellesroles", "jester_curtain");
 }

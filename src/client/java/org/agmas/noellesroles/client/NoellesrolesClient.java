@@ -121,7 +121,6 @@ public class NoellesrolesClient implements ClientModInitializer {
         // C-083 建筑师：门被撬/被卡 → 5 秒透视描边（服务端 S2C 回执）
         org.agmas.noellesroles.client.renderer.BttDoorHighlightRenderer.register();
         // C-089 记者 <跟踪> / 工程师 <扫描>：本机自绘穿墙描边（替代会被全场看见的 Entity.setGlowing）
-        org.agmas.noellesroles.client.renderer.BttEntityHighlightRenderer.register();
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.btt.BttDoorHighlightS2CPacket.ID,
                 (payload, context) -> context.client().execute(() ->
                         org.agmas.noellesroles.client.renderer.BttDoorHighlightRenderer

@@ -23,7 +23,13 @@ public abstract class CoronerAddDeathReasonMixin {
     private static void setDeathReason(PlayerEntity victim, boolean spawnBody, PlayerEntity killer, Identifier identifier, CallbackInfo ci, @Local PlayerBodyEntity playerBodyEntity) {
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
         if (gameWorldComponent.getRole(victim) == null) return;
-        (BodyDeathReasonComponent.KEY.get(playerBodyEntity)).deathReason = identifier;
+        // C-142：**小丑死亡 = 死因"小丑谢幕"**（作者 2026-09-13 口径）——不论实际死于何种手段
+        Identifier reason = identifier;
+        if (org.agmas.noellesroles.btt.BttIdentity.isBttMode(victim.getWorld())
+                && gameWorldComponent.getRole(victim) == org.agmas.noellesroles.btt.BttRoles.JESTER) {
+            reason = org.agmas.noellesroles.btt.BttDeathReasons.JESTER_CURTAIN;
+        }
+        (BodyDeathReasonComponent.KEY.get(playerBodyEntity)).deathReason = reason;
         (BodyDeathReasonComponent.KEY.get(playerBodyEntity)).playerRole = gameWorldComponent.getRole(victim).identifier();
     }
 

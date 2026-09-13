@@ -497,5 +497,6 @@
   "death_reason.noellesroles.collapse": "崩溃",
   "item.noellesroles.sword": "剑",
   "item.noellesroles.sword.tooltip": "右键：扔出飞剑贯穿视线上的所有玩家（1 分钟冷却）",
-  "death_reason.noellesroles.flying_sword": "飞剑"
+  "death_reason.noellesroles.flying_sword": "飞剑",
+  "death_reason.noellesroles.jester_curtain": "小丑谢幕"
 }

@@ -497,5 +497,6 @@
   "death_reason.noellesroles.collapse": "Collapse",
   "item.noellesroles.sword": "Sword",
   "item.noellesroles.sword.tooltip": "Right-click: throw a flying sword that pierces everyone in your line of sight (1 minute cooldown)",
-  "death_reason.noellesroles.flying_sword": "Flying Sword"
+  "death_reason.noellesroles.flying_sword": "Flying Sword",
+  "death_reason.noellesroles.jester_curtain": "Jester's Curtain Call"
 }

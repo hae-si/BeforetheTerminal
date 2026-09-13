@@ -376,7 +376,7 @@ public final class BttEvents {
                 // Entity.setGlowing 是实体共享旗标——服务端一置**全场**都看得见（实测「总有人一直发光，
                 // 把他刀死又换成别人发光」）；且记者侧已删除「未标记时自动盯最远者」（2026-09-11 用户裁定）。
                 // 服务端只把状态同步到本人客户端：记者在 BttGuessReceiver.journalist() 赋值时同步一次；
-                // 工程师在这里逐 tick 递减并同步读秒，客户端 BttEntityHighlightRenderer 据此自绘穿墙描边。
+                // 工程师在这里逐 tick 递减并同步读秒，客户端据本机组件走原版发光通道（C-143）。
                 for (var p : world.getPlayers()) {
                     BttPlayerComponent c = BttPlayerComponent.KEY.get(p);
                     if (c.engineerScanTicks <= 0) continue;
