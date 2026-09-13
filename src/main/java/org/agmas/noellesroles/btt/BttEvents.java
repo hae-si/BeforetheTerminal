@@ -302,6 +302,12 @@ public final class BttEvents {
                     pc.decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     pc.decrementMute(); // 缄默（聋哑）计时（C-086）
                     pc.decrementVoicePitch(); // 笑匠变声：变调计时（C-139）
+                    // C-141：理智归零 → 崩溃死亡（docx 死因表"崩溃"；BT-ECO-SAN 的死亡半部）
+                    // getMood() 对非 REAL（凶手/独行/外人/狂人旗标）恒为 1 → 只有真正跑理智的身份会崩溃
+                    if (GameFunctions.isPlayerAliveAndSurvival(player)
+                            && dev.doctor4t.wathe.cca.PlayerMoodComponent.KEY.get(player).getMood() <= 0f) {
+                        GameFunctions.killPlayer(player, true, null, BttDeathReasons.COLLAPSE);
+                    }
                     BttArsonist.tickGasoline(player, pc); // 纵火犯：被浇者延迟"闻到汽油味"提示（C-092）
                     BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 10–30 秒后生效（C-093/C-097）
                     BttActor.tick(player, pc); // 演员：装死读秒（C-106）

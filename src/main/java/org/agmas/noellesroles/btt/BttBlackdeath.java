@@ -1,7 +1,6 @@
 package org.agmas.noellesroles.btt;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
-import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -131,10 +130,8 @@ public final class BttBlackdeath {
             if (host == null) continue;
             if (!GameFunctions.isPlayerAliveAndSurvival(host)) continue; // 死亡路径由击杀钩子处理
             if (p.getCameraEntity() != host) p.setCameraEntity(host);
-            // 精神崩溃：病人（按自己的身份跑理智；只有 REAL 身份会掉理智）理智归零 → 崩溃死亡 → 黑死病终结
-            if (PlayerMoodComponent.KEY.get(host).getMood() <= 0f) {
-                GameFunctions.killPlayer(host, true, null, BttDeathReasons.COLLAPSE);
-            }
+            // 精神崩溃（病人理智归零）由 `BttEvents` 的通用规则统一处理（C-141：理智归零 → 崩溃死亡，无击杀者）
+            // → 击杀钩子里的黑死病分支随即终结本局黑死病，无需在此重复判定
         }
     }
 
