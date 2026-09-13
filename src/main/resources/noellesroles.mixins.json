@@ -48,8 +48,7 @@
     "btt.BttSpiritDamageMixin",
     "btt.BttWorldBlackoutMixin",
     "btt.BttDropOnDeathMixin",
-    "btt.BttDaggerKnockbackMixin",
-    "btt.BttMoodThresholdMixin"
+    "btt.BttDaggerKnockbackMixin"
   ],
   "injectors": {
     "defaultRequire": 1
