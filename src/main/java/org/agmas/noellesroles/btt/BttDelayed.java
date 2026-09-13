@@ -76,7 +76,10 @@ public final class BttDelayed {
         if (COMEDIAN.equals(kind)) applyComedian(caster, target);
     }
 
-    /** 派对主 &lt;变声&gt;：一次 = 目标醉酒 1 分钟；两次 = 氦气自爆（docx：变声两次直接自爆） */
+    /**
+     * 笑匠 &lt;变声&gt;：一次 = **目标嗓音变调 1 分钟**（字面效果，C-139；此前用"醉酒"占位——已按 docx 移除）；
+     * 两次 = 氦气自爆（docx：变声两次直接自爆）。
+     */
     private static void applyComedian(ServerPlayerEntity caster, ServerPlayerEntity target) {
         BttPlayerComponent uc = BttPlayerComponent.KEY.get(caster);
         uc.partyUses++;
@@ -85,7 +88,9 @@ public final class BttDelayed {
             GameFunctions.killPlayer(caster, true, caster, BttDeathReasons.HELIUM_SELF_DESTRUCT);
             return;
         }
-        BttPlayerComponent.KEY.get(target).applyDrunk(GameConstants.getInTicks(1, 0));
+        BttPlayerComponent targetPc = BttPlayerComponent.KEY.get(target);
+        // C-139：<变声> 的字面效果 = **嗓音变调**（接收端处理 → 本人听不出异常；承受者不觉察）
+        targetPc.applyVoicePitch(GameConstants.getInTicks(1, 0));
         caster.sendMessage(Text.translatable("noellesroles.btt.action.partyhost.effect", target.getName().getString())
                 .withColor(BttRoles.COMEDIAN.color()), true);
     }

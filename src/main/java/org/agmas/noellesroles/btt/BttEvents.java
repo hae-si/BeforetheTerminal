@@ -301,6 +301,7 @@ public final class BttEvents {
                     BttPlayerComponent pc = BttPlayerComponent.KEY.get(player);
                     pc.decrementDrunk(); // 醉酒计时（BT-SYS-DRUNK）
                     pc.decrementMute(); // 缄默（聋哑）计时（C-086）
+                    pc.decrementVoicePitch(); // 笑匠变声：变调计时（C-139）
                     BttArsonist.tickGasoline(player, pc); // 纵火犯：被浇者延迟"闻到汽油味"提示（C-092）
                     BttDelayed.tick(player, pc); // 虐待狂/派对主：标记 → 10–30 秒后生效（C-093/C-097）
                     BttActor.tick(player, pc); // 演员：装死读秒（C-106）

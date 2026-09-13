@@ -57,6 +57,11 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     public int muteTicks = 0;
     /** 派对主已变声次数（2 次 → 氦气自爆） */
     public int partyUses = 0;
+    /**
+     * 笑匠 &lt;变声&gt;（C-139）：嗓音变调剩余 tick（&gt;0 时**其他人听到**该玩家的声音被变调；
+     * **本人听不到异常**——变调在接收端做）。**客户端可见**（所有追踪者都需要读到才能变调）。
+     */
+    public int voicePitchTicks = 0;
     /** C-093 延时技能：待生效标记的类型（comedian，空 = 无） */
     public String delayedKind = "";
     /** C-093 延时技能：待生效标记的目标 UUID 字符串 */
@@ -174,6 +179,22 @@ public class BttPlayerComponent implements AutoSyncedComponent {
     /** 每 tick 递减（BttEvents tick 循环调用） */
     public void decrementDrunk() {
         if (this.drunkTicks > 0) this.drunkTicks--;
+    }
+
+    /**
+     * 笑匠 &lt;变声&gt;（C-139）：施加嗓音变调（接收端变调，本人无感）。
+     * 立即 `sync()`（所有追踪者都要拿到），此后每 10 tick 同步一次供客户端做收尾渐变。
+     */
+    public void applyVoicePitch(int ticks) {
+        this.voicePitchTicks = Math.max(this.voicePitchTicks, Math.max(0, ticks));
+        this.sync();
+    }
+
+    /** 变调计时（服务端每 tick）；每 10 tick 同步一次、归零时补一次同步 */
+    public void decrementVoicePitch() {
+        if (this.voicePitchTicks <= 0) return;
+        this.voicePitchTicks--;
+        if (this.voicePitchTicks == 0 || this.voicePitchTicks % 10 == 0) this.sync();
     }
 
     /** 永久醉酒（走私犯/哲人）：施加者死亡后由 kill hook 解除 */
@@ -331,6 +352,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         relType = "";
         drunkSource = "";
         partyUses = 0;
+        voicePitchTicks = 0;
         delayedKind = "";
         delayedTarget = "";
         delayedTicks = 0;
@@ -389,6 +411,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         tag.putString("relType", relType);
         tag.putString("drunkSource", drunkSource);
         tag.putInt("partyUses", partyUses);
+        tag.putInt("voicePitchTicks", voicePitchTicks);
         tag.putString("delayedKind", delayedKind);
         tag.putString("delayedTarget", delayedTarget);
         tag.putInt("delayedTicks", delayedTicks);
@@ -446,6 +469,7 @@ public class BttPlayerComponent implements AutoSyncedComponent {
         this.relType = tag.contains("relType") ? tag.getString("relType") : "";
         this.drunkSource = tag.contains("drunkSource") ? tag.getString("drunkSource") : "";
         this.partyUses = tag.getInt("partyUses");
+        this.voicePitchTicks = tag.getInt("voicePitchTicks");
         this.delayedKind = tag.contains("delayedKind") ? tag.getString("delayedKind") : "";
         this.delayedTarget = tag.contains("delayedTarget") ? tag.getString("delayedTarget") : "";
         this.delayedTicks = tag.getInt("delayedTicks");

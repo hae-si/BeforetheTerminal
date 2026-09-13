@@ -99,7 +99,24 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         registration.registerEvent(MicrophonePacketEvent.class, this::mutedSpeakerEvent);
         registration.registerEvent(EntitySoundPacketEvent.class, this::mutedListenerEvent);
         registration.registerEvent(LocationalSoundPacketEvent.class, this::mutedListenerEvent);
+        registerClientVoiceHooks(registration);
         VoicechatPlugin.super.registerEvents(registration);
+    }
+
+    /**
+     * 笑匠 &lt;变声&gt; 的接收端变调（C-139）：**只在客户端**注册（SVC 的 voicechat entrypoint 不按环境过滤，
+     * 本插件类在服务端也会被加载，但服务端没有 client 类），故用**反射**延迟加载只存在于 client sourceSet 的
+     * {@code BttVoiceClientReceiver}，避免服务端类路径链接错误（技法同 NRS 的 HeliumBuzz 插件，代码自研）。
+     */
+    private static void registerClientVoiceHooks(EventRegistration registration) {
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType()
+                != net.fabricmc.api.EnvType.CLIENT) return;
+        try {
+            Class<?> receiver = Class.forName("org.agmas.noellesroles.client.voice.BttVoiceClientReceiver");
+            receiver.getMethod("register", EventRegistration.class).invoke(null, registration);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to wire BTT voice receiver", e);
+        }
     }
 
     // ===== 虐待狂 <缄默>（C-086）：哑 + 聋（移植 NRS Silencer/SilencedPlayerComponent 的语音口径）=====
