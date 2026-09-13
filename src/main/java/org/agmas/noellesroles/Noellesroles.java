@@ -382,6 +382,8 @@ public class Noellesroles implements ModInitializer {
                 abilityPlayerComponent.sync();
                 VoodooPlayerComponent voodooPlayerComponent = (VoodooPlayerComponent) VoodooPlayerComponent.KEY.get(context.player());
                 voodooPlayerComponent.setTarget(payload.player());
+                // C-140：女巫「诅咒任何人」也要触发民俗学家（BT-FOLKLORIST-GAP①）
+                org.agmas.noellesroles.btt.BttFolklorist.onAnyoneAbility(context.player(), gameWorldComponent);
 
             }
             if (gameWorldComponent.isRole(context.player(), MORPHLING)) {

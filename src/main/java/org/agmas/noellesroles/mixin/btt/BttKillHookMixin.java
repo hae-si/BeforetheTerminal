@@ -112,7 +112,8 @@ public abstract class BttKillHookMixin {
             world.playSound(null, victim.getBlockPos(), org.agmas.noellesroles.btt.BttSounds.STAR_DEATH,
                     net.minecraft.sound.SoundCategory.PLAYERS, 1.0F, 1.0F);
             for (ServerPlayerEntity p : world.getPlayers()) {
-                if (gwc.isInnocent(p)) {
+                // C-140：口径 = **仅乘客**（混血规则随阵营）——叛徒系/黑死病占 MAD 席位但属凶手，不该收到
+                if (org.agmas.noellesroles.btt.BttRoles.isPassengerCampFor(gwc, p)) {
                     // C-098：身份通知（动作栏）用明星的身份色
                     p.sendMessage(net.minecraft.text.Text.translatable("noellesroles.btt.action.star.died")
                             .withColor(org.agmas.noellesroles.btt.BttRoles.STAR.color()), true);

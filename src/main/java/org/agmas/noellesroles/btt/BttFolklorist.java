@@ -34,7 +34,9 @@ public final class BttFolklorist {
     /** 「描述中带有『任何人』」的技能使用者（见类注释） */
     private static final Set<Role> ANYONE_USERS = Set.of(
             BttRoles.DETECTIVE, BttRoles.HUNTER, BttRoles.MESSIAH, BttRoles.NOVELIST,
-            BttRoles.JOURNALIST, BttRoles.MAGICIAN, BttRoles.RIGGER);
+            BttRoles.JOURNALIST, BttRoles.MAGICIAN, BttRoles.RIGGER,
+            // C-140：女巫诅咒走 NR 原生上行包（不经 BttGuessReceiver），在 NR 接收器里补调本方法
+            BttRoles.WITCH);
 
     /** 有人使用「任何人」类能力时调用（BttGuessReceiver 的上行包入口） */
     public static void onAnyoneAbility(ServerPlayerEntity user, GameWorldComponent gwc) {
